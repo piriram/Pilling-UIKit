@@ -116,6 +116,63 @@ final class READMEMessageRuleTests: XCTestCase {
         XCTAssertEqual(result.text, MessageType.plantingSeed.text)
     }
 
+    func test_readme_timeBased_exactlyTwoHoursLate_returnsOverTwoHours() {
+        let scheduled = makeDate(2024, 1, 10, 9, 0)
+        let current = makeDate(2024, 1, 10, 11, 0)
+        let record = makeRecord(scheduledDate: scheduled, status: .notTaken)
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: [record])
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.overTwoHours.text)
+    }
+
+    func test_readme_timeBased_exactlyFourHoursLate_returnsOverFourHours() {
+        let scheduled = makeDate(2024, 1, 10, 9, 0)
+        let current = makeDate(2024, 1, 10, 13, 0)
+        let record = makeRecord(scheduledDate: scheduled, status: .notTaken)
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: [record])
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.overFourHours.text)
+    }
+
+    func test_readme_timeBased_exactlyTwelveHoursLate_returnsWaiting() {
+        let scheduled = makeDate(2024, 1, 10, 9, 0)
+        let current = makeDate(2024, 1, 10, 21, 0)
+        let record = makeRecord(scheduledDate: scheduled, status: .notTaken)
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: [record])
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.waiting.text)
+    }
+
+    func test_readme_consecutiveMissedThreeDays_returnsWaiting() {
+        let day7 = makeDate(2024, 1, 7, 9, 0)
+        let day8 = makeDate(2024, 1, 8, 9, 0)
+        let day9 = makeDate(2024, 1, 9, 9, 0)
+        let day10 = makeDate(2024, 1, 10, 9, 0)
+        let current = makeDate(2024, 1, 10, 12, 0)
+
+        let records = [
+            makeRecord(scheduledDate: day7, status: .missed),
+            makeRecord(scheduledDate: day8, status: .missed),
+            makeRecord(scheduledDate: day9, status: .missed),
+            makeRecord(scheduledDate: day10, status: .notTaken)
+        ]
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: records)
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.waiting.text)
+    }
+
     // MARK: - Helpers
 
     private func makeDate(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int) -> Date {
