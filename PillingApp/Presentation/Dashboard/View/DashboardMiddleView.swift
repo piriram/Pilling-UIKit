@@ -83,6 +83,8 @@ final class DashboardMiddleView: UIView {
         messageLabel.font = Typography.body2(.medium)
         messageLabel.textColor = AppColor.textBlack
         messageLabel.numberOfLines = 1
+        messageLabel.adjustsFontSizeToFitWidth = true
+        messageLabel.minimumScaleFactor = 0.6
     }
     
     private func setupStackViews() {

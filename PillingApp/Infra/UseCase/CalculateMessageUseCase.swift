@@ -105,6 +105,16 @@ final class CalculateMessageUseCase {
             print("🔍 [CalculateMessage] todayStatus.medicalTiming: \(status.medicalTiming)")
         }
 
+        print("🔍 [CalculateMessage] yesterdayRecord found: \(yesterdayRecord != nil)")
+        if let record = yesterdayRecord {
+            print("🔍 [CalculateMessage] yesterdayRecord.scheduledDateTime: \(record.scheduledDateTime)")
+            print("🔍 [CalculateMessage] yesterdayRecord.status: \(record.status)")
+        }
+        print("🔍 [CalculateMessage] yesterdayStatus: \(String(describing: yesterdayStatus))")
+        if let status = yesterdayStatus {
+            print("🔍 [CalculateMessage] yesterdayStatus.baseStatus: \(status.baseStatus)")
+        }
+
         return MessageContext(
             todayStatus: todayStatus,
             yesterdayStatus: yesterdayStatus,
@@ -137,6 +147,8 @@ final class CalculateMessageUseCase {
             $0.scheduledDateTime > $1.scheduledDateTime
         }
 
+        print("🔍 [calculateConsecutiveMissed] Starting calculation")
+
         // 오늘 제외하고 어제부터 계산
         var skipToday = true
 
@@ -145,19 +157,35 @@ final class CalculateMessageUseCase {
 
             // 오늘 레코드는 건너뛰기
             if skipToday && isToday {
+                print("🔍 [calculateConsecutiveMissed] Skipping today: \(record.scheduledDateTime), status: \(record.status)")
                 continue
             }
             skipToday = false
 
-            let timeElapsed = targetDate.timeIntervalSince(record.scheduledDateTime)
+//            print("🔍 [calculateConsecutiveMissed] Checking record: \(record.scheduledDateTime), status: \(record.status), count: \(count)")
 
-            if timeElapsed >= TimeThreshold.fullyMissed && !record.status.isTaken {
+            // DB에 명시적으로 missed 상태로 저장된 경우 즉시 카운트
+            if record.status == .missed {
                 count += 1
-            } else if record.status.isTaken {
+                print("🔍 [calculateConsecutiveMissed] Counted missed, new count: \(count)")
+                continue
+            }
+
+            // 복용한 경우 중단
+            if record.status.isTaken {
+                print("🔍 [calculateConsecutiveMissed] Found taken, breaking. Final count: \(count)")
                 break
+            }
+
+            // 그 외의 경우 시간 경과로 판단
+            let timeElapsed = targetDate.timeIntervalSince(record.scheduledDateTime)
+            if timeElapsed >= TimeThreshold.fullyMissed {
+                count += 1
+                print("🔍 [calculateConsecutiveMissed] Counted by time elapsed, new count: \(count)")
             }
         }
 
+        print("🔍 [calculateConsecutiveMissed] Final count: \(count)")
         return count
     }
 
