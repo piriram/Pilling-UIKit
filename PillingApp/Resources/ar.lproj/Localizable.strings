@@ -139,6 +139,7 @@
 "message.one_pill_more" = "حبة واحدة إضافية!";
 "message.over_two_hours" = "أكثر من ساعتين";
 "message.over_four_hours" = "أكثر من 4 ساعات";
+"message.no_record_for_days" = "لا يوجد سجل لمدة %d أيام. هل كل شيء على ما يرام؟";
 "message.widget_plant_grass" = "ازرعي العشب!";
 "message.widget_planting_complete" = "تمت زراعة العشب!";
 "message.widget_grass_waiting" = "العشب ينتظر";

@@ -40,6 +40,7 @@
 "message.one_pill_more" = "한알 더!";
 "message.over_two_hours" = "2시간 지났어요";
 "message.over_four_hours" = "4시간 지났어요";
+"message.no_record_for_days" = "لا يوجد سجل لمدة %d أيام. هل كل شيء على ما يرام؟";
 "message.widget_plant_grass" = "잔디를 심어보세요!";
 "message.widget_planting_complete" = "잔디 심기 완료!";
 "message.widget_grass_waiting" = "잔디가 기다려요";

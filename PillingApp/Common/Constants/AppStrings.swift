@@ -188,6 +188,9 @@ enum AppStrings{
         static let onePillMore = "message.one_pill_more".localized
         static let overTwoHours = "message.over_two_hours".localized
         static let overFourHours = "message.over_four_hours".localized
+        static func noRecordForDays(_ days: Int) -> String {
+            return "message.no_record_for_days".localized(with: days)
+        }
 
         // 위젯용 메시지
         static let widgetPlantGrass = "widget.message_plant_grass".localized

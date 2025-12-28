@@ -42,7 +42,8 @@
 "setting.new_pill_button" = "Start a new pill cycle";
 "setting.navigation_title" = "Settings";
 "setting.alarm_section_title" = "Notification Settings";
-"setting.time_setting_title" = "Taking time";
+"setting.time_setting_title" = "Reminder time";
+//"setting.time_setting_title" = "Taking time";
 "setting.time_setting_default" = "9:00 AM";
 "setting.message_setting_title" = "Noti Text";
 "setting.message_setting_default" = "For a healthy day...";
@@ -52,7 +53,7 @@
 "setting.new_pill_cycle_title" = "Start new pill cycle";
 "setting.new_pill_cycle_message" = "All current pill records will be deleted.\nDo you want to start a new pill cycle?";
 "setting.new_pill_cycle_confirm" = "Start";
-"setting.success_time_updated" = "Taking time updated";
+"setting.success_time_updated" = "Reminder time updated";
 "setting.success_message_updated" = "Notification message updated";
 "setting.error_time_update_failed" = "Failed to update time";
 "setting.error_message_update_failed" = "Failed to update message";
@@ -68,7 +69,7 @@
 "dashboard.guide_missed" = "Missed";
 "dashboard.taken" = "Taken";
 "dashboard.taken_double" = "Two pills";
-"dashboard.guide_today" = "Now";
+"dashboard.guide_today" = "Today";
 "dashboard.take_pill_button" = "Plant grass";
 "dashboard.take_pill_completed" = "Planted!";
 "dashboard.rest_period" = "Break period now";
@@ -133,7 +134,7 @@
 "message.need_one_pill_more" = "You need one more pill!";
 "message.taken_delayed_ok" = "It’s okay, just 2 hours late!";
 "message.took_too_early" = "You took it more than 2 hours early";
-"message.see_tomorrow" = "See you tomorrow!";
+"message.see_tomorrow" = "2 pills done! You're doing great";
 "message.start_taking_today" = "Start taking today";
 "message.start_taking_tomorrow" = "Start taking tomorrow";
 // Plurals handled in stringsdict
@@ -141,6 +142,7 @@
 "message.one_pill_more" = "One more pill!";
 "message.over_two_hours" = "Over 2 hours";
 "message.over_four_hours" = "Over 4 hours";
+"message.no_record_for_days" = "No record for %d days. Everything okay?";
 "message.widget_plant_grass" = "Plant the grass!";
 "message.widget_planting_complete" = "Grass planted!";
 "message.widget_grass_waiting" = "The grass is waiting";
@@ -182,7 +184,7 @@
 // MARK: - Time Setting
 "time_setting.main_title" = "Set your notification time!";
 "time_setting.subtitle" = "You can change this later.";
-"time_setting.time_button_title" = "Taking time";
+"time_setting.time_button_title" = "Reminder time";
 "time_setting.confirm_button" = "Done!";
 "time_setting.picker_confirm_button" = "OK";
 "time_setting.navigation_title" = "Time Settings";
@@ -190,9 +192,9 @@
 // MARK: - Onboarding
 "onboarding.next_button" = "Next";
 "onboarding.start_button" = "Start taking";
-"onboarding.page1_title" = "Pilling helps you build a\nconsistent habit for a full month";
-"onboarding.page1_description" = "Once a day, take your pill when you get a private notification\nand record it";
-"onboarding.page2_title" = "See your adherence at a glance\nwith clear charts";
-"onboarding.page2_description" = "Manage taking days and break periods\neasily in one place";
+"onboarding.page1_title" = "Build a steady routine\nfor your cycle with Pilling";
+"onboarding.page1_description" = "Get a daily reminder at your set time.\nTake your pill and record it.";
+"onboarding.page2_title" = "Track your adherence\nwith simple charts";
+"onboarding.page2_description" = "Manage your cycle and break periods\nall in one place";
 "onboarding.page3_title" = "Check your status instantly\nwith a widget";
 "onboarding.page3_description" = "Record with one tap\nand check anytime";
