@@ -2,26 +2,30 @@ import Foundation
 
 /// 메시지 타입 enum
 enum MessageType {
-    case empty
-    case cycleComplete
-    case resting
-    case waiting
-    case plantingSeed
-    case success
-    case groomy
-    case fire(days: Int)
-    case overTwoHours
-    case overFourHours
-    case pilledTwo
-    case morePill
-    case todayAfter
-    case takingBeforeTwo
-    case takingBefore
-    case warning
-    case takenDelayedOk
-    case takenTooEarly
-    case takenDoubleComplete
-    case beforeStart(daysUntilStart: Int)
+    
+    case empty                              // 사이클/데이터 없음
+    case beforeStart(daysUntilStart: Int)   // 시작 전 안내
+    case cycleComplete                      // 사이클 완료 안내
+    
+    case resting                            // 휴약일 안내
+    case missedThreePlusDays                            // 연속 미복용 3일 이상 경고
+    case missedOneDay                       // 연속 미복용 1일(가벼운 경고)
+    case consecutiveMissed(days: Int)       // 연속 미복용 N일 (2일 이상)
+    
+    case timeOnTimeNotTaken                       // 오늘 복용 시간대에 아직 미복용
+    case overTwoHours                       // 2시간 경과 미복용
+    case overFourHours                      // 4시간 경과 미복용
+    case timeTakenDelayed                     // 지연 복용(2시간 초과) 완료
+    
+    case missedYesterdayTakeTwo                    // 예: 어제 21:00 미복용, 오늘 09:00~+36h 내 미복용 → “오늘 2알 복용하세요”
+    case missedYesterdayTwoPillsDoneLate                       // 예: 어제 21:00 미복용, 오늘 09:00에 2알 복용(36h 이후) → 추가 안내
+    case missedYesterdayNeedOneMore                            // 어제 미복용 + 오늘 복용 관련 추가 경고(의미 구체화 필요)
+    
+    case doubleDoseDoneToday                       // 더블 복용 완료 메시지
+    
+    case takenTooEarly                      // 예정 시간보다 2시간 이상 일찍 복용
+    case takenToday                         // 오늘 복용 완료 후 일반 안내
+    case takenSuccess                            // 정상 복용/연속 복용에 대한 긍정 메시지
     
     var text: String {
         switch self {
@@ -31,32 +35,30 @@ enum MessageType {
             return AppStrings.Message.cycleComplete
         case .resting:
             return AppStrings.Message.restPeriod
-        case .waiting:
+        case .missedThreePlusDays:
             return AppStrings.Message.forgotMe
-        case .plantingSeed:
+        case .timeOnTimeNotTaken:
             return AppStrings.Message.plantTodayGrass
-        case .success:
+        case .takenSuccess:
             return AppStrings.Message.plantSteadily
-        case .groomy:
+        case .missedOneDay:
             return AppStrings.Message.pillingSearching
-        case .fire(let days):
+        case .consecutiveMissed(let days):
             return AppStrings.Message.noRecordForDays(days)
-        case .pilledTwo:
-            return AppStrings.Message.takeTwoPills
-        case .todayAfter:
+        case .takenToday:
             return AppStrings.Message.grassGrowingWell
-        case .takingBeforeTwo:
+        case .missedYesterdayTakeTwo:
             return AppStrings.Message.missedYesterdayTakeTwo
-        case .takingBefore:
+        case .missedYesterdayTwoPillsDoneLate:
             return AppStrings.Message.takeWithinTwoHours
-        case .warning:
+        case .missedYesterdayNeedOneMore:
             return AppStrings.Message.needOnePillMore
-        case .takenDelayedOk:
+        case .timeTakenDelayed:
             return AppStrings.Message.takenDelayedOk
         case .takenTooEarly:
             return AppStrings.Message.tookTooEarly
-        case .takenDoubleComplete:
-            return AppStrings.Message.seeTomorrow
+        case .doubleDoseDoneToday:
+            return AppStrings.Message.takeTwoPills  //
         case .beforeStart(let daysUntilStart):
             if daysUntilStart == 0 {
                 return AppStrings.Message.startTakingToday
@@ -69,22 +71,20 @@ enum MessageType {
             return AppStrings.Message.overTwoHours
         case .overFourHours:
             return AppStrings.Message.overFourHours
-        case .morePill:
-            return AppStrings.Message.onePillMore
         }
     }
     
     var widgetText: String? {
         switch self {
-        case .plantingSeed:
+        case .timeOnTimeNotTaken:
             return AppStrings.Message.widgetPlantGrass
-        case .todayAfter:
+        case .takenToday:
             return AppStrings.Message.widgetPlantingComplete
-        case .waiting:
+        case .missedThreePlusDays:
             return AppStrings.Message.widgetGrassWaiting
-        case .groomy:
+        case .missedOneDay:
             return AppStrings.Message.widgetOverTwoHours
-        case .fire:
+        case .consecutiveMissed:
             return AppStrings.Message.widgetOverFourHours
         case .resting:
             return AppStrings.Message.widgetRestTime
@@ -101,40 +101,36 @@ enum MessageType {
             return "icon_rest"
         case .resting:
             return "icon_rest"
-        case .waiting:
+        case .missedThreePlusDays:
             return "icon_noTaking"
-        case .plantingSeed:
+        case .timeOnTimeNotTaken:
             return "icon_takingBefore"
-        case .success:
+        case .takenSuccess:
             return "icon_good"
-        case .groomy:
+        case .missedOneDay:
             return "icon_2hour"
-        case .fire:
+        case .consecutiveMissed:
             return "icon_4hour"
-        case .pilledTwo:
-            return "icon_takingBeforeTwo"
-        case .todayAfter:
+        case .takenToday:
             return "icon_takingAfter"
-        case .takingBeforeTwo:
+        case .missedYesterdayTakeTwo:
             return "icon_takingBeforeTwo"
-        case .takingBefore:
+        case .missedYesterdayTwoPillsDoneLate:
             return "icon_takingBefore"
-        case .warning:
+        case .missedYesterdayNeedOneMore:
             return "icon_takingBeforeTwo"
-        case .takenDelayedOk:
+        case .timeTakenDelayed:
             return "icon_takingAfter"
         case .takenTooEarly:
             return "icon_takingAfter"
-        case .takenDoubleComplete:
-            return "icon_takingAfter"
+        case .doubleDoseDoneToday:
+            return "icon_takingAfter" //
         case .beforeStart:
             return "icon_plant"
         case .overTwoHours:
             return "icon_2hour"
         case .overFourHours:
             return "icon_4hour"
-        case .morePill:
-            return "icon_takingBeforeTwo"
         }
     }
     
@@ -142,11 +138,11 @@ enum MessageType {
         switch self {
         case .empty, .cycleComplete, .resting:
             return "rest"
-        case .waiting,.fire,.groomy:
+        case .missedThreePlusDays,.consecutiveMissed,.missedOneDay:
             return "missed"
-        case .plantingSeed, .pilledTwo, .takingBeforeTwo, .warning,.overTwoHours,.overFourHours:
+        case .timeOnTimeNotTaken,.missedYesterdayTakeTwo, .missedYesterdayNeedOneMore,.overTwoHours,.overFourHours:
             return "notTaken"
-        case .success, .todayAfter, .takingBefore, .takenDelayedOk, .takenTooEarly, .takenDoubleComplete,.morePill:
+        case .takenSuccess, .takenToday, .missedYesterdayTwoPillsDoneLate, .timeTakenDelayed, .takenTooEarly, .doubleDoseDoneToday:
             return "taken"
         case .beforeStart:
             return "rest"
@@ -155,7 +151,7 @@ enum MessageType {
     
     var backgroundImageName: String {
         switch self {
-        case .waiting, .groomy, .fire:
+        case .missedThreePlusDays, .missedOneDay, .consecutiveMissed:
             return "background_rest"
         case .resting, .empty, .beforeStart:
             return "background_rest"
@@ -165,20 +161,20 @@ enum MessageType {
             return "background_taken"
         }
     }
-
+    
     var widgetBackgroundImage: String {
         switch self {
-        case .waiting:
+        case .missedThreePlusDays:
             return "widget_background_warning"
-        case .groomy:
+        case .missedOneDay:
             return "widget_background_groomy"
-        case .fire:
+        case .consecutiveMissed:
             return "widget_background_fire"
         default:
             return "widget_background_normal"
         }
     }
-
+    
     func toResult() -> MessageResult {
         return MessageResult(
             text: text,

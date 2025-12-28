@@ -10,7 +10,7 @@ final class RecentlyMissedRule: MessageRule {
 
     func evaluate(context: MessageContext) -> MessageType? {
         if !context.todayIsTaken {
-            return .pilledTwo
+            return .doubleDoseDoneToday
         }
 
         return nil

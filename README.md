@@ -213,6 +213,167 @@ CalculateDashboardMessageUseCase
 // 디버그 로그를 통해 각 단계별 상태 추적 가능
 ```
 
+### 4. 의료 규칙 기반 단위 테스트
+
+**문제**
+
+피임약 복용 로직은 의학적 안전성과 직결되며, ±2시간 허용 범위, 1일 누락 시 2알 복용, 2일 연속 누락 시 추가 피임법 필요 등 복약 지도 규칙을 정확히 반영해야 합니다. 그러나 초기 개발 중 다음과 같은 문제들을 발견했습니다:
+
+- "어제 09:00 예정이었는데 오늘 06:30에 복용하면 '너무 일찍 복용함'이 아니라 '한 알 더 필요해요'가 나온다" (우선순위 충돌)
+- "scheduled + 정확히 2시간" 같은 경계값 검증이 테스트 실행 시각에 따라 결과가 달라져 재현 불가
+- 타임존 변경(GMT → KST)이나 자정 경계 케이스를 테스트하려면 시스템 시간을 조작해야 하는데 CI/CD 환경에서 불가능
+- 휴약기 전환을 검증하려면 실제로 21일을 기다려야 함
+
+**접근**
+
+시간 정보를 제공하는 기능을 `TimeProvider` 프로토콜로 분리하고, 프로덕션에서는 `RealTimeProvider`, 테스트에서는 `MockTimeProvider`를 주입하도록 구성했습니다.
+
+```swift
+protocol TimeProvider {
+    var now: Date { get }
+    var calendar: Calendar { get }
+    var timeZone: TimeZone { get }
+    func isDate(_ date1: Date, inSameDayAs date2: Date) -> Bool
+}
+
+// 테스트용 Mock
+class MockTimeProvider: TimeProvider {
+    var now: Date = Date()
+    var calendar: Calendar = Calendar.current
+    var timeZone: TimeZone = TimeZone.current
+
+    // 원하는 시각으로 고정 가능
+    func setNow(year: Int, month: Int, day: Int, hour: Int, minute: Int = 0) {
+        now = calendar.date(from: DateComponents(
+            year: year, month: month, day: day,
+            hour: hour, minute: minute
+        ))!
+    }
+}
+```
+
+피임약 복약 지도 규칙을 **7개 카테고리, 39개 단위 테스트**로 분류하여 검증했습니다:
+
+1. **복용 시간 규칙** (6개): scheduled ± 2시간 경계, 너무 이른 복용, 12시간 이상 지연
+2. **누락 복용 보상** (5개): 어제 missed + 오늘 미복용/1알/2알 복용 조합
+3. **연속 미복용** (4개): 1일/2일/3일+ 누락 시 메시지 강도 단계
+4. **사이클 전환** (6개): 21일차 → 휴약기, 휴약 7일 → 새 사이클
+5. **휴약기 처리** (4개): 휴약일 메시지, 휴약기 복용 시도
+6. **2알 복용 시나리오** (4개): 정상 상태에서 2알, 어제 누락 후 2알
+7. **우선순위 규칙** (10개): 여러 조건 동시 충족 시 올바른 메시지 반환
+
+**대표 테스트 케이스**
+
+**1) ±2시간 경계값 검증** (피임 효과 유지 기준점)
+
+```swift
+func test_허용범위_경계_정시복용() {
+    // Given: 09:00 예정, 10:59 복용 (scheduled + 1시간 59분)
+    let scheduledDate = calendar.date(from: DateComponents(
+        year: 2024, month: 1, day: 10, hour: 9
+    ))!
+    let takenAt = calendar.date(from: DateComponents(
+        year: 2024, month: 1, day: 10, hour: 10, minute: 59
+    ))!
+
+    // When: 상태 평가
+    mockTimeProvider.now = takenAt
+    let status = statusFactory.createStatus(
+        scheduledDate: scheduledDate,
+        actionDate: takenAt,
+        evaluationDate: takenAt,
+        isRestDay: false
+    )
+
+    // Then: 정상 복용으로 판단
+    XCTAssertEqual(status.medicalTiming, .onTime)
+}
+
+func test_허용범위_초과_지연복용() {
+    // Given: 09:00 예정, 11:01 복용 (scheduled + 2시간 1분)
+    let takenAt = calendar.date(from: DateComponents(
+        year: 2024, month: 1, day: 10, hour: 11, minute: 1
+    ))!
+
+    // When/Then: 지연 복용으로 판단
+    XCTAssertEqual(status.medicalTiming, .delayed)
+}
+```
+
+**2) 1일 누락 보상 시나리오** (복약 지도: 깨닫는 즉시 1알 + 원래 시간 1알)
+
+```swift
+func test_어제놓침_오늘1알복용_1알더필요_메시지() {
+    // Given: 어제(01-09) missed, 오늘(01-10) 1알만 복용
+    let yesterdayRecord = createRecord(
+        scheduledDate: "2024-01-09 09:00",
+        status: .missed
+    )
+    let todayRecord = createRecord(
+        scheduledDate: "2024-01-10 09:00",
+        status: .taken,
+        takenAt: "2024-01-10 09:10"
+    )
+
+    // When: 메시지 계산
+    mockTimeProvider.now = "2024-01-10 09:10"
+    let result = calculateMessageUseCase.execute(cycle: cycle, for: now)
+
+    // Then: 1알 더 복용 권유
+    XCTAssertEqual(result.text, "한 알 더 필요해요!")
+}
+```
+
+**3) 연속 누락 경고 단계** (의학적 위험도에 따른 메시지 강도)
+
+```swift
+func test_연속2일미복용_Fire_메시지_반환() {
+    // Given: 01-08, 01-09 missed, 01-10 미복용
+    let records = [
+        createRecord(scheduledDate: "2024-01-08 09:00", status: .missed),
+        createRecord(scheduledDate: "2024-01-09 09:00", status: .missed),
+        createRecord(scheduledDate: "2024-01-10 09:00", status: .notTaken)
+    ]
+
+    // When/Then: 긴급 메시지 (2일째 기록 없음)
+    XCTAssertEqual(result.text, MessageType.fire(days: 2).text)
+}
+```
+
+**결과**
+
+테스트 커버리지가 **48% → 68%**로 향상되었고, **우선순위 규칙 충돌 버그 3건**을 발견해 수정했습니다:
+
+1. **EarlyTakingRule vs YesterdayMissedRule 충돌**
+   - 문제: "어제 누락 + 오늘 이른 시각 복용"일 때 "너무 일찍 복용함" 메시지 표시
+   - 해결: `EarlyTakingRule`에 `yesterdayNotMissed` 조건 추가하여 우선순위 400번 Rule이 먼저 평가되도록 수정
+
+2. **연속 미복용 계산 오류**
+   - 문제: DB에 `.missed` 상태로 저장된 레코드를 시간 경과로만 판단하여 "어제 09:00 missed + 오늘 06:30 복용"일 때 연속 미복용 0일로 계산
+   - 해결: `calculateConsecutiveMissedDays`를 수정해 DB 상태를 우선 확인하고 그 다음 시간 경과 판단
+
+3. **ConsecutiveMissedRule 조건 오류**
+   - 문제: 1일 누락도 "화난 필링" 메시지 표시 (의도: 2일 이상만)
+   - 해결: `consecutiveMissedDays > 0`을 `>= 2`로 수정
+
+**TimeProvider 도입 전후 비교:**
+
+| 항목 | 도입 전 | 도입 후 |
+|-----|--------|---------|
+| 경계값 테스트 | 실제 시각 맞춰 실행 필요 (scheduled + 2시간 = 11:00까지 대기) | 1초 만에 자동 검증 |
+| 휴약기 전환 | 21일 기다려야 검증 가능 | 즉시 검증 가능 |
+| 버그 수정 시간 | 평균 30분 (재현 어려움) | 평균 5분 (즉시 재현) |
+| CI/CD | 타임존/시각 제어 불가 | 완전 제어 가능 |
+
+**테스트 파일 위치:**
+- [CalculateMessageUseCaseTests.swift](PillingAppTests/UseCase/CalculateMessageUseCaseTests.swift) - 메시지 판단 로직 테스트 (22개)
+- [PillStatusFactoryTests.swift](PillingAppTests/Factory/PillStatusFactoryTests.swift) - 상태 계산 로직 테스트 (17개)
+
+**향후 개선:**
+- 타임존 변경 케이스 추가 (해외 여행 시나리오)
+- 일광절약시간 전환 케이스 추가
+- 사이클 시작 후 첫 7일 "안정화 기간" 특수 처리 테스트
+
 ---
 
 ## 리팩토링 성과

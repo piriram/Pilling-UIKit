@@ -13,10 +13,10 @@ final class ConsecutiveMissedRule: MessageRule {
         let days = context.consecutiveMissedDays
 
         if days >= 3 {
-            return .waiting
+            return .missedThreePlusDays
         }
         if days >= 2 {
-            return .fire(days: days)
+            return .consecutiveMissed(days: days)
         }
 
         return nil
