@@ -1,0 +1,48 @@
+/*
+  Localizable.strings (Korean)
+  DaillyWidgetExtension
+*/
+
+// MARK: - Widget
+"widget.configuration_display_name" = "약 복용 위젯";
+"widget.configuration_description" = "오늘의 복용 상태를 확인하세요";
+"widget.day_label" = "%d일차";
+"widget.message_plant_grass" = "잔디를 심어보세요!";
+"widget.message_setup_pill" = "약을 설정해주세요";
+"widget.message_grass_waiting" = "잔디가 기다려요";
+"widget.message_one_pill_complete" = "한알 심기 완료";
+"widget.message_rest_time" = "지금은 쉬는 시간";
+"widget.message_over_two_hours" = "2시간 지났어요!";
+"widget.message_over_four_hours" = "4시간 지났어요!";
+"widget.message_two_today" = "오늘은 두알";
+"widget.message_today_complete" = "오늘 복용 완료.";
+
+// MARK: - Message (Shared with app)
+"message.empty" = "약을 설정해주세요";
+"message.cycle_complete" = "새 약을 설정해주세요.";
+"message.setup_required" = "약을 설정해주세요";
+"message.rest_period" = "오늘은 잔디도 휴식중";
+"message.forgot_me" = "저를 잊었나요...?";
+"message.plant_today_grass" = "오늘의 잔디를 심어주세요";
+"message.plant_steadily" = "꾸준히 잔디를 심어주세요.";
+"message.pilling_searching" = "필링이가 찾아요...";
+"message.pilling_angry" = "필링이 화남";
+"message.take_two_pills" = "오늘은 두알을 복용하세요.";
+"message.grass_growing_well" = "잔디가 잘 자라고 있어요";
+"message.missed_yesterday_take_two" = "어제 미복용했다면 오늘은 2알!!";
+"message.take_within_two_hours" = "매일 2시간 이내의 같은 시간에 복용해주세요.";
+"message.need_one_pill_more" = "한알 더 먹어야해요!";
+"message.taken_delayed_ok" = "2시간 지났지만 괜찮아요!";
+"message.took_too_early" = "예정보다 2시간 이상 일찍 복용했어요";
+"message.see_tomorrow" = "내일도 만나요!";
+"message.start_taking_today" = "오늘부터 복용을 시작해요";
+"message.start_taking_tomorrow" = "내일부터 복용을 시작해요";
+"message.one_pill_more" = "한알 더!";
+"message.over_two_hours" = "2시간 지났어요";
+"message.over_four_hours" = "4시간 지났어요";
+"message.widget_plant_grass" = "잔디를 심어보세요!";
+"message.widget_planting_complete" = "잔디 심기 완료!";
+"message.widget_grass_waiting" = "잔디가 기다려요";
+"message.widget_rest_time" = "지금은 쉬는 시간";
+"message.widget_over_two_hours" = "2시간 지났어요!";
+"message.widget_over_four_hours" = "4시간 지났어요!";

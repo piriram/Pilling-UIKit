@@ -49,53 +49,60 @@ final class SettingViewController: UIViewController {
         button.backgroundColor = .systemGray6
         button.layer.cornerRadius = 12
         button.contentHorizontalAlignment = .left
-        
+
         let iconImageView = UIImageView(image: UIImage(systemName: "clock.fill"))
         iconImageView.tintColor = AppColor.textGray
         iconImageView.contentMode = .scaleAspectFit
-        
+
         let titleLabel = UILabel()
         titleLabel.text = str.timeSettingTitle
         titleLabel.font = Typography.body2(.medium)
         titleLabel.textColor = AppColor.textGray
-        
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.5
+
         let timeLabel = UILabel()
         timeLabel.tag = 100
         timeLabel.text = str.timeSettingDefault
         timeLabel.font = Typography.body2(.regular)
         timeLabel.textColor = AppColor.textBlack
-        
+        timeLabel.textAlignment = .right
+        timeLabel.adjustsFontSizeToFitWidth = true
+        timeLabel.minimumScaleFactor = 0.5
+
         let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
         chevronImageView.tintColor = .systemGray3
         chevronImageView.contentMode = .scaleAspectFit
-        
+
         button.addSubview(iconImageView)
         button.addSubview(titleLabel)
         button.addSubview(timeLabel)
         button.addSubview(chevronImageView)
-        
+
         iconImageView.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(16)
             $0.centerY.equalToSuperview()
             $0.size.equalTo(20)
         }
-        
-        titleLabel.snp.makeConstraints {
-            $0.leading.equalTo(iconImageView.snp.trailing).offset(10)
-            $0.centerY.equalToSuperview()
-        }
-        
+
         chevronImageView.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-16)
             $0.centerY.equalToSuperview()
             $0.size.equalTo(20)
         }
-        
+
+        titleLabel.snp.makeConstraints {
+            $0.leading.equalTo(iconImageView.snp.trailing).offset(10)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(timeLabel.snp.width).multipliedBy(0.5)
+        }
+
         timeLabel.snp.makeConstraints {
+            $0.leading.equalTo(titleLabel.snp.trailing).offset(8)
             $0.trailing.equalTo(chevronImageView.snp.leading).offset(-8)
             $0.centerY.equalToSuperview()
         }
-        
+
         return button
     }()
     
@@ -104,56 +111,63 @@ final class SettingViewController: UIViewController {
         button.backgroundColor = .systemGray6
         button.layer.cornerRadius = 12
         button.contentHorizontalAlignment = .left
-        
+
         let iconImageView = UIImageView(image: UIImage(systemName: "text.bubble.fill"))
         iconImageView.tintColor = AppColor.textGray
         iconImageView.contentMode = .scaleAspectFit
-        
+
         let titleLabel = UILabel()
         titleLabel.text = str.messageSettingTitle
         titleLabel.font = Typography.body2(.medium)
         titleLabel.textColor = AppColor.textGray
+        titleLabel.numberOfLines = 1
+//        titleLabel.lineBreakMode = .byWordWrapping
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.7
         
+
         let messageLabel = UILabel()
         messageLabel.tag = 101
         messageLabel.text = str.messageSettingDefault
         messageLabel.font = Typography.body2(.regular)
         messageLabel.textColor = AppColor.textBlack
         messageLabel.textAlignment = .right
-        messageLabel.lineBreakMode = .byTruncatingTail
-        
+        messageLabel.adjustsFontSizeToFitWidth = true
+        messageLabel.minimumScaleFactor = 0.5
+
         let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
         chevronImageView.tintColor = .systemGray3
         chevronImageView.contentMode = .scaleAspectFit
-        
+
         button.addSubview(iconImageView)
         button.addSubview(titleLabel)
         button.addSubview(messageLabel)
         button.addSubview(chevronImageView)
-        
+
         iconImageView.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(16)
             $0.centerY.equalToSuperview()
             $0.size.equalTo(20)
         }
-        
-        titleLabel.snp.makeConstraints {
-            $0.leading.equalTo(iconImageView.snp.trailing).offset(10)
-            $0.centerY.equalToSuperview()
-        }
-        
+
         chevronImageView.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-16)
             $0.centerY.equalToSuperview()
             $0.size.equalTo(20)
         }
-        
+
+        titleLabel.snp.makeConstraints {
+            $0.leading.equalTo(iconImageView.snp.trailing).offset(10)
+            $0.centerY.equalToSuperview()
+            $0.width.equalTo(messageLabel.snp.width).multipliedBy(0.5)
+        }
+
         messageLabel.snp.makeConstraints {
             $0.leading.equalTo(titleLabel.snp.trailing).offset(8)
             $0.trailing.equalTo(chevronImageView.snp.leading).offset(-8)
             $0.centerY.equalToSuperview()
         }
-        
+
         return button
     }()
     
@@ -245,11 +259,11 @@ final class SettingViewController: UIViewController {
             $0.leading.trailing.equalToSuperview().inset(contentInset)
             $0.height.equalTo(60)
         }
-        
+
         messageSettingButton.snp.makeConstraints {
-            $0.top.equalTo(timeSettingButton.snp.bottom).offset(12)
+            $0.top.equalTo(timeSettingButton.snp.bottom).offset(8)
             $0.leading.trailing.equalToSuperview().inset(contentInset)
-            $0.height.equalTo(60)
+            $0.height.equalTo(68)
         }
         
         // Move pill section below alarm section
