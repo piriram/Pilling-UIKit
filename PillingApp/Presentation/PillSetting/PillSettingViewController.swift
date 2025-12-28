@@ -126,7 +126,8 @@ final class PillSettingViewController: UIViewController {
     }
     
     private func configureNavigationBar() {
-        navigationItem.title = str.navTitle
+        navigationItem.title = ""
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.hidesBackButton = false
         navigationItem.backButtonDisplayMode = .default
     }
