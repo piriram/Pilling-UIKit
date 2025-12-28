@@ -215,8 +215,8 @@ final class CalculateMessageUseCaseTests: XCTestCase {
         mockTimeProvider.now = currentDate
         let result = sut.execute(cycle: cycle, for: currentDate)
 
-        // Then: 연속 미복용 1일이므로 groomy 메시지
-        XCTAssertEqual(result.text, MessageType.groomy.text)
+        // Then: 어제 미복용이면 오늘 2알 권유 메시지
+        XCTAssertEqual(result.text, MessageType.takingBeforeTwo.text)
     }
 
     func test_어제놓침_오늘1알복용_PilledTwo_메시지_반환() {
@@ -241,8 +241,8 @@ final class CalculateMessageUseCaseTests: XCTestCase {
         mockTimeProvider.now = takenAt
         let result = sut.execute(cycle: cycle, for: takenAt)
 
-        // Then: 연속 미복용 규칙에 의해 pilledTwo 메시지 (2알 복용 권유)
-        XCTAssertEqual(result.text, MessageType.pilledTwo.text)
+        // Then: 더블 복용 규칙에 의해 morePill 메시지 (한알 더)
+        XCTAssertEqual(result.text, MessageType.morePill.text)
     }
 
     func test_어제놓침_오늘2알복용_PilledTwo_메시지_반환() {
@@ -267,8 +267,8 @@ final class CalculateMessageUseCaseTests: XCTestCase {
         mockTimeProvider.now = takenAt
         let result = sut.execute(cycle: cycle, for: takenAt)
 
-        // Then: 연속 미복용 규칙에 의해 pilledTwo 메시지
-        XCTAssertEqual(result.text, MessageType.pilledTwo.text)
+        // Then: 더블 복용 완료 메시지
+        XCTAssertEqual(result.text, MessageType.takenDoubleComplete.text)
     }
 
     // MARK: - 연속 미복용 테스트
