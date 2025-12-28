@@ -39,8 +39,8 @@ final class READMEMessageRuleTests: XCTestCase {
     }
 
     func test_readme_restDay_returnsRestingMessage() {
-        let scheduled = makeDate(2024, 1, 10, 9, 0)
-        let current = makeDate(2024, 1, 10, 12, 0)
+        let scheduled = makeDate(2024, 1, 25, 9, 0)
+        let current = makeDate(2024, 1, 25, 12, 0)
         let record = makeRecord(scheduledDate: scheduled, status: .rest)
         let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: [record])
 
@@ -226,6 +226,29 @@ final class READMEMessageRuleTests: XCTestCase {
 
         XCTAssertEqual(result.text, MessageType.takenDoubleComplete.text)
     }
+
+    func test_readme_beforeStart_returnsBeforeStartMessage() {
+        let startDate = makeDate(2024, 1, 10, 9, 0)
+        let current = makeDate(2024, 1, 5, 12, 0)
+        let cycle = makeCycle(startDate: startDate, records: [])
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.beforeStart(daysUntilStart: 4).text)
+    }
+
+    func test_readme_cycleComplete_returnsCycleCompleteMessage() {
+        let startDate = makeDate(2024, 1, 1, 0, 0)
+        let current = makeDate(2024, 1, 30, 12, 0)
+        let cycle = makeCycle(startDate: startDate, records: [])
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.cycleComplete.text)
+    }
+
 
     // MARK: - Helpers
 
