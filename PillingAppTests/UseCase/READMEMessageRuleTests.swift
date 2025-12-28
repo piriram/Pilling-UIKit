@@ -173,6 +173,60 @@ final class READMEMessageRuleTests: XCTestCase {
         XCTAssertEqual(result.text, MessageType.waiting.text)
     }
 
+    func test_readme_yesterdayMissed_todayTakenTooEarly_returnsTakenTooEarly() {
+        let yesterday = makeDate(2024, 1, 9, 9, 0)
+        let todayScheduled = makeDate(2024, 1, 10, 9, 0)
+        let takenAt = makeDate(2024, 1, 10, 6, 30)
+        let current = takenAt
+
+        let records = [
+            makeRecord(scheduledDate: yesterday, status: .missed),
+            makeRecord(scheduledDate: todayScheduled, status: .takenTooEarly, takenAt: takenAt)
+        ]
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: records)
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.morePill.text)
+    }
+
+    func test_readme_yesterdayMissed_todayTakenDelayed_returnsMorePill() {
+        let yesterday = makeDate(2024, 1, 9, 9, 0)
+        let todayScheduled = makeDate(2024, 1, 10, 9, 0)
+        let takenAt = makeDate(2024, 1, 10, 13, 30)
+        let current = takenAt
+
+        let records = [
+            makeRecord(scheduledDate: yesterday, status: .missed),
+            makeRecord(scheduledDate: todayScheduled, status: .takenDelayed, takenAt: takenAt)
+        ]
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: records)
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.morePill.text)
+    }
+
+    func test_readme_yesterdayMissed_todayTakenDouble_returnsTakenDoubleComplete() {
+        let yesterday = makeDate(2024, 1, 9, 9, 0)
+        let todayScheduled = makeDate(2024, 1, 10, 9, 0)
+        let takenAt = makeDate(2024, 1, 10, 9, 10)
+        let current = takenAt
+
+        let records = [
+            makeRecord(scheduledDate: yesterday, status: .missed),
+            makeRecord(scheduledDate: todayScheduled, status: .takenDouble, takenAt: takenAt)
+        ]
+        let cycle = makeCycle(startDate: makeDate(2024, 1, 1, 0, 0), records: records)
+
+        mockTimeProvider.now = current
+        let result = sut.execute(cycle: cycle, for: current)
+
+        XCTAssertEqual(result.text, MessageType.takenDoubleComplete.text)
+    }
+
     // MARK: - Helpers
 
     private func makeDate(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int) -> Date {
