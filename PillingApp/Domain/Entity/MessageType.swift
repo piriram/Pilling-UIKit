@@ -9,7 +9,7 @@ enum MessageType {
     case plantingSeed
     case success
     case groomy
-    case fire
+    case fire(days: Int)
     case overTwoHours
     case overFourHours
     case pilledTwo
@@ -39,8 +39,8 @@ enum MessageType {
             return AppStrings.Message.plantSteadily
         case .groomy:
             return AppStrings.Message.pillingSearching
-        case .fire:
-            return AppStrings.Message.pillingAngry
+        case .fire(let days):
+            return AppStrings.Message.noRecordForDays(days)
         case .pilledTwo:
             return AppStrings.Message.takeTwoPills
         case .todayAfter:

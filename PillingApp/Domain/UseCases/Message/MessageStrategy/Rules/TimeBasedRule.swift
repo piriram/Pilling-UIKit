@@ -8,11 +8,8 @@ final class TimeBasedRule: MessageRule {
             return false
         }
 
-        // TimeBasedRule은 기본 폴백 룰이므로, tooEarly와 upcoming만 제외
-        let notEarly = todayStatus.medicalTiming != .tooEarly
-        let notUpcoming = todayStatus.medicalTiming != .upcoming
-
-        return notEarly && notUpcoming
+        // TimeBasedRule은 기본 폴백 룰이므로 항상 평가
+        return true
     }
 
     func evaluate(context: MessageContext) -> MessageType? {

@@ -115,18 +115,18 @@ App Groups와 Shared CoreData Container를 구현했습니다.
 // SharedCoreDataManager
 final class SharedCoreDataManager {
     static let shared = SharedCoreDataManager()
-    
+
     private let appGroupIdentifier = "group.app.Pilltastic.Pilling"
-    
+
     private lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "PillingApp")
-        
+
         guard let storeURL = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier)?
             .appendingPathComponent("PillingApp.sqlite") else {
             fatalError("Shared container URL not found")
         }
-        
+
         let description = NSPersistentStoreDescription(url: storeURL)
         container.persistentStoreDescriptions = [description]
         container.loadPersistentStores { _, error in
@@ -134,10 +134,83 @@ final class SharedCoreDataManager {
                 fatalError("Unresolved error \(error)")
             }
         }
-        
+
         return container
     }()
 }
+```
+
+### 3. 메시지 판단 시스템 (Rule-based Message Engine)
+
+**시스템 개요**
+
+사용자의 복용 상태에 따라 적절한 피드백 메시지를 제공하기 위해 우선순위 기반 규칙 엔진을 구현했습니다.
+
+**동작 흐름**
+
+```
+CalculateDashboardMessageUseCase
+  └→ CalculateMessageUseCase
+      ├→ buildContext (오늘/어제 상태, 연속 누락 일수 계산)
+      │   ├→ findTodayRecord
+      │   ├→ PillStatusFactory.createStatus
+      │   └→ calculateConsecutiveMissedDays
+      └→ MessageRuleEngine.evaluate
+          └→ 우선순위 순으로 Rule 평가 → MessageType 반환
+```
+
+**MessageRule 우선순위 (낮을수록 먼저 평가)**
+
+| 우선순위 | Rule | 조건 | 반환 메시지 |
+|---------|------|------|-----------|
+| 10 | EarlyTakingRule | 예정 시간 2시간 전에 복용 | "너무 일찍 복용함" |
+| 75 | RestDayRule | 오늘이 휴약기 | "휴식 중" |
+| 100 | ConsecutiveMissedRule | 2일 이상 연속 누락 | "화난 필링" |
+| 200 | RecentlyMissedRule | 어제 누락 | "어제 깜빡했니?" |
+| 300 | DoubleDosingRule | 어제 누락 + 오늘 2알 가능 | "오늘 2알 복용" |
+| 400 | YesterdayMissedRule | 어제 누락 + 오늘 이미 복용 | "1알 더 필요" |
+| 500 | TimeBasedRule | **Fallback Rule** | 시간대별 기본 메시지 |
+
+**핵심 컴포넌트**
+
+1. **PillStatusFactory**: DB의 `DayRecord` → `PillStatusModel` 변환
+   - `TimeContext` (과거/현재/미래) 결정
+   - `MedicalTiming` (정시/지연/누락 등) 계산
+   - `isRestDay` 플래그로 휴약기 판단
+
+2. **MessageContext**: Rule 평가에 필요한 모든 정보 제공
+   - `todayStatus`, `yesterdayStatus`
+   - `consecutiveMissedDays`
+   - `canTakeDoubleToday`
+
+3. **MessageRuleEngine**: 우선순위 순으로 Rule을 순회하며 첫 매치를 반환
+   - 모든 Rule이 실패하면 `.empty` 반환
+
+**주의사항 **
+
+⚠️ **문제 발생 시 확인 포인트**
+
+1. `context.todayStatus == nil` → `findTodayRecord`가 오늘 레코드를 찾지 못함
+   - TimeProvider의 `isDate(_:inSameDayAs:)` 로직 확인
+   - DB에 저장된 `scheduledDateTime`의 타임존 확인
+
+2. `MessageType.empty` 반환 → 모든 Rule이 매치 실패
+   - `TimeBasedRule`은 fallback이므로 반드시 매치되어야 함
+   - `todayStatus == nil`일 가능성 높음
+
+3. 휴약기인데 다른 메시지 출력 → `RestDayRule` 우선순위 확인
+   - `record.status == .rest` vs `PillStatusFactory`의 `isRestDay` 플래그 불일치
+
+4. 연속 누락 계산 오류 → `calculateConsecutiveMissedDays` 로직
+   - 오늘은 제외하고 어제부터 역순으로 계산
+   - `TimeThreshold.fullyMissed` (24시간) 기준
+
+**디버깅 코드 위치**
+
+```swift
+// CalculateMessageUseCase.swift:52-57, 98-103
+// MessageRuleEngine.swift:11-28
+// 디버그 로그를 통해 각 단계별 상태 추적 가능
 ```
 
 ---

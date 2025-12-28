@@ -42,12 +42,22 @@ final class CalculateMessageUseCase {
         let context = buildContext(cycle: cycle, date: date)
         let messageType = ruleEngine.evaluate(context: context)
 
+        print("🔍🔍🔍🔍🔍🔍 [CalculateMessage] Final MessageType: \(messageType)")
+        print("🔍 [CalculateMessage] Message text: \(messageType.text)")
+
         return messageType.toResult()
     }
 
     private func buildContext(cycle: Cycle, date: Date) -> MessageContext {
         let todayRecord = findTodayRecord(in: cycle, from: date)
         let yesterdayRecord = findYesterdayRecord(in: cycle, from: date)
+
+        print("🔍 [CalculateMessage] buildContext - date: \(date)")
+        print("🔍 [CalculateMessage] todayRecord found: \(todayRecord != nil)")
+        if let record = todayRecord {
+            print("🔍 [CalculateMessage] todayRecord.scheduledDateTime: \(record.scheduledDateTime)")
+            print("🔍 [CalculateMessage] todayRecord.status: \(record.status)")
+        }
 
         let todayStatus = todayRecord.map { record in
             var status = statusFactory.createStatus(
@@ -87,6 +97,13 @@ final class CalculateMessageUseCase {
             cycle: cycle,
             upTo: date
         )
+
+        print("🔍 [CalculateMessage] todayStatus: \(String(describing: todayStatus))")
+        if let status = todayStatus {
+            print("🔍 [CalculateMessage] todayStatus.baseStatus: \(status.baseStatus)")
+            print("🔍 [CalculateMessage] todayStatus.timeContext: \(status.timeContext)")
+            print("🔍 [CalculateMessage] todayStatus.medicalTiming: \(status.medicalTiming)")
+        }
 
         return MessageContext(
             todayStatus: todayStatus,

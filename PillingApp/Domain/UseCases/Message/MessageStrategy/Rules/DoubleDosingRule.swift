@@ -25,12 +25,13 @@ final class DoubleDosingRule: MessageRule {
             if todayStatus.baseStatus == .takenDouble {
                 return .takenDoubleComplete
             }
-            
+
             if !todayStatus.isTaken &&
                 (todayStatus.medicalTiming == .onTime ||
                  todayStatus.medicalTiming == .upcoming ||
+                 todayStatus.medicalTiming == .tooEarly ||
                  todayStatus.medicalTiming == .slightDelay) {
-                return .pilledTwo
+                return .takingBeforeTwo
             }
         }
         
