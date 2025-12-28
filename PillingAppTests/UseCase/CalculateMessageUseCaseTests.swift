@@ -293,7 +293,7 @@ final class CalculateMessageUseCaseTests: XCTestCase {
         let result = sut.execute(cycle: cycle, for: currentDate)
 
         // Then: fire 메시지 (긴급)
-        XCTAssertEqual(result.text, MessageType.fire.text)
+        XCTAssertEqual(result.text, MessageType.fire(days: 2).text)
     }
 
     func test_연속3일이상미복용_Waiting_메시지_반환() {
