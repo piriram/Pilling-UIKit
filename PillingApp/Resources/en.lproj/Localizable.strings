@@ -72,6 +72,7 @@
 "dashboard.take_pill_button" = "Plant Grass";
 "dashboard.take_pill_completed" = "Planted!";
 "dashboard.rest_period" = "Break Period";
+"dashboard.rest_period_tooltip" = "It's break time now";
 "dashboard.progress_before_start" = "Before Start";
 "dashboard.progress_day" = "Day %d";
 "dashboard.day_progress_format" = "Day %d/%d";

@@ -1,10 +1,3 @@
-//
-//  PillingAppTests.swift
-//  PillingAppTests
-//
-//  Created by 잠만보김쥬디 on 12/8/25.
-//
-
 import XCTest
 
 final class PillingAppTests: XCTestCase {

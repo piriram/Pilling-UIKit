@@ -72,6 +72,7 @@
 "dashboard.take_pill_button" = "잔디 심기";
 "dashboard.take_pill_completed" = "심기 완료!";
 "dashboard.rest_period" = "지금은 휴약기";
+"dashboard.rest_period_tooltip" = "지금은 위약을 먹는 시기에요";
 "dashboard.progress_before_start" = "시작전";
 "dashboard.progress_day" = "%d일차";
 "dashboard.day_progress_format" = "%d일차/%d";

@@ -90,6 +90,7 @@ enum AppStrings{
         static let takePillButton = "dashboard.take_pill_button".localized
         static let takePillCompleted = "dashboard.take_pill_completed".localized
         static let restPeriod = "dashboard.rest_period".localized
+        static let restPeriodTooltip = "dashboard.rest_period_tooltip".localized
         static let progressBeforeStart = "dashboard.progress_before_start".localized
         static func progressDay(_ day: Int) -> String {
             "dashboard.progress_day".localized(with: day)

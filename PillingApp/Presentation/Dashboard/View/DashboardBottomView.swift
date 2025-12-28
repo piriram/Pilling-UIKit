@@ -2,11 +2,13 @@ import UIKit
 import SnapKit
 
 final class DashboardBottomView: UIView {
-    
+
     // MARK: - UI Components
     private typealias str = AppStrings.Dashboard
     let pageControl = UIPageControl()
     let takePillButton = UIButton(type: .system)
+    private var tooltip: TooltipView?
+    private(set) var isRestPeriod = false
     
     // MARK: - Initialization
     
@@ -28,13 +30,13 @@ final class DashboardBottomView: UIView {
         pageControl.pageIndicatorTintColor = AppColor.notYetGray
         pageControl.isUserInteractionEnabled = false
         pageControl.hidesForSinglePage = false
-        
+
         takePillButton.setTitle(str.takePillButton, for: .normal)
         takePillButton.setTitleColor(.label, for: .normal)
         takePillButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         takePillButton.backgroundColor = AppColor.pillGreen200
         takePillButton.layer.cornerRadius = 12
-        
+
         addSubview(pageControl)
         addSubview(takePillButton)
     }
@@ -83,8 +85,10 @@ final class DashboardBottomView: UIView {
             takePillButton.setTitle(str.restPeriod, for: .normal)
             takePillButton.backgroundColor = AppColor.breakPeriodBg
             takePillButton.setTitleColor(AppColor.breakPeriodText, for: .normal)
-            takePillButton.isEnabled = false
+            takePillButton.isEnabled = true
+            isRestPeriod = true
         } else if todayRecord.status.isTaken {
+            isRestPeriod = false
             takePillButton.setTitle(str.takePillCompleted, for: .normal)
             takePillButton.backgroundColor = AppColor.notYetGray
             takePillButton.setTitleColor(.label, for: .normal)
@@ -94,11 +98,49 @@ final class DashboardBottomView: UIView {
             takePillButton.backgroundColor = AppColor.pillGreen200
             takePillButton.setTitleColor(.label, for: .normal)
             takePillButton.isEnabled = true
+            isRestPeriod = false
         } else {
             takePillButton.setTitle("???", for: .normal)
             takePillButton.backgroundColor = AppColor.pillGreen200
             takePillButton.setTitleColor(.label, for: .normal)
             takePillButton.isEnabled = true
+            isRestPeriod = false
+        }
+    }
+
+    func showRestPeriodTooltip() {
+        if let existingTooltip = tooltip {
+            UIView.animate(withDuration: 0.2, animations: {
+                existingTooltip.alpha = 0
+                existingTooltip.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+            }) { _ in
+                existingTooltip.removeFromSuperview()
+            }
+            tooltip = nil
+        } else {
+            let newTooltip = TooltipView(
+                message: str.restPeriodTooltip,
+                backgroundColor: UIColor(hexString: "D2F9AA"),
+                textColor: UIColor(hexString: "303030"),
+                arrowDirection: .bottom,
+                arrowPosition: .center
+            )
+            guard let parentView = self.superview else { return }
+
+            parentView.addSubview(newTooltip)
+            newTooltip.snp.makeConstraints { make in
+                make.bottom.equalTo(takePillButton.snp.top).offset(-5)
+                make.centerX.equalTo(takePillButton.snp.centerX)
+            }
+
+            newTooltip.alpha = 0
+            newTooltip.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
+            UIView.animate(withDuration: 0.2) {
+                newTooltip.alpha = 1.0
+                newTooltip.transform = .identity
+            }
+
+            tooltip = newTooltip
         }
     }
 }
