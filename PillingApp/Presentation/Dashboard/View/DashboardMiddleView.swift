@@ -111,6 +111,7 @@ final class DashboardMiddleView: UIView {
         progressRowStackView.axis = .horizontal
         progressRowStackView.alignment = .firstBaseline
         progressRowStackView.spacing = 2
+        progressRowStackView.semanticContentAttribute = .forceLeftToRight
         progressRowStackView.addArrangedSubview(progressLabel)
         progressRowStackView.addArrangedSubview(totalLabel)
         

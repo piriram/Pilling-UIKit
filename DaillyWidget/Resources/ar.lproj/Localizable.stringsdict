@@ -5,15 +5,25 @@
 	<key>message.days_until_start</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>복용 시작까지 %#@days@ 남았어요</string>
+		<string>%#@days@ حتى بدء التناول</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
+			<key>zero</key>
+			<string>اليوم</string>
+			<key>one</key>
+			<string>يوم واحد</string>
+			<key>two</key>
+			<string>يومان</string>
+			<key>few</key>
+			<string>%d أيام</string>
+			<key>many</key>
+			<string>%d يومًا</string>
 			<key>other</key>
-			<string>%d일</string>
+			<string>%d يوم</string>
 		</dict>
 	</dict>
 </dict>
