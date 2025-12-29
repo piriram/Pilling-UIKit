@@ -19,15 +19,15 @@ final class TimeBasedRule: MessageRule {
             let message: MessageType
             switch status.baseStatus {
             case .taken:
-                message = .takenToday
+                message = .takenOnTime
             case .takenDelayed:
-                message = .timeTakenDelayed
+                message = .takenDelayed
             case .takenTooEarly:
                 message = .takenTooEarly
             case .takenDouble:
-                message = .doubleDoseDoneToday
+                message = .doubleDoseComplete
             default:
-                message = .takenToday
+                message = .takenOnTime
             }
             return message
         }
@@ -35,17 +35,17 @@ final class TimeBasedRule: MessageRule {
         let message: MessageType
         switch status.medicalTiming {
         case .onTime:
-            message = .timeOnTimeNotTaken
+            message = .onTimeNotTaken
         case .slightDelay:
             message = .overTwoHours
         case .moderate:
             message = .overFourHours
         case .recent:
-            message = .missedThreePlusDays
+            message = .missedThreePlusWarning
         case .missed:
-            message = .missedThreePlusDays
+            message = .missedThreePlusWarning
         default:
-            message = .timeOnTimeNotTaken
+            message = .onTimeNotTaken
         }
         return message
     }

@@ -22,7 +22,7 @@ final class EarlyTakingRule: MessageRule {
         if todayStatus.isTaken {
             return .takenTooEarly
         } else {
-            return .timeOnTimeNotTaken
+            return .onTimeNotTaken
         }
     }
 }
