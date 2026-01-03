@@ -33,7 +33,7 @@ final class SettingItemButton: UIButton {
     
     private let arrowImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.image = UIImage(systemName: "chevron.right")
+        imageView.image = UIImage(systemName: "chevron.forward")
         imageView.tintColor = AppColor.cheveronGray
         imageView.contentMode = .scaleAspectFit
         return imageView

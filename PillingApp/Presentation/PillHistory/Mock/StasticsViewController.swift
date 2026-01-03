@@ -33,7 +33,6 @@ final class StasticsViewController: UIViewController {
         button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
         button.tintColor = .black
         button.semanticContentAttribute = .forceRightToLeft
-        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: -4)
         return button
     }()
     
