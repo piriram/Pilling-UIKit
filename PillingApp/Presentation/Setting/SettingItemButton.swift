@@ -27,7 +27,7 @@ final class SettingItemButton: UIButton {
         let label = UILabel()
         label.font = Typography.body2(.regular)
         label.textColor = AppColor.textGray
-        label.textAlignment = .right
+        label.textAlignment = .natural
         return label
     }()
     

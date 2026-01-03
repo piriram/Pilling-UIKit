@@ -195,6 +195,7 @@ final class StatisticsContentView: UIView {
         percentageLabel.backgroundColor = UIColor(hex: item.colorHex) ?? .gray
         percentageLabel.layer.cornerRadius = 6
         percentageLabel.clipsToBounds = true
+        percentageLabel.semanticContentAttribute = .forceLeftToRight
         
         let categoryLabel = UILabel()
         categoryLabel.text = item.category
