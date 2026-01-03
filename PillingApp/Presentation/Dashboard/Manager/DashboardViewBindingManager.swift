@@ -259,7 +259,11 @@ final class DashboardViewBindingManager {
     private func bindBottomView(bottomView: DashboardBottomView) {
         bottomView.takePillButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.viewModel.takePill()
+                if bottomView.isRestPeriod {
+                    bottomView.showRestPeriodTooltip()
+                } else {
+                    self?.viewModel.takePill()
+                }
             })
             .disposed(by: disposeBag)
     }

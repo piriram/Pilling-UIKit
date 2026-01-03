@@ -90,6 +90,7 @@ enum AppStrings{
         static let takePillButton = "dashboard.take_pill_button".localized
         static let takePillCompleted = "dashboard.take_pill_completed".localized
         static let restPeriod = "dashboard.rest_period".localized
+        static let restPeriodTooltip = "dashboard.rest_period_tooltip".localized
         static let progressBeforeStart = "dashboard.progress_before_start".localized
         static func progressDay(_ day: Int) -> String {
             "dashboard.progress_day".localized(with: day)
@@ -175,7 +176,7 @@ enum AppStrings{
         static let grassGrowingWell = "message.grass_growing_well".localized
         static let missedYesterdayTakeTwo = "message.missed_yesterday_take_two".localized
         static let takeWithinTwoHours = "message.take_within_two_hours".localized
-        static let needOnePillMore = "message.need_one_pill_more".localized
+        static let needOnePillMore = "message.need_one_pill_more".localized //한알더먹어야해요
         static let takenDelayedOk = "message.taken_delayed_ok".localized
         static let tookTooEarly = "message.took_too_early".localized
         static let seeTomorrow = "message.see_tomorrow".localized
@@ -184,9 +185,12 @@ enum AppStrings{
         static func daysUntilStart(_ days: Int) -> String {
             return "message.days_until_start".localized(with: days)
         }
-        static let onePillMore = "message.one_pill_more".localized
+        static let onePillMore = "message.one_pill_more".localized //
         static let overTwoHours = "message.over_two_hours".localized
         static let overFourHours = "message.over_four_hours".localized
+        static func noRecordForDays(_ days: Int) -> String {
+            return "message.no_record_for_days".localized(with: days)
+        }
 
         // 위젯용 메시지
         static let widgetPlantGrass = "widget.message_plant_grass".localized

@@ -34,13 +34,13 @@
 "message.need_one_pill_more" = "한알 더 먹어야해요!";
 "message.taken_delayed_ok" = "2시간 지났지만 괜찮아요!";
 "message.took_too_early" = "예정보다 2시간 이상 일찍 복용했어요";
-"message.see_tomorrow" = "오늘 2알 완료! 잘하고 있어요";
+"message.see_tomorrow" = "내일도 만나요!";
 "message.start_taking_today" = "오늘부터 복용을 시작해요";
 "message.start_taking_tomorrow" = "내일부터 복용을 시작해요";
 "message.one_pill_more" = "한알 더!";
 "message.over_two_hours" = "2시간 지났어요";
 "message.over_four_hours" = "4시간 지났어요";
-"message.no_record_for_days" = "%d일째 기록이 없어요. 괜찮으신가요?";
+"message.no_record_for_days" = "لا يوجد سجل لمدة %d أيام. هل كل شيء على ما يرام؟";
 "message.widget_plant_grass" = "잔디를 심어보세요!";
 "message.widget_planting_complete" = "잔디 심기 완료!";
 "message.widget_grass_waiting" = "잔디가 기다려요";

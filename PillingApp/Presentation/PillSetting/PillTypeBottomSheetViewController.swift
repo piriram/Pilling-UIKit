@@ -123,7 +123,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
         label.textColor = .systemRed
         label.numberOfLines = 0
         label.isHidden = true
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     

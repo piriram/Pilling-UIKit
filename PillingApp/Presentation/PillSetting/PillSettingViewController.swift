@@ -26,7 +26,7 @@ final class PillSettingViewController: UIViewController {
         label.text = str.mainTitle
         label.font = Typography.headline3(.bold)
         label.textColor = AppColor.textBlack
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
@@ -35,7 +35,7 @@ final class PillSettingViewController: UIViewController {
         label.text = str.subtitle
         label.font = Typography.body2(.regular)
         label.textColor = .gray
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
@@ -130,7 +130,8 @@ final class PillSettingViewController: UIViewController {
     }
     
     private func configureNavigationBar() {
-        navigationItem.title = str.navTitle
+        navigationItem.title = ""
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.hidesBackButton = false
         navigationItem.backButtonDisplayMode = .default
     }

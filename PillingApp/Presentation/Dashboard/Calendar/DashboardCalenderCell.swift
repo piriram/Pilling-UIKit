@@ -100,15 +100,11 @@ final class DashboardCalendarCell: UICollectionViewCell {
         }
         
         if item.isToday && item.status != .takenDouble {
-            backgroundShapeView.layer.borderWidth = 3
-            backgroundShapeView.layer.borderColor = AppColor.pillBorder.cgColor
-
-            // inner shadow 대체: 안쪽에 반투명 녹색 border
-            innerBorderView.isHidden = false
-            innerBorderView.layer.borderColor = AppColor.pillGreen800.withAlphaComponent(0.3).cgColor
+            backgroundShapeView.layer.borderWidth = 4
+            backgroundShapeView.layer.borderColor = AppColor.pillGreen800.cgColor
         }
         
-        if case .rest = item.status {
+        if case .rest = item.status, !item.isToday {
             backgroundShapeView.layer.borderWidth = 1
             backgroundShapeView.layer.borderColor = AppColor.notYetGray.cgColor
         }

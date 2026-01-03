@@ -1,5 +1,3 @@
-// MARK: - 복용 사이클 데이터를 rx로 다룸 & 위젯 갱신까지 책임
-// TODO: - 위젯에 새약 설정해야하는 것도 설정하기
 import CoreData
 import RxSwift
 import WidgetKit

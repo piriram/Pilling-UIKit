@@ -8,48 +8,22 @@ final class TimeBasedRule: MessageRule {
             return false
         }
 
-        // TimeBasedRule은 기본 폴백 룰이므로, tooEarly와 upcoming만 제외
-        let notEarly = todayStatus.medicalTiming != .tooEarly
-        let notUpcoming = todayStatus.medicalTiming != .upcoming
-
-        return notEarly && notUpcoming
+        // TimeBasedRule은 기본 폴백 룰이므로 항상 평가
+        return true
     }
 
     func evaluate(context: MessageContext) -> MessageType? {
         guard let status = context.todayStatus else { return nil }
 
         if status.isTaken {
-            let message: MessageType
             switch status.baseStatus {
-            case .taken:
-                message = .todayAfter
-            case .takenDelayed:
-                message = .takenDelayedOk
-            case .takenTooEarly:
-                message = .takenTooEarly
             case .takenDouble:
-                message = .takenDoubleComplete
+                return .doubleDoseComplete
             default:
-                message = .todayAfter
+                return .takenComplete(timing: status.medicalTiming, minutesDiff: status.delayMinutes)
             }
-            return message
         }
 
-        let message: MessageType
-        switch status.medicalTiming {
-        case .onTime:
-            message = .plantingSeed
-        case .slightDelay:
-            message = .overTwoHours
-        case .moderate:
-            message = .overFourHours
-        case .recent:
-            message = .waiting
-        case .missed:
-            message = .waiting
-        default:
-            message = .plantingSeed
-        }
-        return message
+        return .notTakenYet(timing: status.medicalTiming)
     }
 }

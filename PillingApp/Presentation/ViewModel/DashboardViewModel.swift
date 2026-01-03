@@ -242,7 +242,31 @@ final class DashboardViewModel {
         }
 
         let message = calculateDashboardMessageUseCase.execute(cycle: cycle)
+        debugLogCycleAndMessage(cycle: cycle, message: message)
         dashboardMessage.accept(message)
+    }
+
+    private func debugLogCycleAndMessage(cycle: Cycle, message: DashboardMessage) {
+        #if DEBUG
+        let dayLimit = 28
+        let calendar = Calendar.current
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd (EEE) HH:mm"
+//
+//        print("=== Dashboard Debug ===")
+        print("cycleNumber=\(cycle.cycleNumber) startDate=\(dateFormatter.string(from: cycle.startDate)) activeDays=\(cycle.activeDays) breakDays=\(cycle.breakDays) scheduledTime=\(cycle.scheduledTime) totalRecords=\(cycle.records.count)")
+        print("dashboardMessage=\(message.text) icon=\(message.icon.rawValue) characterImage=\(message.imageName.rawValue) background=\(message.backgroundImageName)")
+        print("-- Cycle Records Statuses (first \(dayLimit) days) --")
+
+        let sortedRecords = cycle.records.sorted { $0.scheduledDateTime < $1.scheduledDateTime }
+        let statuses = sortedRecords
+            .prefix(dayLimit)
+            .map { $0.status.rawValue }
+            .joined(separator: " | ")
+        print(statuses)
+        print("=== End Dashboard Debug ===")
+        #endif
     }
     
     private func updateCanTakePill() {

@@ -4,7 +4,7 @@
 */
 
 // MARK: - Common
-"common.alert_title" = "Notice";
+"common.alert_title" = "Alert";
 "common.ok_button" = "OK";
 "common.error_title" = "Error";
 "common.cancel_title" = "Cancel";
@@ -13,155 +13,158 @@
 "common.go_to_settings" = "Go to Settings";
 
 // MARK: - Pill Setting
-"pill_setting.main_title" = "Tell us about your pill";
-"pill_setting.subtitle" = "Change anytime in settings";
-"pill_setting.button_title" = "Pill Type";
-"pill_setting.start_date_button" = "Start Date";
+"pill_setting.main_title" = "Tell us about the pill you're taking!";
+"pill_setting.subtitle" = "You can change this later in settings.";
+"pill_setting.button_title" = "Pill type";
+"pill_setting.start_date_button" = "Start date";
 "pill_setting.next_button" = "Next";
-"pill_setting.nav_title" = "Pill Setup";
-"pill_setting.name_title" = "Pill Name (Optional)";
-"pill_setting.taking_days" = "Active Days";
+"pill_setting.nav_title" = "Pill Settings";
+"pill_setting.name_title" = "Pill name (optional)";
+"pill_setting.taking_days" = "Taking days";
 "pill_setting.taking_button" = "24 days";
-"pill_setting.break_label" = "Break Days";
+"pill_setting.break_label" = "Break period";
 "pill_setting.break_day" = "4 days";
-"pill_setting.warning_label" = "Active and break days must total 28 days or less";
-"pill_setting.setting_complete" = "Setup Complete";
-"pill_setting.title_label" = "Enter Pill Info";
+"pill_setting.warning_label" = "Taking days and break days must total 28 days or fewer.";
+"pill_setting.setting_complete" = "Setup complete";
+"pill_setting.title_label" = "Enter pill details";
 "pill_setting.days_format" = "%d days";
-"pill_setting.taking_break_format" = "%d active / %d break";
+"pill_setting.taking_break_format" = "Taking %d days / Break %d days";
 "pill_setting.day_ordinal" = "Day %d";
 "pill_setting.today" = "Today";
-"pill_setting.days_remaining" = "%d days left";
+"pill_setting.days_remaining" = "%d days remaining";
 
 // MARK: - Setting Floating
 "setting_floating.title" = "All set!";
-"setting_floating.subtitle" = "Daily reminders enabled";
+"setting_floating.subtitle" = "We’ll remind you every day";
 
 // MARK: - Setting
 "setting.section_label" = "Pill Settings";
-"setting.new_pill_button" = "Start New Cycle";
+"setting.new_pill_button" = "Start a new pill cycle";
 "setting.navigation_title" = "Settings";
-"setting.alarm_section_title" = "Notifications";
-"setting.time_setting_title" = "Reminder Time";
+"setting.alarm_section_title" = "Notification Settings";
+"setting.time_setting_title" = "Reminder time";
+//"setting.time_setting_title" = "Taking time";
 "setting.time_setting_default" = "9:00 AM";
-"setting.message_setting_title" = "Notification Message";
+"setting.message_setting_title" = "Noti Text";
 "setting.message_setting_default" = "For a healthy day...";
-"setting.message_editor_title" = "Edit Notification";
-"setting.message_editor_description" = "Enter notification message";
-"setting.message_editor_placeholder" = "Enter message";
-"setting.new_pill_cycle_title" = "Start New Cycle";
-"setting.new_pill_cycle_message" = "All current records will be deleted.\nStart a new cycle?";
+"setting.message_editor_title" = "Edit notification message";
+"setting.message_editor_description" = "Enter the message you want to receive";
+"setting.message_editor_placeholder" = "Enter notification message";
+"setting.new_pill_cycle_title" = "Start new pill cycle";
+"setting.new_pill_cycle_message" = "All current pill records will be deleted.\nDo you want to start a new pill cycle?";
 "setting.new_pill_cycle_confirm" = "Start";
-"setting.success_time_updated" = "Time updated";
-"setting.success_message_updated" = "Message updated";
+"setting.success_time_updated" = "Reminder time updated";
+"setting.success_message_updated" = "Notification message updated";
 "setting.error_time_update_failed" = "Failed to update time";
 "setting.error_message_update_failed" = "Failed to update message";
-"setting.error_reset_failed" = "Reset failed";
+"setting.error_reset_failed" = "Failed to reset";
 "setting.permission_error_go_to_settings" = "Go to Settings";
 
 // MARK: - Dashboard
 "dashboard.guide_title" = "Pilling Guide";
-"dashboard.guide_subtitle" = "Your pill status shown as grass!";
-"dashboard.guide_confirm_button" = "Got it";
-"dashboard.guide_taken" = "Pill Taken";
-"dashboard.guide_taken_double" = "Two Pills Taken";
+"dashboard.guide_subtitle" = "Your pill status shown as growing grass!";
+"dashboard.guide_confirm_button" = "OK";
+"dashboard.guide_taken" = "Pill taken";
+"dashboard.guide_taken_double" = "Two pills taken";
 "dashboard.guide_missed" = "Missed";
 "dashboard.taken" = "Taken";
-"dashboard.taken_double" = "Two Pills";
+"dashboard.taken_double" = "Two pills";
 "dashboard.guide_today" = "Today";
-"dashboard.take_pill_button" = "Plant Grass";
+"dashboard.take_pill_button" = "Plant grass";
 "dashboard.take_pill_completed" = "Planted!";
-"dashboard.rest_period" = "Break Period";
-"dashboard.progress_before_start" = "Before Start";
+"dashboard.rest_period" = "Break period now";
+"dashboard.rest_period_tooltip" = "You’re currently in pill-free days";
+"dashboard.progress_before_start" = "Before start";
 "dashboard.progress_day" = "Day %d";
-"dashboard.day_progress_format" = "Day %d/%d";
+"dashboard.day_progress_format" = "Day %d / %d";
 
 // MARK: - Widget
-"widget.configuration_display_name" = "Pill Widget";
-"widget.configuration_description" = "Today's status";
+"widget.configuration_display_name" = "Pill Tracking Widget";
+"widget.configuration_description" = "Check today’s pill status";
 "widget.day_label" = "Day %d";
-"widget.message_plant_grass" = "Plant your grass!";
-"widget.message_setup_pill" = "Set up pill";
-"widget.message_grass_waiting" = "Grass is waiting";
-"widget.message_one_pill_complete" = "One planted!";
-"widget.message_rest_time" = "Rest time";
+"widget.message_plant_grass" = "Plant today’s grass!";
+"widget.message_setup_pill" = "Set up your pill";
+"widget.message_grass_waiting" = "The grass is waiting";
+"widget.message_one_pill_complete" = "One pill planted";
+"widget.message_rest_time" = "Break time now";
 "widget.message_over_two_hours" = "2 hours late!";
 "widget.message_over_four_hours" = "4 hours late!";
 "widget.message_two_today" = "Two pills today";
-"widget.message_today_complete" = "Today done";
+"widget.message_today_complete" = "Today completed";
 
 // MARK: - History
 "history.navigation_title" = "History";
-"history.detail_title" = "Cycle Details";
-"history.empty_message" = "No records";
+"history.detail_title" = "Cycle details";
+"history.empty_message" = "No records yet";
 "history.start_label" = "Start:";
 "history.created_label" = "Created:";
-"history.cycle_title_format" = "Cycle #%d · %d days";
-"history.scheduled_time_label" = "Scheduled";
+"history.cycle_title_format" = "Cycle #%d · %d days total";
+"history.scheduled_time_label" = "Scheduled time";
 // Plurals handled in stringsdict
-"history.active_days_format" = "%d active";
-"history.break_days_format" = "%d break";
-"history.cell_meta_format" = "%d active · %d break · %@ scheduled";
+"history.active_days_format" = "Taking %d days";
+"history.break_days_format" = "Break %d days";
+"history.cell_meta_format" = "Taking %d days · Break %d days · %@";
 
 // MARK: - Statistics
 "statistics.my_record_title" = "My Records";
-"statistics.taking_pill_label" = "Current Pill";
+"statistics.taking_pill_label" = "Pill";
 "statistics.chart_title" = "Pilling Time";
-"statistics.period_selection_title" = "Period";
-"statistics.category_on_time" = "On time";
-"statistics.category_delayed" = "A bit late";
-"statistics.category_missed_or_double" = "Missed or doubled";
-"statistics.deleted_side_effect" = "Deleted";
+"statistics.period_selection_title" = "Select period";
+"statistics.category_on_time" = "Taken on time";
+"statistics.category_delayed" = "Taken late";
+"statistics.category_missed_or_double" = "Missed or double dose";
+"statistics.deleted_side_effect" = "Deleted side effect";
 "statistics.day_count_format" = "%d days";
 "statistics.side_effect_count_format" = "%d times";
 
 // MARK: - Message
-"message.empty" = "Set up your pill";
-"message.cycle_complete" = "Start a new cycle";
-"message.setup_required" = "Set up your pill";
-"message.rest_period" = "Grass resting today";
-"message.forgot_me" = "Did you forget about me...?";
-"message.plant_today_grass" = "Plant today's grass";
-"message.plant_steadily" = "Keep planting steadily";
-"message.pilling_searching" = "Pilling is looking...";
+"message.empty" = "Please set up your pill";
+"message.cycle_complete" = "Please set up a new pill.";
+"message.setup_required" = "Pill setup required";
+"message.rest_period" = "Even the grass is resting today";
+"message.forgot_me" = "Did you forget me...?";
+"message.plant_today_grass" = "Plant today’s grass";
+"message.plant_steadily" = "Keep planting your grass consistently.";
+"message.pilling_searching" = "Pilling is looking for you...";
 "message.pilling_angry" = "Pilling is upset";
-"message.take_two_pills" = "Take two pills today";
-"message.grass_growing_well" = "Grass growing well";
-"message.missed_yesterday_take_two" = "Missed yesterday? Take 2 today!!";
-"message.take_within_two_hours" = "Take at the same time daily, within 2 hours";
-"message.need_one_pill_more" = "Need one more!";
-"message.taken_delayed_ok" = "Over 2 hours late, but okay!";
-"message.took_too_early" = "Taken 2+ hours early";
-"message.see_tomorrow" = "See you tomorrow!";
-"message.start_taking_today" = "Starting today";
-"message.start_taking_tomorrow" = "Starting tomorrow";
+"message.take_two_pills" = "Take two pills today.";
+"message.grass_growing_well" = "The grass is growing well";
+"message.missed_yesterday_take_two" = "Missed yesterday? Take two today!";
+"message.take_within_two_hours" = "Take your pill at the same time every day within 2 hours.";
+"message.need_one_pill_more" = "You need one more pill!";
+"message.taken_delayed_ok" = "It’s okay, just 2 hours late!";
+"message.took_too_early" = "You took it more than 2 hours early";
+"message.see_tomorrow" = "2 pills done! You're doing great";
+"message.start_taking_today" = "Start taking today";
+"message.start_taking_tomorrow" = "Start taking tomorrow";
 // Plurals handled in stringsdict
 "message.days_until_start" = "%d days until start";
-"message.one_pill_more" = "One more!";
-"message.over_two_hours" = "2 hours late";
-"message.over_four_hours" = "4 hours late";
-"message.widget_plant_grass" = "Plant grass!";
-"message.widget_planting_complete" = "Planted!";
-"message.widget_grass_waiting" = "Grass is waiting";
-"message.widget_rest_time" = "Rest time";
+"message.one_pill_more" = "One more pill!";
+"message.over_two_hours" = "Over 2 hours";
+"message.over_four_hours" = "Over 4 hours";
+"message.no_record_for_days" = "No record for %d days. Everything okay?";
+"message.widget_plant_grass" = "Plant the grass!";
+"message.widget_planting_complete" = "Grass planted!";
+"message.widget_grass_waiting" = "The grass is waiting";
+"message.widget_rest_time" = "Break time now";
 "message.widget_over_two_hours" = "2 hours late!";
 "message.widget_over_four_hours" = "4 hours late!";
 
 // MARK: - Notification
 "notification.title" = "Grass Time";
-"notification.break_period" = "Break time";
-"notification.default_message" = "Time to plant grass 🌱";
+"notification.break_period" = "It’s your break period";
+"notification.default_message" = "Time to plant your grass 🌱";
 
 // MARK: - Side Effect Tag
 "side_effect.mood_down" = "Low mood";
 "side_effect.spotting" = "Spotting";
 "side_effect.dry_mouth" = "Dry mouth";
-"side_effect.section_title" = "Side Effects";
+"side_effect.section_title" = "Side effects";
 "side_effect.add_button" = "Add";
-"side_effect.manage_title" = "Manage Side Effects";
+"side_effect.manage_title" = "Manage side effects";
 "side_effect.edit_title" = "Edit";
 "side_effect.done_title" = "Done";
-"side_effect.new_tag_title" = "Add New Tag";
+"side_effect.new_tag_title" = "Add new tag";
 "side_effect.new_tag_message" = "Enter tag name";
 "side_effect.new_tag_placeholder" = "Tag name";
 
@@ -170,28 +173,28 @@
 "error.invalid_date_range" = "Invalid date range";
 "error.unknown_error" = "Error";
 "error.permission_error" = "Permission";
-"error.notification_permission_title" = "Notification Permission Required";
-"error.notification_permission_required" = "Notification permission required.\nEnable notifications in Settings.";
-"error.notification_setting_failed" = "Failed to set notification.\nTry again.";
-"error.invalid_time" = "Invalid time";
-"error.pill_info_not_found" = "Pill info not found.\nSet up again from the beginning.";
-"error.retry_later" = "An error occurred.\nTry again.";
+"error.notification_permission_title" = "Notification error";
+"error.notification_permission_required" = "Notification permission is required.\nPlease enable notifications in Settings.";
+"error.notification_setting_failed" = "Failed to set notifications.\nPlease try again.";
+"error.invalid_time" = "Invalid time.";
+"error.pill_info_not_found" = "Pill information not found.\nPlease set it up again.";
+"error.retry_later" = "An error occurred.\nPlease try again.";
 "error.data_load_failed" = "Failed to load data";
 
 // MARK: - Time Setting
-"time_setting.main_title" = "Set your reminder time";
-"time_setting.subtitle" = "Change anytime in settings";
-"time_setting.time_button_title" = "Reminder Time";
-"time_setting.confirm_button" = "All set!";
+"time_setting.main_title" = "Set your notification time!";
+"time_setting.subtitle" = "You can change this later.";
+"time_setting.time_button_title" = "Reminder time";
+"time_setting.confirm_button" = "Done!";
 "time_setting.picker_confirm_button" = "OK";
-"time_setting.navigation_title" = "Time Setup";
+"time_setting.navigation_title" = "Time Settings";
 
 // MARK: - Onboarding
 "onboarding.next_button" = "Next";
-"onboarding.start_button" = "Start Taking";
-"onboarding.page1_title" = "Build a steady routine\nfor a month with Pilling";
+"onboarding.start_button" = "Start taking";
+"onboarding.page1_title" = "Build a steady routine\nfor your cycle with Pilling";
 "onboarding.page1_description" = "Get a daily reminder at your set time.\nTake your pill and record it.";
 "onboarding.page2_title" = "Track your adherence\nwith simple charts";
 "onboarding.page2_description" = "Manage your cycle and break periods\nall in one place";
-"onboarding.page3_title" = "Check status instantly\nwith the home screen widget";
-"onboarding.page3_description" = "Record with one tap.\nCheck status anytime.";
+"onboarding.page3_title" = "Check your status instantly\nwith a widget";
+"onboarding.page3_description" = "Record with one tap\nand check anytime";

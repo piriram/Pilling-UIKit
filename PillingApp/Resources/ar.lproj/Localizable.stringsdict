@@ -5,23 +5,31 @@
 	<key>message.days_until_start</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@days@ until you start taking</string>
+		<string>%#@days@ حتى بدء التناول</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
 			<string>NSStringPluralRuleType</string>
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
+			<key>zero</key>
+			<string>اليوم</string>
 			<key>one</key>
-			<string>%d day</string>
+			<string>يوم واحد</string>
+			<key>two</key>
+			<string>يومان</string>
+			<key>few</key>
+			<string>%d أيام</string>
+			<key>many</key>
+			<string>%d يومًا</string>
 			<key>other</key>
-			<string>%d days</string>
+			<string>%d يوم</string>
 		</dict>
 	</dict>
 	<key>history.active_days_format</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>Taking %#@days@</string>
+		<string>أيام التناول: %#@days@</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
@@ -29,15 +37,21 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%d day</string>
+			<string>يوم واحد</string>
+			<key>two</key>
+			<string>يومان</string>
+			<key>few</key>
+			<string>%d أيام</string>
+			<key>many</key>
+			<string>%d يومًا</string>
 			<key>other</key>
-			<string>%d days</string>
+			<string>%d يوم</string>
 		</dict>
 	</dict>
 	<key>history.break_days_format</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>Break %#@days@</string>
+		<string>فترة التوقف: %#@days@</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
@@ -45,9 +59,15 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>d</string>
 			<key>one</key>
-			<string>%d day</string>
+			<string>يوم واحد</string>
+			<key>two</key>
+			<string>يومان</string>
+			<key>few</key>
+			<string>%d أيام</string>
+			<key>many</key>
+			<string>%d يومًا</string>
 			<key>other</key>
-			<string>%d days</string>
+			<string>%d يوم</string>
 		</dict>
 	</dict>
 </dict>

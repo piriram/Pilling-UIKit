@@ -1,0 +1,2 @@
+/* Notification permission description */
+"NSUserNotificationsUsageDescription" = "약 복용 시간 알림을 위해 알림 권한이 필요합니다.";
