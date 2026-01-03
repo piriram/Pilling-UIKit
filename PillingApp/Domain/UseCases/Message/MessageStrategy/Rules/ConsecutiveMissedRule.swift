@@ -12,11 +12,8 @@ final class ConsecutiveMissedRule: MessageRule {
     func evaluate(context: MessageContext) -> MessageType? {
         let days = context.consecutiveMissedDays
 
-        if days >= 3 {
-            return .missedThreePlusDays
-        }
         if days >= 2 {
-            return .consecutiveMissed(days: days)
+            return .consecutiveMissedWarning(days: days)
         }
 
         return nil

@@ -96,11 +96,13 @@ final class DashboardMiddleView: UIView {
         dateLine.axis = .horizontal
         dateLine.spacing = 8
         dateLine.alignment = .center
-        
+        dateLine.semanticContentAttribute = .forceLeftToRight
+
         let timeLine = UIStackView(arrangedSubviews: [timeIconImageView, timeLabel])
         timeLine.axis = .horizontal
         timeLine.spacing = 8
         timeLine.alignment = .center
+        timeLine.semanticContentAttribute = .forceLeftToRight
         
         dateIconImageView.snp.makeConstraints { $0.width.height.equalTo(20) }
         timeIconImageView.snp.makeConstraints { $0.width.height.equalTo(20) }

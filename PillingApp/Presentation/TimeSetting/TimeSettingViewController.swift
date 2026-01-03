@@ -27,7 +27,7 @@ final class TimeSettingViewController: UIViewController {
         label.text = Str.mainTitle
         label.font = Typography.headline3(.bold)
         label.textColor = AppColor.textBlack
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
@@ -36,7 +36,7 @@ final class TimeSettingViewController: UIViewController {
         label.text = Str.subtitle
         label.font = Typography.body2(.regular)
         label.textColor = .gray
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     

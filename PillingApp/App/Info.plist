@@ -8,6 +8,7 @@
 	<array>
 		<string>ko</string>
 		<string>en</string>
+		<string>ar</string>
 	</array>
 	<key>CFBundleURLTypes</key>
 	<array>

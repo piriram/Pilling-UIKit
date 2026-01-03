@@ -66,11 +66,11 @@ final class SettingViewController: UIViewController {
         timeLabel.text = str.timeSettingDefault
         timeLabel.font = Typography.body2(.regular)
         timeLabel.textColor = AppColor.textBlack
-        timeLabel.textAlignment = .right
+        timeLabel.textAlignment = .natural
         timeLabel.adjustsFontSizeToFitWidth = true
         timeLabel.minimumScaleFactor = 0.5
 
-        let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
+        let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.forward"))
         chevronImageView.tintColor = .systemGray3
         chevronImageView.contentMode = .scaleAspectFit
 
@@ -131,11 +131,11 @@ final class SettingViewController: UIViewController {
         messageLabel.text = str.messageSettingDefault
         messageLabel.font = Typography.body2(.regular)
         messageLabel.textColor = AppColor.textBlack
-        messageLabel.textAlignment = .right
+        messageLabel.textAlignment = .natural
         messageLabel.adjustsFontSizeToFitWidth = true
         messageLabel.minimumScaleFactor = 0.5
 
-        let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.right"))
+        let chevronImageView = UIImageView(image: UIImage(systemName: "chevron.forward"))
         chevronImageView.tintColor = .systemGray3
         chevronImageView.contentMode = .scaleAspectFit
 

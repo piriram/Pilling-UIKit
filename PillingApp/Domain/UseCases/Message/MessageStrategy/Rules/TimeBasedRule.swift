@@ -16,37 +16,14 @@ final class TimeBasedRule: MessageRule {
         guard let status = context.todayStatus else { return nil }
 
         if status.isTaken {
-            let message: MessageType
             switch status.baseStatus {
-            case .taken:
-                message = .takenToday
-            case .takenDelayed:
-                message = .timeTakenDelayed
-            case .takenTooEarly:
-                message = .takenTooEarly
             case .takenDouble:
-                message = .doubleDoseDoneToday
+                return .doubleDoseComplete
             default:
-                message = .takenToday
+                return .takenComplete(timing: status.medicalTiming, minutesDiff: status.delayMinutes)
             }
-            return message
         }
 
-        let message: MessageType
-        switch status.medicalTiming {
-        case .onTime:
-            message = .timeOnTimeNotTaken
-        case .slightDelay:
-            message = .overTwoHours
-        case .moderate:
-            message = .overFourHours
-        case .recent:
-            message = .missedThreePlusDays
-        case .missed:
-            message = .missedThreePlusDays
-        default:
-            message = .timeOnTimeNotTaken
-        }
-        return message
+        return .notTakenYet(timing: status.medicalTiming)
     }
 }

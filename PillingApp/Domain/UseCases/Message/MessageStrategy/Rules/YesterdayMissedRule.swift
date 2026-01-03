@@ -16,15 +16,15 @@ final class YesterdayMissedRule: MessageRule {
         guard let todayStatus = context.todayStatus else { return nil }
 
         if todayStatus.baseStatus == .takenDouble {
-            return .missedYesterdayTwoPillsDoneLate
+            return .yesterdayMissedLateTiming
         }
 
         if todayStatus.isTaken && todayStatus.baseStatus != .takenDouble {
-            return .missedYesterdayNeedOneMore
+            return .yesterdayMissedNeedOne
         }
 
         if !todayStatus.isTaken {
-            return .doubleDoseDoneToday
+            return .doubleDoseComplete
         }
 
         return nil

@@ -213,6 +213,36 @@ CalculateDashboardMessageUseCase
 // 디버그 로그를 통해 각 단계별 상태 추적 가능
 ```
 
+**MessageType 매핑표**
+
+개발자 참고용: 각 MessageType의 의미와 사용처를 한눈에 파악할 수 있습니다.
+
+| MessageType | 카테고리 | 한글 메시지 | 영문 메시지 | 사용 Rule |
+|------------|---------|-----------|-----------|----------|
+| **시스템 메시지** | | | | |
+| `.empty` | 시스템 | "약을 설정해주세요" | "Please set up your pill" | CalculateMessageUseCase |
+| `.beforeStart(Int)` | 시스템 | "N일 후 시작" | "Start in N days" | CalculateMessageUseCase |
+| `.cycleComplete` | 시스템 | "새 약을 설정해주세요" | "Please set up a new pill" | CalculateMessageUseCase |
+| `.resting` | 시스템 | "오늘은 잔디도 휴식중" | "Even the grass is resting today" | RestDayRule |
+| **복용 완료 상태** | | | | |
+| `.takenToday` | 상태 | "잔디가 잘 자라요" | "The grass is growing well" | TimeBasedRule |
+| `.timeTakenDelayed` | 상태 | "괜찮아요, 2시간만 지났어요" | "It's okay, just 2 hours late!" | TimeBasedRule |
+| `.takenTooEarly` | 상태 | "예정보다 2시간 이상 일찍 복용했어요" | "You took it more than 2 hours early" | EarlyTakingRule |
+| `.doubleDoseDoneToday` | 상태 | "오늘 2알 완료! 잘하고 있어요" | "2 pills done! You're doing great" | DoubleDosingRule |
+| `.takenSuccess` | 상태 | "꾸준히 잔디를 심어요" | "Keep planting consistently" | - |
+| **시간대 메시지** | | | | |
+| `.timeOnTimeNotTaken` | 시간 | "오늘 잔디를 심어요" | "Plant today's grass" | TimeBasedRule |
+| `.overTwoHours` | 시간 | "2시간 지났어요" | "Over 2 hours" | TimeBasedRule |
+| `.overFourHours` | 시간 | "4시간 지났어요" | "Over 4 hours" | TimeBasedRule |
+| **어제 누락 경고** | | | | |
+| `.missedYesterdayTakeTwo` | 경고 | "어제 미복용했다면 오늘은 2알!!" | "Missed yesterday? Take two today!" | DoubleDosingRule |
+| `.missedYesterdayNeedOneMore` | 경고 | "한알 더 먹어야해요!" | "You need one more pill!" | YesterdayMissedRule |
+| `.missedYesterdayTwoPillsDoneLate` | 경고 | "매일 같은 시간에 2시간 이내 복용하세요" | "Take within 2 hours" | RecentlyMissedRule |
+| **연속 누락 경고** | | | | |
+| `.missedOneDay` | 경고 | "필링이가 찾아요..." | "Pilling is looking for you..." | - |
+| `.consecutiveMissed(Int)` | 경고 | "N일째 기록이 없어요. 괜찮으신가요?" | "No record for N days. Everything okay?" | ConsecutiveMissedRule |
+| `.missedThreePlusDays` | 경고 | "나를 잊으셨나요...?" | "Did you forget me...?" | ConsecutiveMissedRule |
+
 ### 4. 의료 규칙 기반 단위 테스트
 
 **문제**
