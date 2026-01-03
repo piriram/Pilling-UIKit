@@ -8,7 +8,7 @@ final class MedicationSearchTableViewCell: UITableViewCell {
 
     private let medicationImageView: UIImageView = {
         let imageView = UIImageView()
-        imageView.contentMode = .scaleAspectFill
+        imageView.contentMode = .scaleAspectFit
         imageView.clipsToBounds = true
         imageView.layer.cornerRadius = 6
         imageView.tintColor = .lightGray
@@ -18,29 +18,41 @@ final class MedicationSearchTableViewCell: UITableViewCell {
 
     private let nameLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
+        label.font = Typography.body1()
+        label.textColor = AppColor.textBlack
         return label
     }()
 
-    private let manufacturerLabel: UILabel = {
+    private let dosageLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 14, weight: .regular)
-        label.textColor = .gray
+        label.font = Typography.caption()
+        label.textColor = AppColor.secondary
         return label
     }()
 
-    private let ingredientLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 12, weight: .regular)
-        label.textColor = .lightGray
-        label.numberOfLines = 1
-        return label
+    private let checkmarkImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "checkmark")
+        imageView.tintColor = UIColor(hex: "#7FDD1C")
+        imageView.contentMode = .scaleAspectFit
+        imageView.isHidden = true
+        return imageView
+    }()
+
+    private let containerView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .white
+        view.layer.cornerRadius = 12
+        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.clear.cgColor
+        return view
     }()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
         setupUI()
+        selectionStyle = .none
+        backgroundColor = .clear
     }
 
     required init?(coder: NSCoder) {
@@ -51,51 +63,63 @@ final class MedicationSearchTableViewCell: UITableViewCell {
         super.prepareForReuse()
         medicationImageView.kf.cancelDownloadTask()
         medicationImageView.image = UIImage(systemName: "pills")
+        setSelected(false)
     }
 
     private func setupUI() {
-        contentView.addSubview(medicationImageView)
-        contentView.addSubview(nameLabel)
-        contentView.addSubview(manufacturerLabel)
-        contentView.addSubview(ingredientLabel)
+        contentView.addSubview(containerView)
+        containerView.addSubview(medicationImageView)
+        containerView.addSubview(nameLabel)
+        containerView.addSubview(dosageLabel)
+        containerView.addSubview(checkmarkImageView)
+
+        containerView.snp.makeConstraints {
+            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16))
+            $0.height.greaterThanOrEqualTo(60)
+        }
 
         medicationImageView.snp.makeConstraints {
-            $0.leading.equalToSuperview().inset(16)
+            $0.leading.equalToSuperview().offset(16)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(48)
+            $0.width.height.equalTo(40)
         }
 
         nameLabel.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(12)
             $0.leading.equalTo(medicationImageView.snp.trailing).offset(12)
-            $0.trailing.equalToSuperview().inset(16)
+            $0.centerY.equalToSuperview()
         }
 
-        manufacturerLabel.snp.makeConstraints {
-            $0.top.equalTo(nameLabel.snp.bottom).offset(4)
-            $0.leading.equalTo(medicationImageView.snp.trailing).offset(12)
-            $0.trailing.equalToSuperview().inset(16)
+        dosageLabel.snp.makeConstraints {
+            $0.leading.equalTo(nameLabel.snp.trailing).offset(8)
+            $0.centerY.equalToSuperview()
+            $0.trailing.lessThanOrEqualTo(checkmarkImageView.snp.leading).offset(-8)
         }
 
-        ingredientLabel.snp.makeConstraints {
-            $0.top.equalTo(manufacturerLabel.snp.bottom).offset(2)
-            $0.leading.equalTo(medicationImageView.snp.trailing).offset(12)
-            $0.trailing.equalToSuperview().inset(16)
-            $0.bottom.equalToSuperview().offset(-12)
+        checkmarkImageView.snp.makeConstraints {
+            $0.trailing.equalToSuperview().offset(-16)
+            $0.centerY.equalToSuperview()
+            $0.width.height.equalTo(20)
         }
     }
 
-    func configure(with medication: MedicationInfo) {
+    func configure(with medication: MedicationInfo, isSelected: Bool = false) {
         nameLabel.text = medication.name
-        let typeText = medication.productTypeDisplay
-        let dosageText = medication.dosagePatternText
-        if !typeText.isEmpty {
-            manufacturerLabel.text = "\(dosageText) · \(typeText)"
-        } else {
-            manufacturerLabel.text = dosageText
-        }
-        ingredientLabel.text = medication.mainIngredient
+        let pillInfo = medication.toPillInfo()
+        dosageLabel.text = "\(pillInfo.takingDays)일 복용 / \(pillInfo.breakDays)일 휴약"
         setImage(urlString: medication.imageURL)
+        setSelected(isSelected)
+    }
+
+    private func setSelected(_ selected: Bool) {
+        if selected {
+            containerView.backgroundColor = UIColor(hex: "#7FDD1C")?.withAlphaComponent(0.1)
+            containerView.layer.borderColor = UIColor(hex: "#7FDD1C")?.cgColor
+            checkmarkImageView.isHidden = false
+        } else {
+            containerView.backgroundColor = .white
+            containerView.layer.borderColor = UIColor.clear.cgColor
+            checkmarkImageView.isHidden = true
+        }
     }
 
     private func setImage(urlString: String) {
