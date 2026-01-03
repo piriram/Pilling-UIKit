@@ -20,9 +20,9 @@ final class EarlyTakingRule: MessageRule {
         guard let todayStatus = context.todayStatus else { return nil }
 
         if todayStatus.isTaken {
-            return .takenTooEarly
-        } else {
-            return .onTimeNotTaken
+            return .takenComplete(timing: todayStatus.medicalTiming, minutesDiff: todayStatus.delayMinutes)
         }
+
+        return nil
     }
 }

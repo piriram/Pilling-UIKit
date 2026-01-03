@@ -28,14 +28,16 @@ final class READMEMessageRuleTests: XCTestCase {
 
     func test_readme_earlyTaking_returnsTakenTooEarlyMessage() {
         let scheduled = makeDate(2024, 1, 10, 9, 0)
-        let takenAt = makeDate(2024, 1, 10, 6, 30) // >2h early
+        let takenAt = makeDate(2024, 1, 10, 6, 30) // 2h 30m early
         let record = makeRecord(scheduledDate: scheduled, status: .takenTooEarly, takenAt: takenAt)
         let cycle = makeCycle(startDate: makeDate(2024, 1, 10, 0, 0), records: [record])
 
         mockTimeProvider.now = takenAt
         let result = sut.execute(cycle: cycle, for: takenAt)
 
-        XCTAssertEqual(result.text, MessageType.takenTooEarly.text)
+        // 새로운 기능: 정확한 시간 표시 (2시간 30분 일찍 복용)
+        XCTAssertTrue(result.text.contains("예정보다") && result.text.contains("일찍 복용했어요"))
+        XCTAssertTrue(result.text.contains("2시간 30분") || result.text.contains("2시간") && result.text.contains("30분"))
     }
 
     func test_readme_restDay_returnsRestingMessage() {

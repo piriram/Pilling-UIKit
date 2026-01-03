@@ -12,30 +12,23 @@ enum MessageType {
 
     // MARK: - 복용 완료 상태
 
-    case takenOnTime                         // 상태: 오늘 정상 복용 완료
-    case takenDelayed                   // 상태: 지연 복용 완료 (2시간 초과, 괜찮음)
-    case takenTooEarly                      // 상태: 너무 이른 복용 (2시간 이상 빠름)
-    case doubleDoseComplete                // 상태: 2알 복용 완료
-    case takenConsecutive                       // 상태: 연속 정상 복용 격려
+    case takenComplete(timing: MedicalTiming, minutesDiff: Int?)  // 상태: 복용 완료 (정시/지연/일찍)
+    case doubleDoseComplete                                        // 상태: 2알 복용 완료
 
-    // MARK: - 시간대 메시지
+    // MARK: - 미복용 상태
 
-    case onTimeNotTaken                 // 시간: 복용 시간대 도달, 아직 미복용
-    case overTwoHours                       // 시간: 2시간 초과 미복용
-    case overFourHours                      // 시간: 4시간 초과 미복용
+    case notTakenYet(timing: MedicalTiming)  // 시간: 아직 미복용 (정시/2시간/4시간 초과)
 
     // MARK: - 어제 누락 관련 경고
 
     case yesterdayMissedTakeTwo             // 경고: 어제 누락 → 오늘 2알 복용 권유
-    case yesterdayMissedNeedOne         // 경고: 어제 누락 + 오늘 1알 복용 → 1알 더 필요
-    case yesterdayMissedLateTiming    // 경고: 어제 누락 + 오늘 2알 복용 (36h 이후)
+    case yesterdayMissedNeedOne             // 경고: 어제 누락 + 오늘 1알 복용 → 1알 더 필요
+    case yesterdayMissedLateTiming          // 경고: 어제 누락 + 오늘 2알 복용 (36h 이후)
 
     // MARK: - 연속 누락 경고
 
-    case missedOneDayWarning                       // 경고: 1일 누락 (가벼운 경고)
-    case consecutiveMissedWarning(days: Int)       // 경고: 2일 연속 누락 (긴급)
-    case missedThreePlusWarning                // 경고: 3일 이상 누락 (포기 상태)
-    
+    case consecutiveMissedWarning(days: Int)  // 경고: 2일 이상 연속 누락 (2일/3일+)
+
     var text: String {
         switch self {
         case .empty:
@@ -44,30 +37,56 @@ enum MessageType {
             return AppStrings.Message.cycleComplete
         case .resting:
             return AppStrings.Message.restPeriod
-        case .missedThreePlusWarning:
-            return AppStrings.Message.forgotMe
-        case .onTimeNotTaken:
-            return AppStrings.Message.plantTodayGrass
-        case .takenConsecutive:
-            return AppStrings.Message.plantSteadily
-        case .missedOneDayWarning:
-            return AppStrings.Message.pillingSearching
         case .consecutiveMissedWarning(let days):
-            return AppStrings.Message.noRecordForDays(days)
-        case .takenOnTime:
-            return AppStrings.Message.grassGrowingWell
+            if days >= 3 {
+                return AppStrings.Message.forgotMe  // "저를 잊었나요...?"
+            } else {
+                return AppStrings.Message.noRecordForDays(days)  // "N일째 기록이 없어요"
+            }
+        case .notTakenYet(let timing):
+            switch timing {
+            case .onTime, .upcoming:
+                return AppStrings.Message.plantTodayGrass  // "오늘의 잔디를 심어주세요"
+            case .slightDelay:
+                return AppStrings.Message.overTwoHours     // "2시간 지났어요"
+            case .moderate:
+                return AppStrings.Message.overFourHours    // "4시간 지났어요"
+            case .recent, .missed:
+                return AppStrings.Message.forgotMe         // "저를 잊었나요...?"
+            default:
+                return AppStrings.Message.plantTodayGrass
+            }
+        case .takenComplete(let timing, let minutesDiff):
+            switch timing {
+            case .onTime:
+                return AppStrings.Message.grassGrowingWell  // "잔디가 잘 자라고 있어요"
+            case .slightDelay:
+                return AppStrings.Message.takenDelayedOk    // "2시간 지났지만 괜찮아요!"
+            case .tooEarly:
+                if let minutes = minutesDiff {
+                    let absMinutes = abs(minutes)
+                    let hours = absMinutes / 60
+                    let mins = absMinutes % 60
+                    if hours > 0 && mins > 0 {
+                        return "예정보다 \(hours)시간 \(mins)분 일찍 복용했어요"
+                    } else if hours > 0 {
+                        return "예정보다 \(hours)시간 일찍 복용했어요"
+                    } else {
+                        return "예정보다 \(mins)분 일찍 복용했어요"
+                    }
+                }
+                return AppStrings.Message.tookTooEarly
+            default:
+                return AppStrings.Message.grassGrowingWell
+            }
         case .yesterdayMissedTakeTwo:
             return AppStrings.Message.missedYesterdayTakeTwo
         case .yesterdayMissedLateTiming:
             return AppStrings.Message.takeWithinTwoHours
         case .yesterdayMissedNeedOne:
             return AppStrings.Message.needOnePillMore
-        case .takenDelayed:
-            return AppStrings.Message.takenDelayedOk
-        case .takenTooEarly:
-            return AppStrings.Message.tookTooEarly
         case .doubleDoseComplete:
-            return AppStrings.Message.takeTwoPills  //
+            return AppStrings.Message.takeTwoPills
         case .beforeStart(let daysUntilStart):
             if daysUntilStart == 0 {
                 return AppStrings.Message.startTakingToday
@@ -76,32 +95,37 @@ enum MessageType {
             } else {
                 return AppStrings.Message.daysUntilStart(daysUntilStart)
             }
-        case .overTwoHours:
-            return AppStrings.Message.overTwoHours
-        case .overFourHours:
-            return AppStrings.Message.overFourHours
         }
     }
-    
+
     var widgetText: String? {
         switch self {
-        case .onTimeNotTaken:
-            return AppStrings.Message.widgetPlantGrass
-        case .takenOnTime:
+        case .notTakenYet(let timing):
+            switch timing {
+            case .onTime, .upcoming:
+                return AppStrings.Message.widgetPlantGrass
+            case .slightDelay:
+                return AppStrings.Message.widgetOverTwoHours
+            case .moderate, .recent, .missed:
+                return AppStrings.Message.widgetOverFourHours
+            default:
+                return nil
+            }
+        case .takenComplete:
             return AppStrings.Message.widgetPlantingComplete
-        case .missedThreePlusWarning:
-            return AppStrings.Message.widgetGrassWaiting
-        case .missedOneDayWarning:
-            return AppStrings.Message.widgetOverTwoHours
-        case .consecutiveMissedWarning:
-            return AppStrings.Message.widgetOverFourHours
+        case .consecutiveMissedWarning(let days):
+            if days >= 3 {
+                return AppStrings.Message.widgetGrassWaiting
+            } else {
+                return AppStrings.Message.widgetOverFourHours
+            }
         case .resting:
             return AppStrings.Message.widgetRestTime
         default:
             return nil
         }
     }
-    
+
     var characterImageName: String {
         switch self {
         case .empty:
@@ -110,17 +134,24 @@ enum MessageType {
             return "icon_rest"
         case .resting:
             return "icon_rest"
-        case .missedThreePlusWarning:
-            return "icon_noTaking"
-        case .onTimeNotTaken:
-            return "icon_takingBefore"
-        case .takenConsecutive:
-            return "icon_good"
-        case .missedOneDayWarning:
-            return "icon_2hour"
-        case .consecutiveMissedWarning:
-            return "icon_4hour"
-        case .takenOnTime:
+        case .consecutiveMissedWarning(let days):
+            if days >= 3 {
+                return "icon_noTaking"
+            } else {
+                return "icon_4hour"
+            }
+        case .notTakenYet(let timing):
+            switch timing {
+            case .onTime, .upcoming:
+                return "icon_takingBefore"
+            case .slightDelay:
+                return "icon_2hour"
+            case .moderate, .recent, .missed:
+                return "icon_4hour"
+            default:
+                return "icon_takingBefore"
+            }
+        case .takenComplete:
             return "icon_takingAfter"
         case .yesterdayMissedTakeTwo:
             return "icon_takingBeforeTwo"
@@ -128,39 +159,31 @@ enum MessageType {
             return "icon_takingBefore"
         case .yesterdayMissedNeedOne:
             return "icon_takingBeforeTwo"
-        case .takenDelayed:
-            return "icon_takingAfter"
-        case .takenTooEarly:
-            return "icon_takingAfter"
         case .doubleDoseComplete:
-            return "icon_takingAfter" //
+            return "icon_takingAfter"
         case .beforeStart:
             return "icon_plant"
-        case .overTwoHours:
-            return "icon_2hour"
-        case .overFourHours:
-            return "icon_4hour"
         }
     }
-    
+
     var iconImageName: String {
         switch self {
         case .empty, .cycleComplete, .resting:
             return "rest"
-        case .missedThreePlusWarning,.consecutiveMissedWarning,.missedOneDayWarning:
+        case .consecutiveMissedWarning:
             return "missed"
-        case .onTimeNotTaken,.yesterdayMissedTakeTwo, .yesterdayMissedNeedOne,.overTwoHours,.overFourHours:
+        case .notTakenYet, .yesterdayMissedTakeTwo, .yesterdayMissedNeedOne:
             return "notTaken"
-        case .takenConsecutive, .takenOnTime, .yesterdayMissedLateTiming, .takenDelayed, .takenTooEarly, .doubleDoseComplete:
+        case .takenComplete, .yesterdayMissedLateTiming, .doubleDoseComplete:
             return "taken"
         case .beforeStart:
             return "rest"
         }
     }
-    
+
     var backgroundImageName: String {
         switch self {
-        case .missedThreePlusWarning, .missedOneDayWarning, .consecutiveMissedWarning:
+        case .consecutiveMissedWarning:
             return "background_rest"
         case .resting, .empty, .beforeStart:
             return "background_rest"
@@ -170,20 +193,20 @@ enum MessageType {
             return "background_taken"
         }
     }
-    
+
     var widgetBackgroundImage: String {
         switch self {
-        case .missedThreePlusWarning:
-            return "widget_background_warning"
-        case .missedOneDayWarning:
-            return "widget_background_groomy"
-        case .consecutiveMissedWarning:
-            return "widget_background_fire"
+        case .consecutiveMissedWarning(let days):
+            if days >= 3 {
+                return "widget_background_warning"
+            } else {
+                return "widget_background_fire"
+            }
         default:
             return "widget_background_normal"
         }
     }
-    
+
     func toResult() -> MessageResult {
         return MessageResult(
             text: text,

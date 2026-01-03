@@ -82,12 +82,15 @@ final class DashboardSheetViewController: UIViewController {
         self.onTimeChanged = onTimeChanged
         self.userDefaultsManager = userDefaultsManager
         self.timeProvider = timeProvider
-        
+
         // 초기 메모에서 부작용 태그 파싱
         let parsedMemo = PillRecordMemo.fromJSONString(initialMemo)
         self.initialSideEffectIds = parsedMemo.sideEffectIds
-        
-        
+
+        print("🔍 [DashboardSheet] init - initialMemo: \(initialMemo)")
+        print("🔍 [DashboardSheet] init - parsedMemo.sideEffectIds: \(parsedMemo.sideEffectIds)")
+        print("🔍 [DashboardSheet] init - parsedMemo.text: \(parsedMemo.text)")
+
         self.viewModel = DefaultDashboardSheetViewModel(
             selectedDate: selectedDate,
             initialMemo: parsedMemo.text,
@@ -115,11 +118,19 @@ final class DashboardSheetViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        
+
+        // 🔍 DEBUG: 부작용 초기화 상태 로깅
+        print("🔍 [DashboardSheet] viewWillAppear - initialSideEffectIds: \(initialSideEffectIds)")
+        print("🔍 [DashboardSheet] viewWillAppear - before setSelectedTagIds: \(sideEffectTagsView.getSelectedTagIds())")
+
         // 부작용 관리에서 돌아올 때를 대비해 태그 목록을 다시 로드
         // (태그 추가/삭제/순서변경/visibility 변경 반영)
         sideEffectTagsView.reloadTags()
+
+        // 🔧 FIX: 초기 부작용 선택 상태 복원
+        sideEffectTagsView.setSelectedTagIds(initialSideEffectIds)
+
+        print("🔍 [DashboardSheet] viewWillAppear - after setSelectedTagIds: \(sideEffectTagsView.getSelectedTagIds())")
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -277,9 +288,11 @@ final class DashboardSheetViewController: UIViewController {
         output.dismiss
             .emit(onNext: { [weak self] status, memoText in
                 guard let self else { return }
-                
+
                 // 선택된 부작용 태그 ID 수집
                 let selectedTagIds = self.sideEffectTagsView.getSelectedTagIds()
+
+                print("🔍 [DashboardSheet] dismiss - selectedTagIds: \(selectedTagIds)")
 
                 // 선택된 태그의 이름을 함께 저장 (삭제된 태그 대비)
                 let allTags = self.userDefaultsManager.loadSideEffectTags()
@@ -295,8 +308,9 @@ final class DashboardSheetViewController: UIViewController {
                     sideEffectNames: sideEffectNames.isEmpty ? nil : sideEffectNames
                 )
                 let memoJSON = pillMemo.toJSONString()
-                
-                
+
+                print("🔍 [DashboardSheet] dismiss - memoJSON: \(memoJSON)")
+
                 self.onDataChanged(status, memoJSON)
                 self.sheetAnimator.hide()
             })
