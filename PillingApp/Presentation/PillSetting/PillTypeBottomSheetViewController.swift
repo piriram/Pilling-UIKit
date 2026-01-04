@@ -20,7 +20,8 @@ final class PillTypeBottomSheetViewController: UIViewController {
     private let medicationRepository: MedicationRepositoryProtocol
     private let searchResultsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let initialMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
-    private let initialSearchKeywords = ["머시론", "야즈", "야스민"]
+    private let isLoadingRelay = BehaviorRelay<Bool>(value: true)
+    private let initialSearchKeywords = ["머시론","센스데이","디어미","멜리안","마이보라","야즈","야스민","클래라","에이리스","라니아","미니보라","트리퀼라","센스리베","미뉴렛"]
     private let contraceptiveTypeKeyword = "피임제"
     private var selectedMedicationId: String?
     
@@ -77,13 +78,19 @@ final class PillTypeBottomSheetViewController: UIViewController {
         let tableView = UITableView()
         tableView.backgroundColor = .white
         tableView.separatorStyle = .none
-        tableView.isHidden = true
+        tableView.isHidden = false
         tableView.register(MedicationSearchTableViewCell.self, forCellReuseIdentifier: MedicationSearchTableViewCell.identifier)
         tableView.rowHeight = UITableView.automaticDimension
         tableView.estimatedRowHeight = 80
         tableView.tableHeaderView = UIView(frame: .zero)
         tableView.tableFooterView = UIView(frame: .zero)
         return tableView
+    }()
+    
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        return indicator
     }()
 
     private var containerViewBottomConstraint: Constraint?
@@ -130,6 +137,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
         containerView.addSubview(pillNameTextField)
         containerView.addSubview(confirmButton)
         containerView.addSubview(searchResultsTableView)
+        containerView.addSubview(loadingIndicator)
         confirmButton.setTitle(str.settingComplete, for: .normal)
         confirmButton.isEnabled = false
     }
@@ -170,6 +178,11 @@ final class PillTypeBottomSheetViewController: UIViewController {
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
             $0.height.equalTo(56)
         }
+        
+        loadingIndicator.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalTo(searchResultsTableView.snp.centerY)
+        }
     }
     
     
@@ -199,13 +212,23 @@ final class PillTypeBottomSheetViewController: UIViewController {
 
                 let trimmedKeyword = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
                 if trimmedKeyword.isEmpty {
+                    self.isLoadingRelay.accept(false)
                     return self.initialMedicationsRelay.asObservable()
                 }
 
                 guard trimmedKeyword.count >= 2 else {
+                    self.isLoadingRelay.accept(false)
                     return Observable.just([])
                 }
+                self.isLoadingRelay.accept(true)
                 return self.medicationRepository.searchMedication(keyword: trimmedKeyword)
+                    .do(onNext: { [weak self] _ in
+                        self?.isLoadingRelay.accept(false)
+                    }, onError: { [weak self] _ in
+                        self?.isLoadingRelay.accept(false)
+                    }, onCompleted: { [weak self] in
+                        self?.isLoadingRelay.accept(false)
+                    })
                     .catch { error in
                         print("검색 에러: \(error.localizedDescription)")
                         return Observable.just([])
@@ -219,11 +242,12 @@ final class PillTypeBottomSheetViewController: UIViewController {
             .bind(to: searchResultsRelay)
             .disposed(by: disposeBag)
 
-        searchResultsRelay
-            .subscribe(onNext: { [weak self] results in
+        isLoadingRelay
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isLoading in
                 guard let self = self else { return }
-                let hasResults = !results.isEmpty
-                self.searchResultsTableView.isHidden = !hasResults
+                isLoading ? self.loadingIndicator.startAnimating() : self.loadingIndicator.stopAnimating()
             })
             .disposed(by: disposeBag)
 
@@ -251,6 +275,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
     }
 
     private func fetchInitialMedications() {
+        isLoadingRelay.accept(true)
         Observable.from(initialSearchKeywords)
             .concatMap { [weak self] keyword -> Observable<[MedicationInfo]> in
                 guard let self = self else { return Observable.just([]) }
@@ -278,6 +303,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
                 if self.pillNameTextField.text?.isEmpty ?? true {
                     self.searchResultsRelay.accept(results)
                 }
+                self.isLoadingRelay.accept(false)
             }, onError: { error in
                 print("초기 목록 에러: \(error.localizedDescription)")
             })
@@ -309,7 +335,13 @@ final class PillTypeBottomSheetViewController: UIViewController {
     private func animatePresentation() {
         containerViewBottomConstraint?.update(offset: 0)
         
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
+        UIView.animate(
+            withDuration: DatePickerConfiguration.Animation.presentationDuration,
+            delay: 0,
+            usingSpringWithDamping: DatePickerConfiguration.Animation.springDamping,
+            initialSpringVelocity: DatePickerConfiguration.Animation.springVelocity,
+            options: .curveEaseOut
+        ) {
             self.dimmedView.alpha = 1
             self.view.layoutIfNeeded()
         }
@@ -351,4 +383,3 @@ final class PillTypeBottomSheetViewController: UIViewController {
         }
     }
 }
-
