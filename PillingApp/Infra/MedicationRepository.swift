@@ -28,7 +28,8 @@ final class MedicationRepository: MedicationRepositoryProtocol {
 
         if let cachedData = loadFromCache(key: cacheKey, timestampKey: timestampKey) {
             print("   💾 [Cache HIT] '\(keyword)' - 캐시에서 \(cachedData.count)개 로드")
-            return Observable.just(cachedData)
+            let filtered = filterContraceptivePills(cachedData, keyword: keyword)
+            return Observable.just(filtered)
         }
 
         print("   📡 [Cache MISS] '\(keyword)' - 새로 검색 필요")
@@ -40,6 +41,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
 
         print("   🌐 [API] '\(keyword)' - 공공데이터 API 호출 중...")
         return apiService.fetchMedications(keyword: keyword)
+            .map { [weak self] medications -> [MedicationInfo] in
+                guard let self = self else { return medications }
+                return self.filterContraceptivePills(medications, keyword: keyword)
+            }
             .do(onNext: { [weak self] medications in
                 print("   💾 [Cache SAVE] '\(keyword)' - \(medications.count)개 약물 캐시에 저장")
                 self?.saveToCache(medications, key: cacheKey, timestampKey: timestampKey)
@@ -52,6 +57,36 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 print("   🔄 [Fallback] '\(keyword)' - 로컬 데이터로 전환")
                 return self.getFallbackData(keyword: keyword)
             }
+    }
+
+    private func filterContraceptivePills(_ medications: [MedicationInfo], keyword: String) -> [MedicationInfo] {
+        let beforeCount = medications.count
+
+        let filtered = medications.filter { medication in
+            // 1. 피임제 타입 체크
+            guard medication.productType.contains("[02540]") else {
+                return false
+            }
+
+            // 2. 키워드 매칭 정확도 체크 (부분 일치가 아닌 시작 일치)
+            let normalizedName = medication.name.lowercased()
+                .replacingOccurrences(of: " ", with: "")
+                .replacingOccurrences(of: "정", with: "")
+
+            let normalizedKeyword = keyword.lowercased()
+                .replacingOccurrences(of: " ", with: "")
+                .replacingOccurrences(of: "정", with: "")
+
+            // 약 이름이 키워드로 시작하는지 체크
+            return normalizedName.hasPrefix(normalizedKeyword)
+        }
+
+        let filteredCount = beforeCount - filtered.count
+        if filteredCount > 0 {
+            print("   🔍 [Filter] '\(keyword)' - 피임제 외 \(filteredCount)개 제외")
+        }
+
+        return filtered
     }
 
     func refreshCache() -> Observable<Void> {
@@ -188,10 +223,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 productType: "피임제"
             ),
             MedicationInfo(
-                id: "센스리베",
-                name: "센스리베",
+                id: "센스데이",
+                name: "센스데이",
                 manufacturer: "한국오가논",
-                mainIngredient: "에티닐에스트라디올, 드로스피레논",
+                mainIngredient: "에티닐에스트라디올, 레보노르게스트렐",
                 materialName: "",
                 dosageInstructions: "21일 복용 + 7일 휴약",
                 packUnit: "",

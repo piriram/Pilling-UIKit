@@ -21,7 +21,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
     private let searchResultsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let initialMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let isLoadingRelay = BehaviorRelay<Bool>(value: true)
-    private let initialSearchKeywords = ["머시론","센스데이","디어미","멜리안","마이보라","야즈","야스민","클래라","에이리스","라니아","미니보라","트리퀼라","센스리베","미뉴렛"]
+    private let initialSearchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
     private let contraceptiveTypeKeyword = "피임제"
     private var selectedMedicationId: String?
     

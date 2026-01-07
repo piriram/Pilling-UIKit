@@ -201,14 +201,15 @@ final class PillSettingViewController: UIViewController {
     private func prefetchMedicationList() {
         print("🚀 [Prefetch] 약물 프리패치 시작 - \(prefetchKeywords.count)개 키워드")
         print("🚀 [Prefetch] 키워드 목록: \(prefetchKeywords.joined(separator: ", "))")
-        
+
         var completedCount = 0
-        
+        var allMedications: [String: [MedicationInfo]] = [:]
+
         Observable.from(prefetchKeywords)
             .concatMap { [weak self] keyword -> Observable<(String, [MedicationInfo])> in
                 guard let self = self else { return Observable.just((keyword, [])) }
                 print("📥 [Prefetch] '\(keyword)' 검색 시작...")
-                
+
                 return self.medicationRepository.searchMedication(keyword: keyword)
                     .map { medications in
                         print("✅ [Prefetch] '\(keyword)' 완료 - \(medications.count)개 결과")
@@ -222,14 +223,93 @@ final class PillSettingViewController: UIViewController {
             .subscribe(
                 onNext: { keyword, medications in
                     completedCount += 1
+                    allMedications[keyword] = medications
                     print("📊 [Prefetch] 진행 상황: \(completedCount)/\(self.prefetchKeywords.count)")
                 },
                 onCompleted: {
                     print("🎉 [Prefetch] 모든 약물 프리패치 완료!")
                     self.logCacheStatus()
+                    self.printHardcodedDataTemplate(allMedications)
                 }
             )
             .disposed(by: disposeBag)
+    }
+
+    private func printHardcodedDataTemplate(_ medications: [String: [MedicationInfo]]) {
+        print("\n" + String(repeating: "=", count: 80))
+        print("📋 [Hardcoded Data Template] 아래 코드를 MedicationRepository.getHardcodedPills()에 복사하세요")
+        print(String(repeating: "=", count: 80) + "\n")
+
+        var hardcodedArray: [String] = []
+
+        for keyword in prefetchKeywords {
+            guard let meds = medications[keyword], !meds.isEmpty else {
+                print("❌ '\(keyword)' - 데이터 없음")
+                continue
+            }
+
+            // 피임제 타입만 선택
+            let contraceptives = meds.filter { $0.productType.contains("[02540]") }
+
+            guard let med = contraceptives.first else {
+                print("⚠️ '\(keyword)' - 피임제 없음 (검색 결과: \(meds.count)개)")
+                for m in meds {
+                    print("   - \(m.name) [\(m.productType)]")
+                }
+                continue
+            }
+
+            // 데이터 완성도 체크
+            var warnings: [String] = []
+            if med.mainIngredient.isEmpty { warnings.append("성분 누락") }
+            if med.dosageInstructions.isEmpty { warnings.append("용법 누락") }
+            if med.packUnit.isEmpty { warnings.append("포장단위 누락") }
+            if med.imageURL.isEmpty { warnings.append("이미지 누락") }
+
+            let template = """
+            MedicationInfo(
+                id: "\(med.id)",
+                name: "\(med.name)",
+                manufacturer: "\(med.manufacturer)",
+                mainIngredient: "\(med.mainIngredient)",
+                materialName: "\(med.materialName)",
+                dosageInstructions: "\(med.dosageInstructions)",
+                packUnit: "\(med.packUnit)",
+                storageMethod: "\(med.storageMethod)",
+                permitDate: "\(med.permitDate)",
+                imageURL: "\(med.imageURL)",
+                productType: "\(med.productType)"
+            )
+            """
+
+            hardcodedArray.append(template)
+
+            print("✅ '\(keyword)' → \(med.name)")
+            print("   제조사: \(med.manufacturer)")
+            print("   ID: \(med.id)")
+            print("   제품타입: \(med.productType)")
+            if !med.mainIngredient.isEmpty {
+                print("   성분: \(med.mainIngredient)")
+            }
+            if !med.dosageInstructions.isEmpty {
+                print("   용법: \(med.dosageInstructions)")
+            }
+            if !med.imageURL.isEmpty {
+                print("   이미지: ✓")
+            }
+            if !warnings.isEmpty {
+                print("   ⚠️ 주의: \(warnings.joined(separator: ", "))")
+            }
+            print()
+        }
+
+        print("\n// Copy this code:")
+        print("private static func getHardcodedPills() -> [MedicationInfo] {")
+        print("    return [")
+        print(hardcodedArray.joined(separator: ",\n"))
+        print("    ]")
+        print("}")
+        print("\n" + String(repeating: "=", count: 80) + "\n")
     }
     
     // MARK: - Private Methods
