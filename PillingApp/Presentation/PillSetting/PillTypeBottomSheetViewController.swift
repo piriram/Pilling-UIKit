@@ -123,7 +123,26 @@ final class PillTypeBottomSheetViewController: UIViewController {
         setupConstraints()
         bind()
         setupGestures()
+
+        // 즉시 하드코딩 데이터 표시
+        loadHardcodedMedications()
+
+        // 백그라운드에서 API 업데이트
         fetchInitialMedications()
+    }
+
+    private func loadHardcodedMedications() {
+        let hardcodedPills = medicationRepository.getHardcodedPills()
+        let contraceptivePills = hardcodedPills.filter { $0.productTypeDisplay.contains(contraceptiveTypeKeyword) }
+
+        print("💊 [Hardcoded] 즉시 표시: \(contraceptivePills.count)개 약물")
+
+        initialMedicationsRelay.accept(contraceptivePills)
+        searchResultsRelay.accept(contraceptivePills)
+        isLoadingRelay.accept(false)
+
+        // 하드코딩 데이터 표시 로깅
+        analyticsService.logEvent(.medicationListViewed(count: contraceptivePills.count))
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -293,7 +312,8 @@ final class PillTypeBottomSheetViewController: UIViewController {
     }
 
     private func fetchInitialMedications() {
-        isLoadingRelay.accept(true)
+        print("🔄 [API] 백그라운드에서 최신 약물 정보 업데이트 중...")
+
         Observable.from(initialSearchKeywords)
             .concatMap { [weak self] keyword -> Observable<[MedicationInfo]> in
                 guard let self = self else { return Observable.just([]) }
@@ -302,31 +322,36 @@ final class PillTypeBottomSheetViewController: UIViewController {
             }
             .toArray()
             .map { resultsByKeyword -> [MedicationInfo] in
-                var uniqueById: [String: MedicationInfo] = [:]
+                // 키워드 순서를 유지하기 위해 순서대로 추가
+                var orderedResults: [MedicationInfo] = []
+                var seenIds: Set<String> = []
+
                 for medications in resultsByKeyword {
                     for medication in medications where medication.productTypeDisplay.contains(self.contraceptiveTypeKeyword) {
                         let key = medication.id.isEmpty ? medication.name : medication.id
-                        if uniqueById[key] == nil {
-                            uniqueById[key] = medication
+                        if !seenIds.contains(key) {
+                            orderedResults.append(medication)
+                            seenIds.insert(key)
                         }
                     }
                 }
-                return Array(uniqueById.values).sorted { $0.name < $1.name }
+
+                return orderedResults
             }
             .asObservable()
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] results in
                 guard let self = self else { return }
+
+                print("✅ [API] 최신 약물 정보 업데이트 완료: \(results.count)개")
+
+                // 최신 데이터로 업데이트 (사용자가 검색 중이 아닐 때만)
                 self.initialMedicationsRelay.accept(results)
                 if self.pillNameTextField.text?.isEmpty ?? true {
                     self.searchResultsRelay.accept(results)
                 }
-                self.isLoadingRelay.accept(false)
-
-                // 🔥 초기 목록 표시 이벤트 로깅
-                self.analyticsService.logEvent(.medicationListViewed(count: results.count))
             }, onError: { error in
-                print("초기 목록 에러: \(error.localizedDescription)")
+                print("⚠️ [API] 업데이트 실패: \(error.localizedDescription) - 하드코딩 데이터 유지")
             })
             .disposed(by: disposeBag)
     }

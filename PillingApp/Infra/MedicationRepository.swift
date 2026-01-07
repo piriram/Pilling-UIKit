@@ -162,7 +162,7 @@ final class MedicationRepository: MedicationRepositoryProtocol {
             .replacingOccurrences(of: " ", with: "")
             .replacingOccurrences(of: "정", with: "")
 
-        let fallbackPills = Self.getHardcodedPills()
+        let fallbackPills = Self.getHardcodedPillsData()
 
         let matchedPills = fallbackPills.filter { pill in
             let pillName = pill.name.lowercased()
@@ -181,85 +181,90 @@ final class MedicationRepository: MedicationRepositoryProtocol {
         return Observable.just(matchedPills)
     }
 
-    private static func getHardcodedPills() -> [MedicationInfo] {
+    func getHardcodedPills() -> [MedicationInfo] {
+        return Self.getHardcodedPillsData()
+    }
+
+    private static func getHardcodedPillsData() -> [MedicationInfo] {
+        // 순서: initialSearchKeywords와 동일하게 유지 ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
         return [
             MedicationInfo(
-                id: "머시론",
-                name: "머시론",
-                manufacturer: "바이엘코리아",
-                mainIngredient: "에티닐에스트라디올, 데소게스트렐",
+                id: "200009522",
+                name: "머시론정",
+                manufacturer: "알보젠코리아(주)",
+                mainIngredient: "",
                 materialName: "",
-                dosageInstructions: "21일 복용 + 7일 휴약",
+                dosageInstructions: "",
                 packUnit: "",
                 storageMethod: "",
-                permitDate: "",
-                imageURL: "",
-                productType: "피임제"
+                permitDate: "20000616",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MpYN6WeYa0",
+                productType: "[02540]피임제"
             ),
             MedicationInfo(
-                id: "야즈",
-                name: "야즈",
-                manufacturer: "바이엘코리아",
-                mainIngredient: "에티닐에스트라디올, 드로스피레논",
+                id: "201706350",
+                name: "센스데이정",
+                manufacturer: "(주)유한양행",
+                mainIngredient: "",
                 materialName: "",
-                dosageInstructions: "24일 복용 + 4일 휴약",
+                dosageInstructions: "",
                 packUnit: "",
                 storageMethod: "",
-                permitDate: "",
-                imageURL: "",
-                productType: "피임제"
+                permitDate: "20170731",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154609816285900048",
+                productType: "[02540]피임제"
             ),
             MedicationInfo(
-                id: "야스민",
-                name: "야스민",
-                manufacturer: "바이엘코리아",
-                mainIngredient: "에티닐에스트라디올, 드로스피레논",
+                id: "200807207",
+                name: "멜리안정",
+                manufacturer: "동아제약(주)",
+                mainIngredient: "",
                 materialName: "",
-                dosageInstructions: "21일 복용 + 7일 휴약",
+                dosageInstructions: "",
                 packUnit: "",
                 storageMethod: "",
-                permitDate: "",
-                imageURL: "",
-                productType: "피임제"
+                permitDate: "20080627",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427893111400138",
+                productType: "[02540]피임제"
             ),
             MedicationInfo(
-                id: "센스데이",
-                name: "센스데이",
-                manufacturer: "한국오가논",
-                mainIngredient: "에티닐에스트라디올, 레보노르게스트렐",
+                id: "200800687",
+                name: "마이보라정",
+                manufacturer: "동아제약(주)",
+                mainIngredient: "",
                 materialName: "",
-                dosageInstructions: "21일 복용 + 7일 휴약",
+                dosageInstructions: "",
                 packUnit: "",
                 storageMethod: "",
-                permitDate: "",
-                imageURL: "",
-                productType: "피임제"
+                permitDate: "20080117",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427878780200121",
+                productType: "[02540]피임제"
             ),
             MedicationInfo(
-                id: "마이보라",
-                name: "마이보라",
-                manufacturer: "바이엘코리아",
-                mainIngredient: "에티닐에스트라디올, 레보노르게스트렐",
+                id: "200807400",
+                name: "야즈정",
+                manufacturer: "바이엘코리아(주)",
+                mainIngredient: "",
                 materialName: "",
-                dosageInstructions: "21일 복용 + 7일 휴약",
+                dosageInstructions: "",
                 packUnit: "",
                 storageMethod: "",
-                permitDate: "",
-                imageURL: "",
-                productType: "피임제"
+                permitDate: "20080703",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427897731800020",
+                productType: "[02540]피임제"
             ),
             MedicationInfo(
-                id: "멜리안",
-                name: "멜리안",
-                manufacturer: "한국오가논",
-                mainIngredient: "에티닐에스트라디올, 데소게스트렐",
+                id: "200801550",
+                name: "야스민정",
+                manufacturer: "바이엘코리아(주)",
+                mainIngredient: "",
                 materialName: "",
-                dosageInstructions: "21일 복용 + 7일 휴약",
+                dosageInstructions: "",
                 packUnit: "",
                 storageMethod: "",
-                permitDate: "",
-                imageURL: "",
-                productType: "피임제"
+                permitDate: "20080204",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427847082700145",
+                productType: "[02540]피임제"
             )
         ]
     }
