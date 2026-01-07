@@ -35,7 +35,14 @@ struct MedicationInfo: Codable {
 
 extension MedicationInfo {
     var isContraceptivePill: Bool {
-        let keywords = ["경구피임", "피임약", "피임제","난포호르몬 및 황체호르몬제"]
+        // productType 코드로 직접 체크 (더 정확)
+        let contraceptiveCodes = ["[02540]", "[02470]"]  // 피임제, 난포호르몬제 및 황체호르몬제
+        if contraceptiveCodes.contains(where: { productType.contains($0) }) {
+            return true
+        }
+
+        // 이름에 키워드 포함 여부 체크 (백업)
+        let keywords = ["경구피임", "피임약", "피임제"]
         return keywords.contains { name.contains($0) }
     }
 
