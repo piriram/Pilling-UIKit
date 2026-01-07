@@ -72,18 +72,24 @@ struct MedicationItem: Codable {
 
 extension MedicationItem {
     func toDomainModel() -> MedicationInfo {
-        MedicationInfo(
+        let dosageText = inferDosageInstructions()
+        let dosage = DosageParser.parse(dosageText: dosageText)
+
+        return MedicationInfo(
             id: itemSeq ?? "",
             name: itemName ?? "",
             manufacturer: entpName ?? "",
             mainIngredient: itemIngrName ?? "",
             materialName: materialName ?? "",
-            dosageInstructions: inferDosageInstructions(),
+            dosageInstructions: dosageText,
             packUnit: packUnit ?? "",
             storageMethod: storageMethod ?? "",
             permitDate: itemPermitDate ?? "",
             imageURL: bigPrdtImgUrl ?? "",
-            productType: productType ?? ""
+            productType: productType ?? "",
+            takingDays: dosage.takingDays,
+            breakDays: dosage.breakDays,
+            detailInfo: nil
         )
     }
 }

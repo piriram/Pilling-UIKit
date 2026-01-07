@@ -176,7 +176,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 storageMethod: "",
                 permitDate: "20000616",
                 imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1MpYN6WeYa0",
-                productType: "[02540]피임제"
+                productType: "[02540]피임제",
+                takingDays: 21,
+                breakDays: 7,
+                detailInfo: nil
             ),
             MedicationInfo(
                 id: "201706350",
@@ -189,7 +192,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 storageMethod: "",
                 permitDate: "20170731",
                 imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/154609816285900048",
-                productType: "[02540]피임제"
+                productType: "[02540]피임제",
+                takingDays: 21,
+                breakDays: 7,
+                detailInfo: nil
             ),
             MedicationInfo(
                 id: "200807207",
@@ -202,7 +208,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 storageMethod: "",
                 permitDate: "20080627",
                 imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427893111400138",
-                productType: "[02540]피임제"
+                productType: "[02540]피임제",
+                takingDays: 21,
+                breakDays: 7,
+                detailInfo: nil
             ),
             MedicationInfo(
                 id: "200800687",
@@ -215,7 +224,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 storageMethod: "",
                 permitDate: "20080117",
                 imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427878780200121",
-                productType: "[02540]피임제"
+                productType: "[02540]피임제",
+                takingDays: 21,
+                breakDays: 7,
+                detailInfo: nil
             ),
             MedicationInfo(
                 id: "200807400",
@@ -228,7 +240,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 storageMethod: "",
                 permitDate: "20080703",
                 imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427897731800020",
-                productType: "[02540]피임제"
+                productType: "[02540]피임제",
+                takingDays: 24,
+                breakDays: 4,
+                detailInfo: nil
             ),
             MedicationInfo(
                 id: "200801550",
@@ -241,7 +256,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 storageMethod: "",
                 permitDate: "20080204",
                 imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147427847082700145",
-                productType: "[02540]피임제"
+                productType: "[02540]피임제",
+                takingDays: 21,
+                breakDays: 7,
+                detailInfo: nil
             )
         ]
     }
