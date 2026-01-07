@@ -71,6 +71,11 @@ final class DIContainer {
         return MedicationRepository(apiService: apiService)
     }()
 
+    private lazy var medicationDetailAPIService: MedicationDetailAPIServiceProtocol = {
+        let apiKey = Bundle.main.object(forInfoDictionaryKey: "MFDS_DETAIL_API_KEY") as? String ?? ""
+        return MedicationDetailAPIService(apiKey: apiKey)
+    }()
+
     // MARK: - UseCases
     
     func makeFetchDashboardDataUseCase() -> FetchDashboardDataUseCaseProtocol {
@@ -203,5 +208,15 @@ final class DIContainer {
 
     func getCrashlyticsService() -> CrashlyticsServiceProtocol {
         return crashlyticsService
+    }
+
+    func getMedicationDetailAPIService() -> MedicationDetailAPIServiceProtocol {
+        return medicationDetailAPIService
+    }
+
+    // MARK: - Test ViewControllers
+
+    func makeMedicationDetailTestViewController() -> MedicationDetailTestViewController {
+        return MedicationDetailTestViewController(detailAPIService: medicationDetailAPIService)
     }
 }

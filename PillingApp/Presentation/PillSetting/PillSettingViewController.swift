@@ -314,13 +314,26 @@ final class PillSettingViewController: UIViewController {
         let tripleTabGesture = UITapGestureRecognizer(target: self, action: #selector(handleDebugTap))
         tripleTabGesture.numberOfTapsRequired = 3
         view.addGestureRecognizer(tripleTabGesture)
-        print("🔧 [Debug] 화면을 3번 탭하면 캐시 상태를 확인할 수 있습니다.")
+
+        let quadrupleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTestScreenTap))
+        quadrupleTapGesture.numberOfTapsRequired = 4
+        view.addGestureRecognizer(quadrupleTapGesture)
+
+        print("🔧 [Debug] 화면을 3번 탭: 캐시 상태 확인")
+        print("🧪 [Debug] 화면을 4번 탭: 상세 API 테스트 화면")
     }
     
     @objc private func handleDebugTap() {
         checkCacheStatus()
     }
-    
+
+    @objc private func handleTestScreenTap() {
+        let testVC = DIContainer.shared.makeMedicationDetailTestViewController()
+        let nav = UINavigationController(rootViewController: testVC)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
     private func logCacheStatus() {
         let defaults = UserDefaults.standard
         let allKeys = defaults.dictionaryRepresentation().keys
