@@ -10,7 +10,7 @@ final class PillSettingViewController: UIViewController {
     private let viewModel: PillSettingViewModel
     private let disposeBag = DisposeBag()
     private let medicationRepository: MedicationRepositoryProtocol
-    private let prefetchKeywords = ["머시론","센스데이","디어미","멜리안","마이보라","야즈","야스민","클래라","에이리스","라니아","미니보라","트리퀼라","센스리베","미뉴렛"]
+    private let prefetchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
     
     // MARK: - UI Components
     

@@ -175,8 +175,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
 
         confirmButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(24)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
-            $0.height.equalTo(56)
+            $0.bottom.equalToSuperview().offset(-20)
         }
         
         loadingIndicator.snp.makeConstraints {
