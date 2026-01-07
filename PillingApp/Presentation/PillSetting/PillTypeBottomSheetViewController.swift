@@ -18,12 +18,14 @@ final class PillTypeBottomSheetViewController: UIViewController {
     }
 
     private let medicationRepository: MedicationRepositoryProtocol
+    private let analyticsService: AnalyticsServiceProtocol
     private let searchResultsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let initialMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let isLoadingRelay = BehaviorRelay<Bool>(value: true)
     private let initialSearchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
     private let contraceptiveTypeKeyword = "피임제"
     private var selectedMedicationId: String?
+    private var currentSearchKeyword: String = ""
     
     // MARK: - UI Components
     
@@ -97,8 +99,12 @@ final class PillTypeBottomSheetViewController: UIViewController {
     
     // MARK: - Initialization
 
-    init(medicationRepository: MedicationRepositoryProtocol = DIContainer.shared.getMedicationRepository()) {
+    init(
+        medicationRepository: MedicationRepositoryProtocol = DIContainer.shared.getMedicationRepository(),
+        analyticsService: AnalyticsServiceProtocol = DIContainer.shared.getAnalyticsService()
+    ) {
         self.medicationRepository = medicationRepository
+        self.analyticsService = analyticsService
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
         modalTransitionStyle = .crossDissolve
@@ -210,6 +216,8 @@ final class PillTypeBottomSheetViewController: UIViewController {
                 }
 
                 let trimmedKeyword = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+                self.currentSearchKeyword = trimmedKeyword
+
                 if trimmedKeyword.isEmpty {
                     self.isLoadingRelay.accept(false)
                     return self.initialMedicationsRelay.asObservable()
@@ -219,6 +227,10 @@ final class PillTypeBottomSheetViewController: UIViewController {
                     self.isLoadingRelay.accept(false)
                     return Observable.just([])
                 }
+
+                // 🔥 검색 이벤트 로깅
+                self.analyticsService.logEvent(.medicationSearched(keyword: trimmedKeyword))
+
                 self.isLoadingRelay.accept(true)
                 return self.medicationRepository.searchMedication(keyword: trimmedKeyword)
                     .do(onNext: { [weak self] _ in
@@ -269,6 +281,13 @@ final class PillTypeBottomSheetViewController: UIViewController {
                 self.selectedMedicationId = medicationId
                 self.confirmButton.isEnabled = true
                 self.searchResultsTableView.reloadData()
+
+                // 🔥 약 선택 이벤트 로깅
+                self.analyticsService.logEvent(.medicationSelected(
+                    id: medication.id,
+                    name: medication.name,
+                    keyword: self.currentSearchKeyword
+                ))
             })
             .disposed(by: disposeBag)
     }
@@ -303,6 +322,9 @@ final class PillTypeBottomSheetViewController: UIViewController {
                     self.searchResultsRelay.accept(results)
                 }
                 self.isLoadingRelay.accept(false)
+
+                // 🔥 초기 목록 표시 이벤트 로깅
+                self.analyticsService.logEvent(.medicationListViewed(count: results.count))
             }, onError: { error in
                 print("초기 목록 에러: \(error.localizedDescription)")
             })
