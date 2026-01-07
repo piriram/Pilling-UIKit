@@ -340,7 +340,8 @@ final class PillSettingViewController: UIViewController {
             guard let self = self else { return }
 
             // PillInfo를 업데이트하고 다시 저장
-            if let pillInfo = DIContainer.shared.userDefaultsManager.loadPillInfo() {
+            let userDefaultsManager = DIContainer.shared.getUserDefaultsManager()
+            if let pillInfo = userDefaultsManager.loadPillInfo() {
                 let updatedPillInfo = PillInfo(
                     name: pillInfo.name,
                     takingDays: apiDosage.0,
@@ -350,7 +351,7 @@ final class PillSettingViewController: UIViewController {
                     dosageInstructions: pillInfo.dosageInstructions,
                     itemSeq: pillInfo.itemSeq
                 )
-                DIContainer.shared.userDefaultsManager.savePillInfo(updatedPillInfo)
+                userDefaultsManager.savePillInfo(updatedPillInfo)
                 print("✅ 복용 주기 업데이트: \(apiDosage.0)일 복용 / \(apiDosage.1)일 휴약")
             }
         }
