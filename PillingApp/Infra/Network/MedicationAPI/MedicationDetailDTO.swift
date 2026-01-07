@@ -78,22 +78,44 @@ extension MedicationDetailItem {
 
     // 복용 주기 파싱
     private func parseDosageInstructions(_ useMethod: String?) -> String {
-        let text = cleanHTML(useMethod).lowercased()
+        print("🔍 [복용주기 파싱] ==================")
+        print("📄 원본: \(useMethod?.prefix(200) ?? "nil")")
+
+        let cleanedText = cleanHTML(useMethod)
+        print("🧹 HTML 제거: \(cleanedText.prefix(200))")
+
+        let text = cleanedText.lowercased()
+        print("🔤 소문자 변환: \(text.prefix(200))")
 
         guard !text.isEmpty else {
+            print("⚠️ 빈 텍스트 → 기본값 21/7")
             return "21일 복용 + 7일 휴약"
         }
 
         // "24일간", "24정", "24일 복용" 등 패턴 감지
-        if text.contains("24일") || text.contains("24정") || text.contains("24회") {
+        let has24Days = text.contains("24일")
+        let has24Pills = text.contains("24정")
+        let has24Times = text.contains("24회")
+        print("🔍 24 패턴: 24일=\(has24Days), 24정=\(has24Pills), 24회=\(has24Times)")
+
+        if has24Days || has24Pills || has24Times {
+            print("✅ 결과: 24일 복용 + 4일 휴약")
             return "24일 복용 + 4일 휴약"
         }
+
         // "21일간", "21정", "21일 복용" 등 패턴 감지
-        else if text.contains("21일") || text.contains("21정") || text.contains("21회") {
+        let has21Days = text.contains("21일")
+        let has21Pills = text.contains("21정")
+        let has21Times = text.contains("21회")
+        print("🔍 21 패턴: 21일=\(has21Days), 21정=\(has21Pills), 21회=\(has21Times)")
+
+        if has21Days || has21Pills || has21Times {
+            print("✅ 결과: 21일 복용 + 7일 휴약")
             return "21일 복용 + 7일 휴약"
         }
 
         // 기본값
+        print("⚠️ 패턴 미감지 → 기본값 21/7")
         return "21일 복용 + 7일 휴약"
     }
 }
@@ -124,15 +146,29 @@ struct MedicationDetailInfo {
 
     // 복용일/휴약일을 Int로 파싱
     func parsedDosage() -> (takingDays: Int, breakDays: Int) {
+        print("🔢 [Int 파싱] dosageInstructions: \(dosageInstructions)")
         let text = dosageInstructions.lowercased()
 
-        if text.contains("24일") || text.contains("24정") {
+        let has24Days = text.contains("24일")
+        let has24Pills = text.contains("24정")
+        print("🔍 24 패턴: 24일=\(has24Days), 24정=\(has24Pills)")
+
+        if has24Days || has24Pills {
+            print("✅ Int 결과: (24, 4)")
             return (24, 4)
-        } else if text.contains("21일") || text.contains("21정") {
+        }
+
+        let has21Days = text.contains("21일")
+        let has21Pills = text.contains("21정")
+        print("🔍 21 패턴: 21일=\(has21Days), 21정=\(has21Pills)")
+
+        if has21Days || has21Pills {
+            print("✅ Int 결과: (21, 7)")
             return (21, 7)
         }
 
         // 기본값
+        print("⚠️ 패턴 미감지 → Int 기본값 (21, 7)")
         return (21, 7)
     }
 }

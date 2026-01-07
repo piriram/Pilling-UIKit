@@ -116,17 +116,25 @@ final class PillSettingViewModel {
                                 // 상세 정보 저장
                                 let storedInfo = detail.toStoredInfo()
                                 userDefaultsManager.saveMedicationDetail(storedInfo, forItemSeq: itemSeq)
+                                print("✅ 상세 정보 저장 완료: \(detail.itemName)")
 
                                 // 복용 주기 비교
                                 let apiDosage = detail.parsedDosage()
                                 let currentDosage = (pillInfo.takingDays, pillInfo.breakDays)
 
+                                print("⚖️ [복용 주기 비교] \(pillInfo.name)")
+                                print("   현재 선택: \(currentDosage.0)일 복용 / \(currentDosage.1)일 휴약")
+                                print("   API 결과: \(apiDosage.0)일 복용 / \(apiDosage.1)일 휴약")
+
                                 if apiDosage != currentDosage {
+                                    print("   ⚠️ 불일치 감지 → Alert 표시")
                                     dosageMismatchAlertSubject.onNext((
                                         current: currentDosage,
                                         api: apiDosage,
                                         itemSeq: itemSeq
                                     ))
+                                } else {
+                                    print("   ✅ 일치")
                                 }
                             },
                             onError: { error in
