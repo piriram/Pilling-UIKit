@@ -78,7 +78,9 @@ extension MedicationDetailItem {
 
     // 복용 주기 파싱
     private func parseDosageInstructions(_ useMethod: String?) -> String {
-        guard let text = cleanHTML(useMethod).lowercased() else {
+        let text = cleanHTML(useMethod).lowercased()
+
+        guard !text.isEmpty else {
             return "21일 복용 + 7일 휴약"
         }
 
