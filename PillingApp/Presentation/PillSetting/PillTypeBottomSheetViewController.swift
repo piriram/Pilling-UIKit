@@ -133,7 +133,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
 
     private func loadHardcodedMedications() {
         let hardcodedPills = medicationRepository.getHardcodedPills()
-        let contraceptivePills = hardcodedPills.filter { $0.productTypeDisplay.contains(contraceptiveTypeKeyword) }
+        let contraceptivePills = hardcodedPills.filter { $0.isContraceptivePill }
 
         initialMedicationsRelay.accept(contraceptivePills)
         searchResultsRelay.accept(contraceptivePills)
@@ -263,7 +263,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
             }
             .map { [weak self] results -> [MedicationInfo] in
                 guard let self = self else { return results }
-                return results.filter { $0.productTypeDisplay.contains(self.contraceptiveTypeKeyword) }
+                return results.filter { $0.isContraceptivePill }
             }
             .observe(on: MainScheduler.instance)
             .bind(to: searchResultsRelay)
