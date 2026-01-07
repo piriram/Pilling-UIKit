@@ -26,67 +26,60 @@ final class MedicationRepository: MedicationRepositoryProtocol {
         let cacheKey = cacheKeyPrefix + keyword
         let timestampKey = timestampKeyPrefix + keyword
 
-        if let cachedData = loadFromCache(key: cacheKey, timestampKey: timestampKey) {
-            print("   💾 [Cache HIT] '\(keyword)' - 캐시에서 \(cachedData.count)개 로드")
-            let filtered = filterContraceptivePills(cachedData, keyword: keyword)
-            return Observable.just(filtered)
-        }
-
-        print("   📡 [Cache MISS] '\(keyword)' - 새로 검색 필요")
-
+        // 한국 외 지역은 캐시 우선 사용
         guard isKoreanRegion else {
-            print("   🌍 [Region] 한국 외 지역 - Fallback 데이터 사용")
+            if let cachedData = loadFromCache(key: cacheKey, timestampKey: timestampKey) {
+                let filtered = filterContraceptivePills(cachedData, keyword: keyword)
+                return Observable.just(filtered)
+            }
             return getFallbackData(keyword: keyword)
         }
 
-        print("   🌐 [API] '\(keyword)' - 공공데이터 API 호출 중...")
+        // 한국 지역: API 우선 호출
         return apiService.fetchMedications(keyword: keyword)
             .map { [weak self] medications -> [MedicationInfo] in
                 guard let self = self else { return medications }
                 return self.filterContraceptivePills(medications, keyword: keyword)
             }
-            .do(onNext: { [weak self] medications in
-                print("   💾 [Cache SAVE] '\(keyword)' - \(medications.count)개 약물 캐시에 저장")
-                self?.saveToCache(medications, key: cacheKey, timestampKey: timestampKey)
-            })
+            .flatMap { [weak self] filteredResults -> Observable<[MedicationInfo]> in
+                guard let self = self else { return Observable.just(filteredResults) }
+
+                // API 결과가 있으면 캐시 저장하고 반환
+                if !filteredResults.isEmpty {
+                    self.saveToCache(filteredResults, key: cacheKey, timestampKey: timestampKey)
+                    return Observable.just(filteredResults)
+                }
+
+                // API 결과가 없으면 캐시 확인
+                if let cachedData = self.loadFromCache(key: cacheKey, timestampKey: timestampKey) {
+                    let cached = self.filterContraceptivePills(cachedData, keyword: keyword)
+                    return Observable.just(cached)
+                }
+
+                // 캐시도 없으면 빈 배열 반환
+                return Observable.just([])
+            }
             .catch { [weak self] error in
                 guard let self = self else {
-                    return Observable.error(error)
+                    return Observable.just([])
                 }
-                print("   ⚠️ [API Error] '\(keyword)' - \(error.localizedDescription)")
-                print("   🔄 [Fallback] '\(keyword)' - 로컬 데이터로 전환")
-                return self.getFallbackData(keyword: keyword)
+
+                // API 에러 시 캐시 확인
+                if let cachedData = self.loadFromCache(key: cacheKey, timestampKey: timestampKey) {
+                    let cached = self.filterContraceptivePills(cachedData, keyword: keyword)
+                    return Observable.just(cached)
+                }
+
+                // 캐시도 없으면 빈 배열 반환
+                return Observable.just([])
             }
     }
 
     private func filterContraceptivePills(_ medications: [MedicationInfo], keyword: String) -> [MedicationInfo] {
-        let beforeCount = medications.count
-
-        let filtered = medications.filter { medication in
-            // 1. 피임제 타입 체크
-            guard medication.productType.contains("[02540]") else {
-                return false
-            }
-
-            // 2. 키워드 매칭 정확도 체크 (부분 일치가 아닌 시작 일치)
-            let normalizedName = medication.name.lowercased()
-                .replacingOccurrences(of: " ", with: "")
-                .replacingOccurrences(of: "정", with: "")
-
-            let normalizedKeyword = keyword.lowercased()
-                .replacingOccurrences(of: " ", with: "")
-                .replacingOccurrences(of: "정", with: "")
-
-            // 약 이름이 키워드로 시작하는지 체크
-            return normalizedName.hasPrefix(normalizedKeyword)
+        // 피임제 타입만 체크 (API가 이미 키워드로 검색한 결과이므로)
+        return medications.filter { medication in
+            medication.productType.contains("[02540]")
         }
-
-        let filteredCount = beforeCount - filtered.count
-        if filteredCount > 0 {
-            print("   🔍 [Filter] '\(keyword)' - 피임제 외 \(filteredCount)개 제외")
-        }
-
-        return filtered
     }
 
     func refreshCache() -> Observable<Void> {
@@ -110,16 +103,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
 
     private func saveToCache(_ medications: [MedicationInfo], key: String, timestampKey: String) {
         guard let data = try? JSONEncoder().encode(medications) else {
-            print("   ❌ [Cache] 인코딩 실패")
             return
         }
         UserDefaults.standard.set(data, forKey: key)
         UserDefaults.standard.set(Date(), forKey: timestampKey)
-
-        let allKeys = UserDefaults.standard.dictionaryRepresentation().keys
-        let cacheCount = allKeys.filter { $0.hasPrefix(timestampKeyPrefix) }.count
-        print("   📦 [Cache] 현재 캐시 항목 수: \(cacheCount)/\(maxCacheEntries)")
-
         cleanupOldCacheEntries()
     }
 
@@ -138,10 +125,7 @@ final class MedicationRepository: MedicationRepositoryProtocol {
 
         if cacheEntries.count > maxCacheEntries {
             let entriesToRemove = cacheEntries.dropFirst(maxCacheEntries)
-            print("   🧹 [Cache Cleanup] \(entriesToRemove.count)개 오래된 캐시 삭제")
             for entry in entriesToRemove {
-                let keyword = entry.key.replacingOccurrences(of: timestampKeyPrefix, with: "")
-                print("      ↳ 삭제: '\(keyword)'")
                 let cacheKey = entry.key.replacingOccurrences(of: timestampKeyPrefix, with: cacheKeyPrefix)
                 UserDefaults.standard.removeObject(forKey: entry.key)
                 UserDefaults.standard.removeObject(forKey: cacheKey)
@@ -171,13 +155,6 @@ final class MedicationRepository: MedicationRepositoryProtocol {
             return pillName.contains(normalizedKeyword)
         }
 
-        print("   📚 [Fallback] '\(keyword)' - 로컬에서 \(matchedPills.count)개 매칭")
-        if matchedPills.isEmpty {
-            print("      ⚠️ 매칭된 약물 없음")
-        } else {
-            print("      ↳ \(matchedPills.map { $0.name }.joined(separator: ", "))")
-        }
-
         return Observable.just(matchedPills)
     }
 
@@ -192,9 +169,9 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 id: "200009522",
                 name: "머시론정",
                 manufacturer: "알보젠코리아(주)",
-                mainIngredient: "",
+                mainIngredient: "Desogestrel/Ethinyl Estradiol",
                 materialName: "",
-                dosageInstructions: "",
+                dosageInstructions: "21일 복용 + 7일 휴약",
                 packUnit: "",
                 storageMethod: "",
                 permitDate: "20000616",
@@ -205,9 +182,9 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 id: "201706350",
                 name: "센스데이정",
                 manufacturer: "(주)유한양행",
-                mainIngredient: "",
+                mainIngredient: "Desogestrel/Ethinyl Estradiol",
                 materialName: "",
-                dosageInstructions: "",
+                dosageInstructions: "21일 복용 + 7일 휴약",
                 packUnit: "",
                 storageMethod: "",
                 permitDate: "20170731",
@@ -218,9 +195,9 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 id: "200807207",
                 name: "멜리안정",
                 manufacturer: "동아제약(주)",
-                mainIngredient: "",
+                mainIngredient: "Ethinyl Estradiol/Gestodene",
                 materialName: "",
-                dosageInstructions: "",
+                dosageInstructions: "21일 복용 + 7일 휴약",
                 packUnit: "",
                 storageMethod: "",
                 permitDate: "20080627",
@@ -231,9 +208,9 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 id: "200800687",
                 name: "마이보라정",
                 manufacturer: "동아제약(주)",
-                mainIngredient: "",
+                mainIngredient: "Ethinyl Estradiol/Gestodene",
                 materialName: "",
-                dosageInstructions: "",
+                dosageInstructions: "21일 복용 + 7일 휴약",
                 packUnit: "",
                 storageMethod: "",
                 permitDate: "20080117",
@@ -244,9 +221,9 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 id: "200807400",
                 name: "야즈정",
                 manufacturer: "바이엘코리아(주)",
-                mainIngredient: "",
+                mainIngredient: "Drospirenone/Ethinyl Estradiol Inclusion Complex",
                 materialName: "",
-                dosageInstructions: "",
+                dosageInstructions: "24일 복용 + 4일 휴약",
                 packUnit: "",
                 storageMethod: "",
                 permitDate: "20080703",
@@ -257,9 +234,9 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 id: "200801550",
                 name: "야스민정",
                 manufacturer: "바이엘코리아(주)",
-                mainIngredient: "",
+                mainIngredient: "Drospirenone/Ethinyl Estradiol",
                 materialName: "",
-                dosageInstructions: "",
+                dosageInstructions: "21일 복용 + 7일 휴약",
                 packUnit: "",
                 storageMethod: "",
                 permitDate: "20080204",

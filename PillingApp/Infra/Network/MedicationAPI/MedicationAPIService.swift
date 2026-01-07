@@ -52,9 +52,6 @@ final class MedicationAPIService: MedicationAPIServiceProtocol {
                 return Disposables.create()
             }
 
-            print("🔍 [API] Request URL: \(url.absoluteString)")
-            print("🔍 [API] API Key length: \(normalizedApiKey.count)")
-
             let task = URLSession.shared.dataTask(with: url) { data, response, error in
                 if let error = error {
                     observer.onError(MedicationAPIError.networkError(error))
@@ -76,15 +73,8 @@ final class MedicationAPIService: MedicationAPIServiceProtocol {
                     return
                 }
 
-                if let responseString = String(data: data, encoding: .utf8) {
-                    print("🔍 [API] Full Response: \(responseString)")
-                }
-
                 do {
                     let apiResponse = try JSONDecoder().decode(MedicationAPIResponse.self, from: data)
-
-                    print("🔍 [API] Result Code: \(apiResponse.header.resultCode)")
-                    print("🔍 [API] Result Message: \(apiResponse.header.resultMsg)")
 
                     if apiResponse.header.resultCode != "00" {
                         observer.onError(MedicationAPIError.apiError(
@@ -96,19 +86,8 @@ final class MedicationAPIService: MedicationAPIServiceProtocol {
 
                     // 유효기간 만료/취소된 약품 필터링
                     let validItems = apiResponse.body.items.filter { $0.isValid }
-                    let invalidCount = apiResponse.body.items.count - validItems.count
-
-                    if invalidCount > 0 {
-                        print("   🚫 [Filter] 유효기간 만료/취소된 약품 \(invalidCount)개 제외")
-                        for item in apiResponse.body.items where !item.isValid {
-                            if let name = item.itemName, let cancelName = item.cancelName, let cancelDate = item.cancelDate {
-                                print("      ↳ \(name) - \(cancelName) (\(cancelDate))")
-                            }
-                        }
-                    }
-
                     let medications = validItems.map { $0.toDomainModel() }
-                    print("   ✅ [Result] 최종 \(medications.count)개 약물 반환")
+
                     observer.onNext(medications)
                     observer.onCompleted()
 

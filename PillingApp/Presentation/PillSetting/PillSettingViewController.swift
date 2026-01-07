@@ -199,39 +199,14 @@ final class PillSettingViewController: UIViewController {
     }
     
     private func prefetchMedicationList() {
-        print("🚀 [Prefetch] 약물 프리패치 시작 - \(prefetchKeywords.count)개 키워드")
-        print("🚀 [Prefetch] 키워드 목록: \(prefetchKeywords.joined(separator: ", "))")
-
-        var completedCount = 0
-        var allMedications: [String: [MedicationInfo]] = [:]
-
         Observable.from(prefetchKeywords)
-            .concatMap { [weak self] keyword -> Observable<(String, [MedicationInfo])> in
-                guard let self = self else { return Observable.just((keyword, [])) }
-                print("📥 [Prefetch] '\(keyword)' 검색 시작...")
-
+            .concatMap { [weak self] keyword -> Observable<Void> in
+                guard let self = self else { return Observable.just(()) }
                 return self.medicationRepository.searchMedication(keyword: keyword)
-                    .map { medications in
-                        print("✅ [Prefetch] '\(keyword)' 완료 - \(medications.count)개 결과")
-                        return (keyword, medications)
-                    }
-                    .catch { error in
-                        print("❌ [Prefetch] '\(keyword)' 실패 - \(error.localizedDescription)")
-                        return Observable.just((keyword, []))
-                    }
+                    .map { _ in () }
+                    .catch { _ in Observable.just(()) }
             }
-            .subscribe(
-                onNext: { keyword, medications in
-                    completedCount += 1
-                    allMedications[keyword] = medications
-                    print("📊 [Prefetch] 진행 상황: \(completedCount)/\(self.prefetchKeywords.count)")
-                },
-                onCompleted: {
-                    print("🎉 [Prefetch] 모든 약물 프리패치 완료!")
-                    self.logCacheStatus()
-                    self.printHardcodedDataTemplate(allMedications)
-                }
-            )
+            .subscribe()
             .disposed(by: disposeBag)
     }
 

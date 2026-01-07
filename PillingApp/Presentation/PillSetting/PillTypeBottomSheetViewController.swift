@@ -135,8 +135,6 @@ final class PillTypeBottomSheetViewController: UIViewController {
         let hardcodedPills = medicationRepository.getHardcodedPills()
         let contraceptivePills = hardcodedPills.filter { $0.productTypeDisplay.contains(contraceptiveTypeKeyword) }
 
-        print("💊 [Hardcoded] 즉시 표시: \(contraceptivePills.count)개 약물")
-
         initialMedicationsRelay.accept(contraceptivePills)
         searchResultsRelay.accept(contraceptivePills)
         isLoadingRelay.accept(false)
@@ -259,8 +257,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
                     }, onCompleted: { [weak self] in
                         self?.isLoadingRelay.accept(false)
                     })
-                    .catch { error in
-                        print("검색 에러: \(error.localizedDescription)")
+                    .catch { _ in
                         return Observable.just([])
                     }
             }
@@ -312,8 +309,6 @@ final class PillTypeBottomSheetViewController: UIViewController {
     }
 
     private func fetchInitialMedications() {
-        print("🔄 [API] 백그라운드에서 최신 약물 정보 업데이트 중...")
-
         Observable.from(initialSearchKeywords)
             .concatMap { [weak self] keyword -> Observable<[MedicationInfo]> in
                 guard let self = self else { return Observable.just([]) }
@@ -343,15 +338,11 @@ final class PillTypeBottomSheetViewController: UIViewController {
             .subscribe(onNext: { [weak self] results in
                 guard let self = self else { return }
 
-                print("✅ [API] 최신 약물 정보 업데이트 완료: \(results.count)개")
-
                 // 최신 데이터로 업데이트 (사용자가 검색 중이 아닐 때만)
                 self.initialMedicationsRelay.accept(results)
                 if self.pillNameTextField.text?.isEmpty ?? true {
                     self.searchResultsRelay.accept(results)
                 }
-            }, onError: { error in
-                print("⚠️ [API] 업데이트 실패: \(error.localizedDescription) - 하드코딩 데이터 유지")
             })
             .disposed(by: disposeBag)
     }

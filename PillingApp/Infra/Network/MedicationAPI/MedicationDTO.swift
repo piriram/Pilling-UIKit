@@ -21,9 +21,8 @@ struct MedicationItem: Codable {
     let itemSeq: String?
     let itemName: String?
     let entpName: String?
-    let mainItemIngr: String?
+    let itemIngrName: String?
     let materialName: String?
-    let udDocData: String?
     let packUnit: String?
     let storageMethod: String?
     let itemPermitDate: String?
@@ -36,9 +35,8 @@ struct MedicationItem: Codable {
         case itemSeq = "ITEM_SEQ"
         case itemName = "ITEM_NAME"
         case entpName = "ENTP_NAME"
-        case mainItemIngr = "MAIN_ITEM_INGR"
+        case itemIngrName = "ITEM_INGR_NAME"
         case materialName = "MATERIAL_NAME"
-        case udDocData = "UD_DOC_DATA"
         case packUnit = "PACK_UNIT"
         case storageMethod = "STORAGE_METHOD"
         case itemPermitDate = "ITEM_PERMIT_DATE"
@@ -55,6 +53,21 @@ struct MedicationItem: Codable {
         }
         return true
     }
+
+    // 성분 정보를 기반으로 복용 주기 추론
+    private func inferDosageInstructions() -> String {
+        guard let ingredient = itemIngrName?.lowercased() else {
+            return "21일 복용 + 7일 휴약"
+        }
+
+        // Drospirenone 성분이 포함된 약품은 24-4 주기 (야즈 계열)
+        if ingredient.contains("drospirenone") {
+            return "24일 복용 + 4일 휴약"
+        }
+
+        // 나머지는 일반적인 21-7 주기
+        return "21일 복용 + 7일 휴약"
+    }
 }
 
 extension MedicationItem {
@@ -63,9 +76,9 @@ extension MedicationItem {
             id: itemSeq ?? "",
             name: itemName ?? "",
             manufacturer: entpName ?? "",
-            mainIngredient: mainItemIngr ?? "",
+            mainIngredient: itemIngrName ?? "",
             materialName: materialName ?? "",
-            dosageInstructions: udDocData ?? "",
+            dosageInstructions: inferDosageInstructions(),
             packUnit: packUnit ?? "",
             storageMethod: storageMethod ?? "",
             permitDate: itemPermitDate ?? "",
