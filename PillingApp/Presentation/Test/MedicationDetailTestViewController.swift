@@ -1,5 +1,6 @@
 import UIKit
 import RxSwift
+import RxCocoa
 import SnapKit
 
 final class MedicationDetailTestViewController: UIViewController {
@@ -294,6 +295,10 @@ final class MedicationDetailTestViewController: UIViewController {
                 errorMessage = "API 오류 [\(code)]: \(message)"
             case .decodingError(let err):
                 errorMessage = "데이터 파싱 오류: \(err.localizedDescription)"
+            case .cacheCorrupted:
+                errorMessage = "캐시 데이터가 손상되었습니다."
+            case .regionNotSupported:
+                errorMessage = "지원하지 않는 지역입니다."
             }
         } else {
             errorMessage = error.localizedDescription
