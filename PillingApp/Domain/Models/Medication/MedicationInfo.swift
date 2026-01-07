@@ -35,7 +35,7 @@ struct MedicationInfo: Codable {
 
 extension MedicationInfo {
     var isContraceptivePill: Bool {
-        let keywords = ["경구피임", "피임약", "피임제"]
+        let keywords = ["경구피임", "피임약", "피임제","난포호르몬 및 황체호르몬제"]
         return keywords.contains { name.contains($0) }
     }
 
