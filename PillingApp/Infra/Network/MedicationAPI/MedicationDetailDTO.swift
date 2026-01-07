@@ -30,19 +30,19 @@ struct MedicationDetailItem: Codable {
     let itemImage: String?        // 낱알이미지
 
     enum CodingKeys: String, CodingKey {
-        case itemSeq = "ITEM_SEQ"
-        case itemName = "ITEM_NAME"
-        case entpName = "ENTP_NAME"
-        case efcyQesitm = "EFCY_QESITM"
-        case useMethodQesitm = "USE_METHOD_QESITM"
-        case atpnWarnQesitm = "ATPN_WARN_QESITM"
-        case atpnQesitm = "ATPN_QESITM"
-        case intrcQesitm = "INTRC_QESITM"
-        case seQesitm = "SE_QESITM"
-        case depositMethodQesitm = "DEPOSIT_METHOD_QESITM"
-        case openDe = "OPEN_DE"
-        case updateDe = "UPDATE_DE"
-        case itemImage = "ITEM_IMAGE"
+        case itemSeq
+        case itemName
+        case entpName
+        case efcyQesitm
+        case useMethodQesitm
+        case atpnWarnQesitm
+        case atpnQesitm
+        case intrcQesitm
+        case seQesitm
+        case depositMethodQesitm
+        case openDe
+        case updateDe
+        case itemImage
     }
 }
 
@@ -50,7 +50,10 @@ struct MedicationDetailItem: Codable {
 
 extension MedicationDetailItem {
     func toDomainModel() -> MedicationDetailInfo {
-        MedicationDetailInfo(
+        print("📦 [toDomainModel] itemName: \(itemName ?? "nil")")
+        print("📦 [toDomainModel] useMethodQesitm: \(useMethodQesitm?.prefix(100) ?? "nil")")
+
+        return MedicationDetailInfo(
             itemSeq: itemSeq ?? "",
             itemName: itemName ?? "",
             entpName: entpName ?? "",
