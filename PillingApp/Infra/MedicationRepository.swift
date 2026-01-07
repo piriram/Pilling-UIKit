@@ -76,10 +76,8 @@ final class MedicationRepository: MedicationRepositoryProtocol {
     }
 
     private func filterContraceptivePills(_ medications: [MedicationInfo], keyword: String) -> [MedicationInfo] {
-        // 피임제 타입만 체크 (API가 이미 키워드로 검색한 결과이므로)
-        return medications.filter { medication in
-            medication.productType.contains("[02540]")
-        }
+        // isContraceptivePill 사용 ([02540] 피임제 + [02470] 난포호르몬제 및 황체호르몬제)
+        return medications.filter { $0.isContraceptivePill }
     }
 
     func refreshCache() -> Observable<Void> {
