@@ -27,22 +27,29 @@ final class MedicationRepository: MedicationRepositoryProtocol {
         let timestampKey = timestampKeyPrefix + keyword
 
         if let cachedData = loadFromCache(key: cacheKey, timestampKey: timestampKey) {
+            print("   💾 [Cache HIT] '\(keyword)' - 캐시에서 \(cachedData.count)개 로드")
             return Observable.just(cachedData)
         }
 
+        print("   📡 [Cache MISS] '\(keyword)' - 새로 검색 필요")
+
         guard isKoreanRegion else {
+            print("   🌍 [Region] 한국 외 지역 - Fallback 데이터 사용")
             return getFallbackData(keyword: keyword)
         }
 
+        print("   🌐 [API] '\(keyword)' - 공공데이터 API 호출 중...")
         return apiService.fetchMedications(keyword: keyword)
             .do(onNext: { [weak self] medications in
+                print("   💾 [Cache SAVE] '\(keyword)' - \(medications.count)개 약물 캐시에 저장")
                 self?.saveToCache(medications, key: cacheKey, timestampKey: timestampKey)
             })
             .catch { [weak self] error in
                 guard let self = self else {
                     return Observable.error(error)
                 }
-                print("API Error: \(error.localizedDescription). Falling back to local data.")
+                print("   ⚠️ [API Error] '\(keyword)' - \(error.localizedDescription)")
+                print("   🔄 [Fallback] '\(keyword)' - 로컬 데이터로 전환")
                 return self.getFallbackData(keyword: keyword)
             }
     }
@@ -67,9 +74,17 @@ final class MedicationRepository: MedicationRepositoryProtocol {
     }
 
     private func saveToCache(_ medications: [MedicationInfo], key: String, timestampKey: String) {
-        guard let data = try? JSONEncoder().encode(medications) else { return }
+        guard let data = try? JSONEncoder().encode(medications) else {
+            print("   ❌ [Cache] 인코딩 실패")
+            return
+        }
         UserDefaults.standard.set(data, forKey: key)
         UserDefaults.standard.set(Date(), forKey: timestampKey)
+
+        let allKeys = UserDefaults.standard.dictionaryRepresentation().keys
+        let cacheCount = allKeys.filter { $0.hasPrefix(timestampKeyPrefix) }.count
+        print("   📦 [Cache] 현재 캐시 항목 수: \(cacheCount)/\(maxCacheEntries)")
+
         cleanupOldCacheEntries()
     }
 
@@ -88,7 +103,10 @@ final class MedicationRepository: MedicationRepositoryProtocol {
 
         if cacheEntries.count > maxCacheEntries {
             let entriesToRemove = cacheEntries.dropFirst(maxCacheEntries)
+            print("   🧹 [Cache Cleanup] \(entriesToRemove.count)개 오래된 캐시 삭제")
             for entry in entriesToRemove {
+                let keyword = entry.key.replacingOccurrences(of: timestampKeyPrefix, with: "")
+                print("      ↳ 삭제: '\(keyword)'")
                 let cacheKey = entry.key.replacingOccurrences(of: timestampKeyPrefix, with: cacheKeyPrefix)
                 UserDefaults.standard.removeObject(forKey: entry.key)
                 UserDefaults.standard.removeObject(forKey: cacheKey)
@@ -116,6 +134,13 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 .replacingOccurrences(of: " ", with: "")
                 .replacingOccurrences(of: "정", with: "")
             return pillName.contains(normalizedKeyword)
+        }
+
+        print("   📚 [Fallback] '\(keyword)' - 로컬에서 \(matchedPills.count)개 매칭")
+        if matchedPills.isEmpty {
+            print("      ⚠️ 매칭된 약물 없음")
+        } else {
+            print("      ↳ \(matchedPills.map { $0.name }.joined(separator: ", "))")
         }
 
         return Observable.just(matchedPills)

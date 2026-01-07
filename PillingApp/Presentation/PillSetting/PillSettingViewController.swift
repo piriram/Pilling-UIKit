@@ -4,7 +4,7 @@ import RxCocoa
 import SnapKit
 
 final class PillSettingViewController: UIViewController {
-    
+
     // MARK: - Properties
     private typealias str = AppStrings.PillSetting
     private let viewModel: PillSettingViewModel
@@ -77,6 +77,7 @@ final class PillSettingViewController: UIViewController {
         configureNavigationBar()
         bind()
         prefetchMedicationList()
+        setupDebugGesture()
     }
     
     // MARK: - Setup
@@ -196,15 +197,38 @@ final class PillSettingViewController: UIViewController {
             })
             .disposed(by: disposeBag)
     }
-
+    
     private func prefetchMedicationList() {
+        print("🚀 [Prefetch] 약물 프리패치 시작 - \(prefetchKeywords.count)개 키워드")
+        print("🚀 [Prefetch] 키워드 목록: \(prefetchKeywords.joined(separator: ", "))")
+        
+        var completedCount = 0
+        
         Observable.from(prefetchKeywords)
-            .concatMap { [weak self] keyword -> Observable<[MedicationInfo]> in
-                guard let self = self else { return Observable.just([]) }
+            .concatMap { [weak self] keyword -> Observable<(String, [MedicationInfo])> in
+                guard let self = self else { return Observable.just((keyword, [])) }
+                print("📥 [Prefetch] '\(keyword)' 검색 시작...")
+                
                 return self.medicationRepository.searchMedication(keyword: keyword)
-                    .catch { _ in Observable.just([]) }
+                    .map { medications in
+                        print("✅ [Prefetch] '\(keyword)' 완료 - \(medications.count)개 결과")
+                        return (keyword, medications)
+                    }
+                    .catch { error in
+                        print("❌ [Prefetch] '\(keyword)' 실패 - \(error.localizedDescription)")
+                        return Observable.just((keyword, []))
+                    }
             }
-            .subscribe(onNext: { _ in })
+            .subscribe(
+                onNext: { keyword, medications in
+                    completedCount += 1
+                    print("📊 [Prefetch] 진행 상황: \(completedCount)/\(self.prefetchKeywords.count)")
+                },
+                onCompleted: {
+                    print("🎉 [Prefetch] 모든 약물 프리패치 완료!")
+                    self.logCacheStatus()
+                }
+            )
             .disposed(by: disposeBag)
     }
     
@@ -228,4 +252,120 @@ final class PillSettingViewController: UIViewController {
         
         present(pillTypeVC, animated: false)
     }
+    
+    // MARK: - Debug Methods
+    
+    private func setupDebugGesture() {
+        let tripleTabGesture = UITapGestureRecognizer(target: self, action: #selector(handleDebugTap))
+        tripleTabGesture.numberOfTapsRequired = 3
+        view.addGestureRecognizer(tripleTabGesture)
+        print("🔧 [Debug] 화면을 3번 탭하면 캐시 상태를 확인할 수 있습니다.")
+    }
+    
+    @objc private func handleDebugTap() {
+        checkCacheStatus()
+    }
+    
+    private func logCacheStatus() {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        let cacheKeys = allKeys.filter { $0.hasPrefix("medication_cache_") }
+        
+        print("\n📦 [Cache] 캐시 상태 요약")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("📦 [Cache] 총 캐시 항목: \(cacheKeys.count)개")
+        
+        for cacheKey in cacheKeys.sorted() {
+            let keyword = cacheKey.replacingOccurrences(of: "medication_cache_", with: "")
+            let timestampKey = "medication_timestamp_" + keyword
+            
+            if let data = defaults.data(forKey: cacheKey),
+               let medications = try? JSONDecoder().decode([MedicationInfo].self, from: data) {
+                
+                var status = "✅ '\(keyword)': \(medications.count)개 약물"
+                
+                if let timestamp = defaults.object(forKey: timestampKey) as? Date {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "MM-dd HH:mm:ss"
+                    status += " (저장: \(formatter.string(from: timestamp)))"
+                }
+                
+                print(status)
+                
+                for (index, med) in medications.prefix(3).enumerated() {
+                    print("   \(index + 1). \(med.name) - \(med.manufacturer)")
+                }
+                if medications.count > 3 {
+                    print("   ... 외 \(medications.count - 3)개")
+                }
+            }
+        }
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    }
+    
+    private func checkCacheStatus() {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        let cacheKeys = allKeys.filter { $0.hasPrefix("medication_cache_") }
+        
+        var message = "📦 캐시 상태\n\n"
+        message += "총 \(cacheKeys.count)개 키워드 캐시됨\n\n"
+        
+        let prefetchedKeywords = prefetchKeywords.filter { keyword in
+            let cacheKey = "medication_cache_" + keyword
+            return cacheKeys.contains(cacheKey)
+        }
+        
+        let missingKeywords = prefetchKeywords.filter { keyword in
+            let cacheKey = "medication_cache_" + keyword
+            return !cacheKeys.contains(cacheKey)
+        }
+        
+        message += "✅ 캐시됨 (\(prefetchedKeywords.count)/\(prefetchKeywords.count)):\n"
+        if !prefetchedKeywords.isEmpty {
+            message += prefetchedKeywords.joined(separator: ", ") + "\n\n"
+        } else {
+            message += "없음\n\n"
+        }
+        
+        if !missingKeywords.isEmpty {
+            message += "❌ 미캐시됨 (\(missingKeywords.count)):\n"
+            message += missingKeywords.joined(separator: ", ") + "\n\n"
+        }
+        
+        for cacheKey in cacheKeys.sorted().prefix(5) {
+            let keyword = cacheKey.replacingOccurrences(of: "medication_cache_", with: "")
+            if let data = defaults.data(forKey: cacheKey),
+               let medications = try? JSONDecoder().decode([MedicationInfo].self, from: data) {
+                message += "• \(keyword): \(medications.count)개\n"
+            }
+        }
+        
+        let alert = UIAlertController(title: "캐시 상태 확인", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "캐시 초기화", style: .destructive) { _ in
+            self.clearCache()
+        })
+        present(alert, animated: true)
+        
+        print("\n🔍 [Debug] 사용자가 캐시 상태를 확인했습니다.")
+        logCacheStatus()
+    }
+    
+    private func clearCache() {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        let cacheKeys = allKeys.filter { $0.hasPrefix("medication_cache_") || $0.hasPrefix("medication_timestamp_") }
+        
+        for key in cacheKeys {
+            defaults.removeObject(forKey: key)
+        }
+        
+        print("🗑️ [Cache] 모든 캐시 삭제 완료")
+        
+        let alert = UIAlertController(title: "캐시 초기화 완료", message: "모든 약물 캐시가 삭제되었습니다.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
 }
+

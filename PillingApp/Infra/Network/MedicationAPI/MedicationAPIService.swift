@@ -94,7 +94,21 @@ final class MedicationAPIService: MedicationAPIServiceProtocol {
                         return
                     }
 
-                    let medications = apiResponse.body.items.map { $0.toDomainModel() }
+                    // 유효기간 만료/취소된 약품 필터링
+                    let validItems = apiResponse.body.items.filter { $0.isValid }
+                    let invalidCount = apiResponse.body.items.count - validItems.count
+
+                    if invalidCount > 0 {
+                        print("   🚫 [Filter] 유효기간 만료/취소된 약품 \(invalidCount)개 제외")
+                        for item in apiResponse.body.items where !item.isValid {
+                            if let name = item.itemName, let cancelName = item.cancelName, let cancelDate = item.cancelDate {
+                                print("      ↳ \(name) - \(cancelName) (\(cancelDate))")
+                            }
+                        }
+                    }
+
+                    let medications = validItems.map { $0.toDomainModel() }
+                    print("   ✅ [Result] 최종 \(medications.count)개 약물 반환")
                     observer.onNext(medications)
                     observer.onCompleted()
 

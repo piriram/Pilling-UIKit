@@ -29,6 +29,8 @@ struct MedicationItem: Codable {
     let itemPermitDate: String?
     let bigPrdtImgUrl: String?
     let productType: String?
+    let cancelDate: String?
+    let cancelName: String?
 
     enum CodingKeys: String, CodingKey {
         case itemSeq = "ITEM_SEQ"
@@ -42,6 +44,16 @@ struct MedicationItem: Codable {
         case itemPermitDate = "ITEM_PERMIT_DATE"
         case bigPrdtImgUrl = "BIG_PRDT_IMG_URL"
         case productType = "PRDUCT_TYPE"
+        case cancelDate = "CANCEL_DATE"
+        case cancelName = "CANCEL_NAME"
+    }
+
+    var isValid: Bool {
+        // CANCEL_DATE가 존재하면 취소/만료된 약품이므로 제외
+        guard cancelDate == nil || cancelDate?.isEmpty == true else {
+            return false
+        }
+        return true
     }
 }
 
