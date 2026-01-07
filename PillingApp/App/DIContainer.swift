@@ -139,7 +139,10 @@ final class DIContainer {
     }
     
     func makePillSettingViewModel() -> PillSettingViewModel {
-        return PillSettingViewModel(userDefaultsManager: userDefaultsManager)
+        return PillSettingViewModel(
+            userDefaultsManager: userDefaultsManager,
+            detailAPIService: medicationDetailAPIService
+        )
     }
     
     func makeTimeSettingViewModel() -> TimeSettingViewModel {

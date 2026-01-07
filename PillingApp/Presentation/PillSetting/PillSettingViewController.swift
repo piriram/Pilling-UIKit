@@ -196,6 +196,16 @@ final class PillSettingViewController: UIViewController {
                 self?.presentNotification(message: message)
             })
             .disposed(by: disposeBag)
+
+        viewModel.output.dosageMismatchAlert
+            .emit(onNext: { [weak self] current, api, itemSeq in
+                self?.presentDosageMismatchAlert(
+                    currentDosage: current,
+                    apiDosage: api,
+                    itemSeq: itemSeq
+                )
+            })
+            .disposed(by: disposeBag)
     }
     
     private func prefetchMedicationList() {
@@ -300,14 +310,61 @@ final class PillSettingViewController: UIViewController {
     
     private func presentPillTypeBottomSheet() {
         let pillTypeVC = PillTypeBottomSheetViewController()
-        
+
         pillTypeVC.pillInfoSelected
             .bind(to: viewModel.input.pillInfoSelected)
             .disposed(by: disposeBag)
-        
+
         present(pillTypeVC, animated: false)
     }
-    
+
+    private func presentDosageMismatchAlert(
+        currentDosage: (Int, Int),
+        apiDosage: (Int, Int),
+        itemSeq: String
+    ) {
+        let alert = UIAlertController(
+            title: "복용 주기 불일치",
+            message: """
+            API에서 조회한 복용 주기가 선택한 주기와 다릅니다.
+
+            현재 선택: \(currentDosage.0)일 복용 / \(currentDosage.1)일 휴약
+            API 정보: \(apiDosage.0)일 복용 / \(apiDosage.1)일 휴약
+
+            API 정보로 업데이트하시겠습니까?
+            """,
+            preferredStyle: .alert
+        )
+
+        let updateAction = UIAlertAction(title: "업데이트", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+
+            // PillInfo를 업데이트하고 다시 저장
+            if let pillInfo = DIContainer.shared.userDefaultsManager.loadPillInfo() {
+                let updatedPillInfo = PillInfo(
+                    name: pillInfo.name,
+                    takingDays: apiDosage.0,
+                    breakDays: apiDosage.1,
+                    manufacturer: pillInfo.manufacturer,
+                    mainIngredient: pillInfo.mainIngredient,
+                    dosageInstructions: pillInfo.dosageInstructions,
+                    itemSeq: pillInfo.itemSeq
+                )
+                DIContainer.shared.userDefaultsManager.savePillInfo(updatedPillInfo)
+                print("✅ 복용 주기 업데이트: \(apiDosage.0)일 복용 / \(apiDosage.1)일 휴약")
+            }
+        }
+
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel) { _ in
+            print("ℹ️ 복용 주기 업데이트 취소")
+        }
+
+        alert.addAction(updateAction)
+        alert.addAction(cancelAction)
+
+        present(alert, animated: true)
+    }
+
     // MARK: - Debug Methods
     
     private func setupDebugGesture() {

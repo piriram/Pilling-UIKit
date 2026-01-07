@@ -110,4 +110,29 @@ struct MedicationDetailInfo {
     let sideEffects: String       // 부작용
     let storage: String           // 보관법
     let dosageInstructions: String // 복용 주기 (파싱된 결과)
+
+    // MedicationDetailStoredInfo로 변환
+    func toStoredInfo() -> MedicationDetailStoredInfo {
+        return MedicationDetailStoredInfo(
+            efficacy: efficacy,
+            useMethod: useMethod,
+            precautions: precautions,
+            sideEffects: sideEffects,
+            storage: storage
+        )
+    }
+
+    // 복용일/휴약일을 Int로 파싱
+    func parsedDosage() -> (takingDays: Int, breakDays: Int) {
+        let text = dosageInstructions.lowercased()
+
+        if text.contains("24일") || text.contains("24정") {
+            return (24, 4)
+        } else if text.contains("21일") || text.contains("21정") {
+            return (21, 7)
+        }
+
+        // 기본값
+        return (21, 7)
+    }
 }

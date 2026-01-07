@@ -10,9 +10,13 @@ protocol UserDefaultsManagerProtocol {
     func loadCurrentCycleID() -> UUID?
     func hasCompletedOnboarding() -> Bool
     func setHasCompletedOnboarding(_ completed: Bool)
-    
+
     func saveSideEffectTags(_ tags: [SideEffectTag])
     func loadSideEffectTags() -> [SideEffectTag]
+
+    // 의약품 상세 정보 저장/로드
+    func saveMedicationDetail(_ detail: MedicationDetailStoredInfo, forItemSeq itemSeq: String)
+    func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo?
 }
 
 
@@ -164,7 +168,7 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
             AppStrings.SideEffectTag.moodDown,
             AppStrings.SideEffectTag.spotting,
         ]
-        
+
         return defaultNames.enumerated().map { index, name in
             SideEffectTag(
                 name: name,
@@ -173,5 +177,25 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
                 isDefault: true
             )
         }
+    }
+
+    // MARK: - Medication Detail Methods
+
+    /// 의약품 상세 정보 저장
+    func saveMedicationDetail(_ detail: MedicationDetailStoredInfo, forItemSeq itemSeq: String) {
+        let key = UserDefaultsKey.medicationDetailKey(forItemSeq: itemSeq)
+        if let encoded = try? JSONEncoder().encode(detail) {
+            userDefaults.set(encoded, forKey: key)
+        }
+    }
+
+    /// 의약품 상세 정보 로드
+    func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo? {
+        let key = UserDefaultsKey.medicationDetailKey(forItemSeq: itemSeq)
+        guard let data = userDefaults.data(forKey: key),
+              let detail = try? JSONDecoder().decode(MedicationDetailStoredInfo.self, from: data) else {
+            return nil
+        }
+        return detail
     }
 }

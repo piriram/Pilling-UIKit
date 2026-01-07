@@ -1,5 +1,17 @@
 import Foundation
 
+// MARK: - MedicationDetailStoredInfo
+
+struct MedicationDetailStoredInfo: Codable {
+    let efficacy: String          // 효능효과
+    let useMethod: String         // 사용법
+    let precautions: String       // 주의사항
+    let sideEffects: String       // 부작용
+    let storage: String           // 보관법
+}
+
+// MARK: - MedicationInfo
+
 struct MedicationInfo: Codable {
     let id: String
     let name: String
@@ -12,6 +24,13 @@ struct MedicationInfo: Codable {
     let permitDate: String
     let imageURL: String
     let productType: String
+
+    // 복용 주기 (Int로 관리)
+    let takingDays: Int?
+    let breakDays: Int?
+
+    // 상세 정보 (AI 챗봇용, Optional)
+    let detailInfo: MedicationDetailStoredInfo?
 }
 
 extension MedicationInfo {
