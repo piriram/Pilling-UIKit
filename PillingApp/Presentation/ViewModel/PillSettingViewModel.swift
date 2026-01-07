@@ -100,9 +100,7 @@ final class PillSettingViewModel {
                 return (pillInfo, startDate)
             }
             .filter { pillInfo, _ in (pillInfo.takingDays + pillInfo.breakDays) <= 28 }
-            .do(onNext: { [weak self, userDefaultsManager, detailAPIService] pillInfo, startDate in
-                guard let self = self else { return }
-
+            .do(onNext: { [userDefaultsManager, detailAPIService, dosageMismatchAlertSubject, disposeBag] pillInfo, startDate in
                 // 기본 정보 저장
                 userDefaultsManager.savePillInfo(pillInfo)
                 userDefaultsManager.savePillStartDate(startDate)
@@ -112,8 +110,8 @@ final class PillSettingViewModel {
                     detailAPIService.fetchMedicationDetail(itemSeq: itemSeq)
                         .observe(on: MainScheduler.instance)
                         .subscribe(
-                            onNext: { [weak self] detailInfo in
-                                guard let self = self, let detail = detailInfo else { return }
+                            onNext: { detailInfo in
+                                guard let detail = detailInfo else { return }
 
                                 // 상세 정보 저장
                                 let storedInfo = detail.toStoredInfo()
@@ -124,7 +122,7 @@ final class PillSettingViewModel {
                                 let currentDosage = (pillInfo.takingDays, pillInfo.breakDays)
 
                                 if apiDosage != currentDosage {
-                                    self.dosageMismatchAlertSubject.onNext((
+                                    dosageMismatchAlertSubject.onNext((
                                         current: currentDosage,
                                         api: apiDosage,
                                         itemSeq: itemSeq
@@ -135,7 +133,7 @@ final class PillSettingViewModel {
                                 print("⚠️ 상세 정보 조회 실패: \(error.localizedDescription)")
                             }
                         )
-                        .disposed(by: self.disposeBag)
+                        .disposed(by: disposeBag)
                 }
             })
             .map { _ in () }
