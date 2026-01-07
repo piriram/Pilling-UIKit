@@ -110,9 +110,12 @@
 "statistics.taking_pill_label" = "Pill";
 "statistics.chart_title" = "Pilling Time";
 "statistics.period_selection_title" = "Select period";
+"statistics.category_too_early" = "Taken too early";
 "statistics.category_on_time" = "Taken on time";
 "statistics.category_delayed" = "Taken late";
-"statistics.category_missed_or_double" = "Missed or double dose";
+"statistics.category_double" = "Double dose";
+"statistics.category_missed" = "Missed";
+"statistics.category_scheduled" = "Scheduled";
 "statistics.deleted_side_effect" = "Deleted side effect";
 "statistics.day_count_format" = "%d days";
 "statistics.side_effect_count_format" = "%d times";

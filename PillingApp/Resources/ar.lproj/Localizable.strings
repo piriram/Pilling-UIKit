@@ -108,9 +108,12 @@
 "statistics.taking_pill_label" = "الحبة";
 "statistics.chart_title" = "وقت Pilling";
 "statistics.period_selection_title" = "اختيار الفترة";
+"statistics.category_too_early" = "تم التناول مبكرًا جدًا";
 "statistics.category_on_time" = "تم التناول في الوقت";
 "statistics.category_delayed" = "تم التناول متأخرًا";
-"statistics.category_missed_or_double" = "فقدان أو جرعة مزدوجة";
+"statistics.category_double" = "جرعة مزدوجة";
+"statistics.category_missed" = "فقدان";
+"statistics.category_scheduled" = "مجدول";
 "statistics.deleted_side_effect" = "تم حذف العرض الجانبي";
 "statistics.day_count_format" = "%d أيام";
 "statistics.side_effect_count_format" = "%d مرات";

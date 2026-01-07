@@ -149,9 +149,12 @@ enum AppStrings{
         static let takingPillLabel = "statistics.taking_pill_label".localized
         static let chartTitle = "statistics.chart_title".localized
         static let periodSelectionTitle = "statistics.period_selection_title".localized
+        static let categoryTooEarly = "statistics.category_too_early".localized
         static let categoryOnTime = "statistics.category_on_time".localized
         static let categoryDelayed = "statistics.category_delayed".localized
-        static let categoryMissedOrDouble = "statistics.category_missed_or_double".localized
+        static let categoryDouble = "statistics.category_double".localized
+        static let categoryMissed = "statistics.category_missed".localized
+        static let categoryScheduled = "statistics.category_scheduled".localized
         static let deletedSideEffect = "statistics.deleted_side_effect".localized
         static func dayCount(_ days: Int) -> String {
             "statistics.day_count_format".localized(with: days)

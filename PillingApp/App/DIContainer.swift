@@ -156,10 +156,18 @@ final class DIContainer {
             settingsRepository: settingsRepository,
             notificationManager: notificationManager,
             pillCycleRepository: cycleRepository,
+            userDefaultsManager: userDefaultsManager,
+            updateScheduledTimeUseCase: makeUpdateScheduledTimeUseCase()
+        )
+    }
+
+    func makeUpdateScheduledTimeUseCase() -> UpdateScheduledTimeUseCaseProtocol {
+        return UpdateScheduledTimeUseCase(
+            cycleRepository: cycleRepository,
             userDefaultsManager: userDefaultsManager
         )
     }
-    
+
     func makeSettingViewController() -> SettingViewController {
         let viewModel = makeSettingViewModel()
         return SettingViewController(viewModel: viewModel)

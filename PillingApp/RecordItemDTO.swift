@@ -6,6 +6,7 @@ struct RecordItemDTO {
     let percentage: Int
     let days: Int
     let colorHex: String
+    let isChartOnly: Bool  // 차트에만 표시, 리스트에는 표시 안함
 }
 
 struct SideEffectStatDTO {

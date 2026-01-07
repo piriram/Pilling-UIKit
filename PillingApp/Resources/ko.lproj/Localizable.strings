@@ -109,9 +109,12 @@
 "statistics.taking_pill_label" = "복용약";
 "statistics.chart_title" = "필링타임";
 "statistics.period_selection_title" = "기간 선택";
+"statistics.category_too_early" = "일찍 복용했어요";
 "statistics.category_on_time" = "정시에 복용했어요";
-"statistics.category_delayed" = "조금 늦었어요";
-"statistics.category_missed_or_double" = "미복용 및 2알 복용";
+"statistics.category_delayed" = "늦게 복용했어요";
+"statistics.category_double" = "2알 복용했어요";
+"statistics.category_missed" = "미복용";
+"statistics.category_scheduled" = "예정";
 "statistics.deleted_side_effect" = "삭제된 부작용";
 "statistics.day_count_format" = "%d일";
 "statistics.side_effect_count_format" = "%d회";
