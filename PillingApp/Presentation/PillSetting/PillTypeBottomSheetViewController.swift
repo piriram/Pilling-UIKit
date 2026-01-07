@@ -263,9 +263,20 @@ final class PillTypeBottomSheetViewController: UIViewController {
             }
             .map { [weak self] results -> [MedicationInfo] in
                 guard let self = self else { return results }
-                return results.filter { $0.isContraceptivePill }
+                let filtered = results.filter { $0.isContraceptivePill }
+                print("🔍 [UI 필터링] 원본: \(results.count)개 → 피임약: \(filtered.count)개")
+                for med in filtered {
+                    print("   - \(med.name) (타입: \(med.productType))")
+                }
+                return filtered
             }
             .observe(on: MainScheduler.instance)
+            .do(onNext: { medications in
+                print("✅ [searchResultsRelay] 바인딩된 약품: \(medications.count)개")
+                for med in medications {
+                    print("   → \(med.name)")
+                }
+            })
             .bind(to: searchResultsRelay)
             .disposed(by: disposeBag)
 
@@ -279,11 +290,15 @@ final class PillTypeBottomSheetViewController: UIViewController {
             .disposed(by: disposeBag)
 
         searchResultsRelay
+            .do(onNext: { medications in
+                print("📋 [테이블뷰] 받은 데이터: \(medications.count)개")
+            })
             .bind(to: searchResultsTableView.rx.items(
                 cellIdentifier: MedicationSearchTableViewCell.identifier,
                 cellType: MedicationSearchTableViewCell.self
             )) { [weak self] index, medication, cell in
                 guard let self = self else { return }
+                print("   [\(index)] 셀 구성: \(medication.name)")
                 let medicationId = medication.id.isEmpty ? medication.name : medication.id
                 let isSelected = self.selectedMedicationId == medicationId
                 cell.configure(with: medication, isSelected: isSelected)
