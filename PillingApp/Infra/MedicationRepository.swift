@@ -161,7 +161,7 @@ final class MedicationRepository: MedicationRepositoryProtocol {
     }
 
     private static func getHardcodedPillsData() -> [MedicationInfo] {
-        // 순서: initialSearchKeywords와 동일하게 유지 ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
+        // 순서: initialSearchKeywords와 동일하게 유지 ["머시론","센스데이","멜리안","마이보라","야즈","야스민","디어미순","클래라"]
         return [
             MedicationInfo(
                 id: "200009522",
@@ -257,6 +257,38 @@ final class MedicationRepository: MedicationRepositoryProtocol {
                 productType: "[02540]피임제",
                 takingDays: 21,
                 breakDays: 7,
+                detailInfo: nil
+            ),
+            MedicationInfo(
+                id: "202001726",
+                name: "디어미순정",
+                manufacturer: "(주)녹십자",
+                mainIngredient: "Gestodene/Ethinyl Estradiol",
+                materialName: "",
+                dosageInstructions: "24일 복용 + 4일 휴약",
+                packUnit: "",
+                storageMethod: "",
+                permitDate: "20200330",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/1NOwp2F6C5P",
+                productType: "[02540]피임제",
+                takingDays: 24,
+                breakDays: 4,
+                detailInfo: nil
+            ),
+            MedicationInfo(
+                id: "201203073",
+                name: "클래라정",
+                manufacturer: "바이엘코리아(주)",
+                mainIngredient: "Dienogest/Estradiol Valerate",
+                materialName: "",
+                dosageInstructions: "26일 복용 + 2일 휴약",
+                packUnit: "",
+                storageMethod: "",
+                permitDate: "20120420",
+                imageURL: "https://nedrug.mfds.go.kr/pbp/cmn/itemImageDownload/147426604172000119",
+                productType: "[02470]난포호르몬제 및 황체호르몬제",
+                takingDays: 26,
+                breakDays: 2,
                 detailInfo: nil
             )
         ]

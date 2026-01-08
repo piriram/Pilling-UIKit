@@ -77,7 +77,7 @@ final class PillSettingViewController: UIViewController {
         configureNavigationBar()
         bind()
         prefetchMedicationList()
-        setupDebugGesture()
+        // setupDebugGesture()  // 디버그 제스처 비활성화 (나중에 필요시 주석 해제)
     }
     
     // MARK: - Setup

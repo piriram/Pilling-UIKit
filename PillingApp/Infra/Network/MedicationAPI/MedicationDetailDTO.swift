@@ -84,6 +84,11 @@ extension MedicationDetailItem {
             return "21일 복용 + 7일 휴약"
         }
 
+        // "26일간", "26정", "26일 복용" 등 패턴 감지
+        if text.contains("26일") || text.contains("26정") || text.contains("26회") {
+            return "26일 복용 + 2일 휴약"
+        }
+
         // "24일간", "24정", "24일 복용" 등 패턴 감지
         if text.contains("24일") || text.contains("24정") || text.contains("24회") {
             return "24일 복용 + 4일 휴약"
@@ -127,7 +132,9 @@ struct MedicationDetailInfo {
     func parsedDosage() -> (takingDays: Int, breakDays: Int) {
         let text = dosageInstructions.lowercased()
 
-        if text.contains("24일") || text.contains("24정") {
+        if text.contains("26일") || text.contains("26정") {
+            return (26, 2)
+        } else if text.contains("24일") || text.contains("24정") {
             return (24, 4)
         } else if text.contains("21일") || text.contains("21정") {
             return (21, 7)

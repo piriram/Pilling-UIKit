@@ -6,6 +6,16 @@ final class MedicationSearchTableViewCell: UITableViewCell {
 
     static let identifier = "MedicationSearchTableViewCell"
 
+    // MARK: - Layout Constants
+
+    private enum Layout {
+        static let verticalSpacing: CGFloat = 0     // 셀 간 간격 (상하 각각)
+        static let horizontalInset: CGFloat = 16     // 좌우 여백
+        static let cellHeight: CGFloat = 60          // 최소 셀 높이
+        static let imageSize: CGFloat = 48           // 이미지 크기
+        static let checkmarkSize: CGFloat = 20       // 체크마크 크기
+    }
+
     private let medicationImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
@@ -74,14 +84,19 @@ final class MedicationSearchTableViewCell: UITableViewCell {
         containerView.addSubview(checkmarkImageView)
 
         containerView.snp.makeConstraints {
-            $0.edges.equalToSuperview().inset(UIEdgeInsets(top: 4, left: 16, bottom: 4, right: 16))
-            $0.height.greaterThanOrEqualTo(60)
+            $0.edges.equalToSuperview().inset(UIEdgeInsets(
+                top: Layout.verticalSpacing,
+                left: Layout.horizontalInset,
+                bottom: Layout.verticalSpacing,
+                right: Layout.horizontalInset
+            ))
+            $0.height.greaterThanOrEqualTo(Layout.cellHeight)
         }
 
         medicationImageView.snp.makeConstraints {
             $0.leading.equalToSuperview().offset(16)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(40)
+            $0.width.height.equalTo(Layout.imageSize)
         }
 
         nameLabel.snp.makeConstraints {
@@ -98,7 +113,7 @@ final class MedicationSearchTableViewCell: UITableViewCell {
         checkmarkImageView.snp.makeConstraints {
             $0.trailing.equalToSuperview().offset(-16)
             $0.centerY.equalToSuperview()
-            $0.width.height.equalTo(20)
+            $0.width.height.equalTo(Layout.checkmarkSize)
         }
     }
 

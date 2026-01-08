@@ -17,7 +17,10 @@ struct DosageParser {
             breakDays = breakMatch
         }
 
-        if normalizedText.contains("24") && normalizedText.contains("4") {
+        if normalizedText.contains("26") && normalizedText.contains("2") {
+            takingDays = 26
+            breakDays = 2
+        } else if normalizedText.contains("24") && normalizedText.contains("4") {
             takingDays = 24
             breakDays = 4
         } else if normalizedText.contains("21") && normalizedText.contains("7") {

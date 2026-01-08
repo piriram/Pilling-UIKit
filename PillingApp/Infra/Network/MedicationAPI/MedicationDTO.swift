@@ -60,6 +60,19 @@ struct MedicationItem: Codable {
             return "21일 복용 + 7일 휴약"
         }
 
+        // 제품명으로 특수 케이스 먼저 확인
+        if let name = itemName?.lowercased() {
+            // 디어미순: Gestodene이지만 24-4 주기
+            if name.contains("디어미순") || name.contains("dearme") {
+                return "24일 복용 + 4일 휴약"
+            }
+        }
+
+        // Dienogest 성분이 포함된 약품은 26-2 주기 (클래라 계열)
+        if ingredient.contains("dienogest") {
+            return "26일 복용 + 2일 휴약"
+        }
+
         // Drospirenone 성분이 포함된 약품은 24-4 주기 (야즈 계열)
         if ingredient.contains("drospirenone") {
             return "24일 복용 + 4일 휴약"

@@ -84,26 +84,26 @@ final class MedicationAPIService: MedicationAPIServiceProtocol {
                         return
                     }
 
-                    print("🔍 [검색 API] 키워드: \"\(keyword)\"")
-                    print("   전체 응답: \(apiResponse.body.items.count)개")
-
-                    // 전체 항목 출력
-                    for (index, item) in apiResponse.body.items.prefix(10).enumerated() {
-                        print("   [\(index + 1)] \(item.itemName ?? "이름없음") | 제조사: \(item.entpName ?? "없음") | 타입: \(item.productType ?? "없음") | 취소: \(item.cancelDate ?? "없음") | 허가: \(item.itemPermitDate ?? "없음")")
-                    }
-
-                    // 유효기간 만료/취소된 약품 필터링
                     let validItems = apiResponse.body.items.filter { $0.isValid }
-                    print("   ✅ 유효한 약품: \(validItems.count)개")
+
+                    // 🔍 API 응답 상세 출력 (하드코딩 데이터 확인용)
+                    print("\n" + String(repeating: "=", count: 80))
+                    print("🔍 [검색 API] 키워드: \"\(keyword)\" - 총 \(validItems.count)개")
+                    print(String(repeating: "=", count: 80))
+                    for (index, item) in validItems.enumerated() {
+                        print("[\(index + 1)] \(item.itemName ?? "이름없음")")
+                        print("  ID (itemSeq): \(item.itemSeq ?? "없음")")
+                        print("  제조사 (entpName): \(item.entpName ?? "없음")")
+                        print("  성분 (itemIngrName): \(item.itemIngrName ?? "없음")")
+                        print("  타입 (productType): \(item.productType ?? "없음")")
+                        print("  허가일 (itemPermitDate): \(item.itemPermitDate ?? "없음")")
+                        print("  이미지 (bigPrdtImgUrl): \(item.bigPrdtImgUrl ?? "없음")")
+                        print("  보관법 (storageMethod): \(item.storageMethod ?? "없음")")
+                        print("")
+                    }
+                    print(String(repeating: "=", count: 80) + "\n")
 
                     let medications = validItems.map { $0.toDomainModel() }
-
-                    // 피임약만 필터링해서 출력
-                    let contraceptives = medications.filter { $0.isContraceptivePill }
-                    print("   💊 피임약: \(contraceptives.count)개")
-                    for med in contraceptives {
-                        print("      - \(med.name) (\(med.manufacturer))")
-                    }
 
                     observer.onNext(medications)
                     observer.onCompleted()

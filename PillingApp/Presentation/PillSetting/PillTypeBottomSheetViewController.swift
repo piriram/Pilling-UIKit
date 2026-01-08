@@ -3,6 +3,7 @@ import RxSwift
 import RxCocoa
 import SnapKit
 import IQKeyboardManagerSwift
+import Kingfisher
 
 // MARK: - PillTypeBottomSheetViewController
 
@@ -20,12 +21,14 @@ final class PillTypeBottomSheetViewController: UIViewController {
     private let medicationRepository: MedicationRepositoryProtocol
     private let analyticsService: AnalyticsServiceProtocol
     private let searchResultsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
+    private let hardcodedMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let initialMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
     private let isLoadingRelay = BehaviorRelay<Bool>(value: true)
-    private let initialSearchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
+    private let initialSearchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민","디어미순","클래라"]
     private let contraceptiveTypeKeyword = "피임제"
     private var selectedMedicationId: String?
     private var currentSearchKeyword: String = ""
+    private var imagePrefetcher: ImagePrefetcher?
     
     // MARK: - UI Components
     
@@ -135,6 +138,7 @@ final class PillTypeBottomSheetViewController: UIViewController {
         let hardcodedPills = medicationRepository.getHardcodedPills()
         let contraceptivePills = hardcodedPills.filter { $0.isContraceptivePill }
 
+        hardcodedMedicationsRelay.accept(contraceptivePills)
         initialMedicationsRelay.accept(contraceptivePills)
         searchResultsRelay.accept(contraceptivePills)
         isLoadingRelay.accept(false)
@@ -163,6 +167,9 @@ final class PillTypeBottomSheetViewController: UIViewController {
         containerView.addSubview(loadingIndicator)
         confirmButton.setTitle(str.settingComplete, for: .normal)
         confirmButton.isEnabled = false
+
+        // 이미지 프리페칭 설정
+        searchResultsTableView.prefetchDataSource = self
     }
     
     private func setupConstraints() {
@@ -237,10 +244,10 @@ final class PillTypeBottomSheetViewController: UIViewController {
 
                 if trimmedKeyword.isEmpty {
                     self.isLoadingRelay.accept(false)
-                    return self.initialMedicationsRelay.asObservable()
+                    return self.hardcodedMedicationsRelay.asObservable()
                 }
 
-                guard trimmedKeyword.count >= 2 else {
+                guard trimmedKeyword.count >= 1 else {
                     self.isLoadingRelay.accept(false)
                     return Observable.just([])
                 }
@@ -263,20 +270,9 @@ final class PillTypeBottomSheetViewController: UIViewController {
             }
             .map { [weak self] results -> [MedicationInfo] in
                 guard let self = self else { return results }
-                let filtered = results.filter { $0.isContraceptivePill }
-                print("🔍 [UI 필터링] 원본: \(results.count)개 → 피임약: \(filtered.count)개")
-                for med in filtered {
-                    print("   - \(med.name) (타입: \(med.productType))")
-                }
-                return filtered
+                return results.filter { $0.isContraceptivePill }
             }
             .observe(on: MainScheduler.instance)
-            .do(onNext: { medications in
-                print("✅ [searchResultsRelay] 바인딩된 약품: \(medications.count)개")
-                for med in medications {
-                    print("   → \(med.name)")
-                }
-            })
             .bind(to: searchResultsRelay)
             .disposed(by: disposeBag)
 
@@ -290,15 +286,11 @@ final class PillTypeBottomSheetViewController: UIViewController {
             .disposed(by: disposeBag)
 
         searchResultsRelay
-            .do(onNext: { medications in
-                print("📋 [테이블뷰] 받은 데이터: \(medications.count)개")
-            })
             .bind(to: searchResultsTableView.rx.items(
                 cellIdentifier: MedicationSearchTableViewCell.identifier,
                 cellType: MedicationSearchTableViewCell.self
             )) { [weak self] index, medication, cell in
                 guard let self = self else { return }
-                print("   [\(index)] 셀 구성: \(medication.name)")
                 let medicationId = medication.id.isEmpty ? medication.name : medication.id
                 let isSelected = self.selectedMedicationId == medicationId
                 cell.configure(with: medication, isSelected: isSelected)
@@ -353,11 +345,11 @@ final class PillTypeBottomSheetViewController: UIViewController {
             .subscribe(onNext: { [weak self] results in
                 guard let self = self else { return }
 
-                // 최신 데이터로 업데이트 (사용자가 검색 중이 아닐 때만)
+                // 백그라운드에서 캐시만 업데이트 (UI는 하드코딩 데이터 유지)
+                // API 결과는 MedicationRepository에서 자동으로 캐시에 저장됨
+                // initialMedicationsRelay는 업데이트하여 다음 검색 시 최신 데이터 사용
                 self.initialMedicationsRelay.accept(results)
-                if self.pillNameTextField.text?.isEmpty ?? true {
-                    self.searchResultsRelay.accept(results)
-                }
+                // searchResultsRelay는 업데이트하지 않음 (UI 변경 방지)
             })
             .disposed(by: disposeBag)
     }
@@ -433,5 +425,35 @@ final class PillTypeBottomSheetViewController: UIViewController {
         default:
             break
         }
+    }
+}
+
+// MARK: - UITableViewDataSourcePrefetching
+
+extension PillTypeBottomSheetViewController: UITableViewDataSourcePrefetching {
+    func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
+        let medications = searchResultsRelay.value
+
+        // 프리페치할 이미지 URL 수집
+        let urls = indexPaths.compactMap { indexPath -> URL? in
+            guard indexPath.row < medications.count else { return nil }
+            let medication = medications[indexPath.row]
+            guard !medication.imageURL.isEmpty else { return nil }
+            return URL(string: medication.imageURL)
+        }
+
+        guard !urls.isEmpty else { return }
+
+        // 기존 프리페처 취소
+        imagePrefetcher?.stop()
+
+        // 새로운 프리페처로 이미지 다운로드 시작
+        imagePrefetcher = ImagePrefetcher(urls: urls)
+        imagePrefetcher?.start()
+    }
+
+    func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
+        // 프리페칭 취소
+        imagePrefetcher?.stop()
     }
 }
