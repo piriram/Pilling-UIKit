@@ -38,6 +38,8 @@ final class DashboardSheetViewController: UIViewController {
         let scrollView = UIScrollView()
         scrollView.showsVerticalScrollIndicator = false
         scrollView.showsHorizontalScrollIndicator = false
+        scrollView.isUserInteractionEnabled = true
+        scrollView.delaysContentTouches = false
         return scrollView
     }()
     
@@ -51,6 +53,7 @@ final class DashboardSheetViewController: UIViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 20
+        stack.isUserInteractionEnabled = true
         return stack
     }()
     
@@ -194,6 +197,10 @@ final class DashboardSheetViewController: UIViewController {
         if let titleText = titleText ?? title {
             subtitleLabel.attributedText = formatTitleText(titleText)
         }
+
+        // StatusSelectionView의 터치 이벤트 활성화
+        statusSelectionView.isUserInteractionEnabled = true
+
         contentStackView.addArrangedSubview(subtitleLabel)
         contentStackView.addArrangedSubview(statusSelectionView)
         contentStackView.addArrangedSubview(timeSettingButton)
@@ -221,10 +228,12 @@ final class DashboardSheetViewController: UIViewController {
     private func setupGestures() {
         let dimmedTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDimmedViewTap))
         sheetAnimator.dimmedView.addGestureRecognizer(dimmedTapGesture)
-        
+
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture))
+        panGesture.cancelsTouchesInView = false  // 🔧 하위 뷰의 터치를 방해하지 않도록 설정
+        panGesture.delegate = self
         sheetAnimator.containerView.addGestureRecognizer(panGesture)
-        
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
@@ -356,5 +365,22 @@ final class DashboardSheetViewController: UIViewController {
         let managementVC = SideEffectManagementViewController(userDefaultsManager: userDefaultsManager)
         navigationController?.setNavigationBarHidden(false, animated: false)
         navigationController?.pushViewController(managementVC, animated: true)
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+
+extension DashboardSheetViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Pan gesture와 다른 제스처(버튼 탭 등)를 동시에 인식하도록 허용
+        return true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // 버튼이나 인터랙티브한 뷰를 터치한 경우 Pan gesture가 터치를 받지 않도록 함
+        if touch.view is UIButton || touch.view is UIControl {
+            return false
+        }
+        return true
     }
 }

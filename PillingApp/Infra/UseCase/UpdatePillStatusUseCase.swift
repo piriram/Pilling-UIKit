@@ -75,19 +75,24 @@ final class UpdatePillStatusUseCase: UpdatePillStatusUseCaseProtocol {
         // takenAt이 명시적으로 전달되고 복용 상태일 때, 시간 기준으로 상태 재계산
         let recalculatedStatus: PillStatus
         if let actualTakenAt = finalTakenAt, finalStatus.isTaken {
-            let delayThresholdMinutes = userDefaults.object(forKey: "delayThresholdMinutes") as? Int ?? 120
-            let timeDiff = actualTakenAt.timeIntervalSince(record.scheduledDateTime)
-            let twoHours: TimeInterval = 2 * 60 * 60
-
-            let isTooEarly = (-timeDiff) >= twoHours
-            let isWithinWindow = abs(timeDiff) <= Double(delayThresholdMinutes * 60)
-
-            if isTooEarly {
-                recalculatedStatus = .takenTooEarly
-            } else if isWithinWindow {
-                recalculatedStatus = .taken
+            // takenDouble 상태는 시간 재계산 없이 그대로 유지
+            if finalStatus == .takenDouble {
+                recalculatedStatus = .takenDouble
             } else {
-                recalculatedStatus = .takenDelayed
+                let delayThresholdMinutes = userDefaults.object(forKey: "delayThresholdMinutes") as? Int ?? 120
+                let timeDiff = actualTakenAt.timeIntervalSince(record.scheduledDateTime)
+                let twoHours: TimeInterval = 2 * 60 * 60
+
+                let isTooEarly = (-timeDiff) >= twoHours
+                let isWithinWindow = abs(timeDiff) <= Double(delayThresholdMinutes * 60)
+
+                if isTooEarly {
+                    recalculatedStatus = .takenTooEarly
+                } else if isWithinWindow {
+                    recalculatedStatus = .taken
+                } else {
+                    recalculatedStatus = .takenDelayed
+                }
             }
         } else {
             recalculatedStatus = finalStatus

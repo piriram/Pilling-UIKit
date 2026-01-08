@@ -146,6 +146,7 @@ final class DashboardViewBindingManager {
                 item: item,
                 cycle: cycle,
                 onStatusUpdate: { [weak self] index, status, memo, takenAt in
+                    print("🔍 [ViewBindingManager] onStatusUpdate - index: \(index), status: \(status), memo: \(memo ?? "nil"), takenAt: \(String(describing: takenAt))")
                     self?.viewModel.updateState(
                         at: index,
                         to: status,
