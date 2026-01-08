@@ -23,23 +23,24 @@ final class DoubleDosingRule: MessageRule {
         
         if timeSinceYesterday < TimeThreshold.critical + TimeThreshold.fullyMissed {
             if todayStatus.baseStatus == .takenDouble {
-                return .takenDoubleComplete
+                return .doubleDoseComplete
             }
-            
+
             if !todayStatus.isTaken &&
                 (todayStatus.medicalTiming == .onTime ||
                  todayStatus.medicalTiming == .upcoming ||
+                 todayStatus.medicalTiming == .tooEarly ||
                  todayStatus.medicalTiming == .slightDelay) {
-                return .pilledTwo
+                return .yesterdayMissedTakeTwo
             }
         }
         
         if todayStatus.baseStatus == .takenDouble{
-            return .takenDoubleComplete
+            return .doubleDoseComplete
         }
         
         if todayStatus.isTaken && todayStatus.baseStatus != .takenDouble{
-            return .morePill
+            return .yesterdayMissedNeedOne
         }
         return nil
     }

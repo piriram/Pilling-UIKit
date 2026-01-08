@@ -114,6 +114,18 @@ final class DashboardViewModel {
     private func handleSuccess(_ data: (cycle: Cycle?, settings: UserSettings)) {
         self.settings.accept(data.settings)
         self.currentCycle.accept(data.cycle)
+
+        // PillInfo가 없으면 Cycle에서 복원
+        if let cycle = data.cycle, userDefaultsManager.loadPillInfo() == nil {
+            let restoredPillInfo = PillInfo(
+                name: "",  // 약 이름은 Cycle에 없으므로 빈 문자열
+                takingDays: cycle.activeDays,
+                breakDays: cycle.breakDays
+            )
+            userDefaultsManager.savePillInfo(restoredPillInfo)
+            print("🔧 [DashboardViewModel] PillInfo를 Cycle에서 복원: takingDays=\(cycle.activeDays), breakDays=\(cycle.breakDays)")
+        }
+
         self.updateItems()
         self.updateDashboardMessage()
         self.updateCanTakePill()
@@ -242,7 +254,31 @@ final class DashboardViewModel {
         }
 
         let message = calculateDashboardMessageUseCase.execute(cycle: cycle)
+        debugLogCycleAndMessage(cycle: cycle, message: message)
         dashboardMessage.accept(message)
+    }
+
+    private func debugLogCycleAndMessage(cycle: Cycle, message: DashboardMessage) {
+        #if DEBUG
+        let dayLimit = 28
+        let calendar = Calendar.current
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd (EEE) HH:mm"
+//
+//        print("=== Dashboard Debug ===")
+        print("cycleNumber=\(cycle.cycleNumber) startDate=\(dateFormatter.string(from: cycle.startDate)) activeDays=\(cycle.activeDays) breakDays=\(cycle.breakDays) scheduledTime=\(cycle.scheduledTime) totalRecords=\(cycle.records.count)")
+        print("dashboardMessage=\(message.text) icon=\(message.icon.rawValue) characterImage=\(message.imageName.rawValue) background=\(message.backgroundImageName)")
+        print("-- Cycle Records Statuses (first \(dayLimit) days) --")
+
+        let sortedRecords = cycle.records.sorted { $0.scheduledDateTime < $1.scheduledDateTime }
+        let statuses = sortedRecords
+            .prefix(dayLimit)
+            .map { $0.status.rawValue }
+            .joined(separator: " | ")
+        print(statuses)
+        print("=== End Dashboard Debug ===")
+        #endif
     }
     
     private func updateCanTakePill() {
@@ -356,11 +392,13 @@ final class DashboardViewModel {
     }
     
     func updateState(at index: Int, to newStatus: PillStatus, memo: String?, takenAt: Date? = nil) {
+        print("🔍 [DashboardViewModel] updateState - index: \(index), newStatus: \(newStatus), memo: \(memo ?? "nil"), takenAt: \(String(describing: takenAt))")
         guard let cycle = currentCycle.value else {
             print("❌ updateState: cycle이 nil입니다")
             return
         }
 
+        print("🔍 [DashboardViewModel] Calling updatePillStatusUseCase")
         updatePillStatusUseCase.execute(
             cycle: cycle,
             recordIndex: index,
@@ -371,6 +409,7 @@ final class DashboardViewModel {
         .subscribe(
             onNext: { [weak self] updatedCycle in
                 guard let self = self else { return }
+                print("🔍 [DashboardViewModel] UseCase success - updatedCycle.records[\(index)].status: \(updatedCycle.records[index].status)")
 
                 self.currentCycle.accept(updatedCycle)
 

@@ -1,0 +1,200 @@
+/*
+  Localizable.strings (Arabic)
+  PillingApp
+*/
+
+// MARK: - Common
+"common.alert_title" = "تنبيه";
+"common.ok_button" = "موافق";
+"common.error_title" = "خطأ";
+"common.cancel_title" = "إلغاء";
+"common.confirm_title" = "تم";
+"common.retry_title" = "إعادة المحاولة";
+"common.go_to_settings" = "الانتقال إلى الإعدادات";
+
+// MARK: - Pill Setting
+"pill_setting.main_title" = "أخبرينا عن الحبة التي تتناولينها!";
+"pill_setting.subtitle" = "يمكنكِ تغيير هذا لاحقًا من الإعدادات.";
+"pill_setting.button_title" = "نوع الحبة";
+"pill_setting.start_date_button" = "تاريخ البدء";
+"pill_setting.next_button" = "التالي";
+"pill_setting.nav_title" = "إعدادات الحبة";
+"pill_setting.name_title" = "اسم الحبة (اختياري)";
+"pill_setting.taking_days" = "أيام التناول";
+"pill_setting.taking_button" = "24 يومًا";
+"pill_setting.break_label" = "فترة التوقف";
+"pill_setting.break_day" = "4 أيام";
+"pill_setting.warning_label" = "يجب ألا يتجاوز مجموع أيام التناول وفترة التوقف 28 يومًا.";
+"pill_setting.setting_complete" = "اكتمل الإعداد";
+"pill_setting.title_label" = "أدخلي تفاصيل الحبة";
+"pill_setting.days_format" = "%d أيام";
+"pill_setting.taking_break_format" = "تناول %d أيام / توقف %d أيام";
+"pill_setting.day_ordinal" = "اليوم %d";
+"pill_setting.today" = "اليوم";
+"pill_setting.days_remaining" = "متبقي %d أيام";
+
+// MARK: - Setting Floating
+"setting_floating.title" = "جاهز!";
+"setting_floating.subtitle" = "سنذكّركِ كل يوم";
+
+// MARK: - Setting
+"setting.section_label" = "إعدادات الحبة";
+"setting.new_pill_button" = "بدء دورة حبوب جديدة";
+"setting.navigation_title" = "الإعدادات";
+"setting.alarm_section_title" = "إعدادات الإشعارات";
+"setting.time_setting_title" = "وقت التذكير";
+"setting.time_setting_default" = "9:00 ص";
+"setting.message_setting_title" = "نص الإشعار";
+"setting.message_setting_default" = "ليوم صحي...";
+"setting.message_editor_title" = "تعديل رسالة الإشعار";
+"setting.message_editor_description" = "أدخلي الرسالة التي ترغبين في استلامها";
+"setting.message_editor_placeholder" = "أدخلي رسالة الإشعار";
+"setting.new_pill_cycle_title" = "بدء دورة حبوب جديدة";
+"setting.new_pill_cycle_message" = "سيتم حذف جميع سجلات الحبوب الحالية.\nهل ترغبين في بدء دورة جديدة؟";
+"setting.new_pill_cycle_confirm" = "بدء";
+"setting.success_time_updated" = "تم تحديث وقت التذكير";
+"setting.success_message_updated" = "تم تحديث رسالة الإشعار";
+"setting.error_time_update_failed" = "فشل تحديث الوقت";
+"setting.error_message_update_failed" = "فشل تحديث الرسالة";
+"setting.error_reset_failed" = "فشل إعادة التعيين";
+"setting.permission_error_go_to_settings" = "الانتقال إلى الإعدادات";
+
+// MARK: - Dashboard
+"dashboard.guide_title" = "دليل Pilling";
+"dashboard.guide_subtitle" = "حالة الحبة تظهر كعشب ينمو!";
+"dashboard.guide_confirm_button" = "موافق";
+"dashboard.guide_taken" = "تم تناول الحبة";
+"dashboard.guide_taken_double" = "تم تناول حبتين";
+"dashboard.guide_missed" = "تم الفقدان";
+"dashboard.taken" = "تم التناول";
+"dashboard.taken_double" = "حبتان";
+"dashboard.guide_today" = "اليوم";
+"dashboard.take_pill_button" = "ازرعي العشب";
+"dashboard.take_pill_completed" = "تمت الزراعة!";
+"dashboard.rest_period" = "فترة التوقف الآن";
+"dashboard.rest_period_tooltip" = "أنتِ حاليًا في أيام خالية من الحبوب";
+"dashboard.progress_before_start" = "قبل البدء";
+"dashboard.progress_day" = "اليوم %d";
+"dashboard.day_progress_format" = "اليوم %d / %d";
+
+// MARK: - Widget
+"widget.configuration_display_name" = "أداة تتبع الحبوب";
+"widget.configuration_description" = "تحققي من حالة حبة اليوم";
+"widget.day_label" = "اليوم %d";
+"widget.message_plant_grass" = "ازرعي عشب اليوم!";
+"widget.message_setup_pill" = "إعداد الحبة";
+"widget.message_grass_waiting" = "العشب بانتظارك";
+"widget.message_one_pill_complete" = "تمت زراعة حبة واحدة";
+"widget.message_rest_time" = "وقت التوقف الآن";
+"widget.message_over_two_hours" = "تأخير ساعتين!";
+"widget.message_over_four_hours" = "تأخير 4 ساعات!";
+"widget.message_two_today" = "حبتان اليوم";
+"widget.message_today_complete" = "اكتمل يومك";
+
+// MARK: - History
+"history.navigation_title" = "السجل";
+"history.detail_title" = "تفاصيل الدورة";
+"history.empty_message" = "لا توجد سجلات بعد";
+"history.start_label" = "البدء:";
+"history.created_label" = "تم الإنشاء:";
+"history.cycle_title_format" = "الدورة #%d · المجموع %d أيام";
+"history.scheduled_time_label" = "الوقت المجدول";
+"history.active_days_format" = "تناول %d أيام";
+"history.break_days_format" = "توقف %d أيام";
+"history.cell_meta_format" = "تناول %d أيام · توقف %d أيام · %@";
+
+// MARK: - Statistics
+"statistics.my_record_title" = "سجلاتي";
+"statistics.taking_pill_label" = "الحبة";
+"statistics.chart_title" = "وقت Pilling";
+"statistics.period_selection_title" = "اختيار الفترة";
+"statistics.category_too_early" = "تم التناول مبكرًا جدًا";
+"statistics.category_on_time" = "تم التناول في الوقت";
+"statistics.category_delayed" = "تم التناول متأخرًا";
+"statistics.category_double" = "جرعة مزدوجة";
+"statistics.category_missed" = "فقدان";
+"statistics.category_scheduled" = "مجدول";
+"statistics.deleted_side_effect" = "تم حذف العرض الجانبي";
+"statistics.day_count_format" = "%d أيام";
+"statistics.side_effect_count_format" = "%d مرات";
+
+// MARK: - Message
+"message.empty" = "يرجى إعداد الحبة";
+"message.cycle_complete" = "يرجى إعداد حبة جديدة.";
+"message.setup_required" = "إعداد الحبة مطلوب";
+"message.rest_period" = "حتى العشب يستريح اليوم";
+"message.forgot_me" = "هل نسيتِني...؟";
+"message.plant_today_grass" = "ازرعي عشب اليوم";
+"message.plant_steadily" = "استمري في زراعة العشب بانتظام.";
+"message.pilling_searching" = "Pilling يبحث عنكِ...";
+"message.pilling_angry" = "Pilling غاضب";
+"message.take_two_pills" = "تناولي حبتين اليوم.";
+"message.grass_growing_well" = "العشب ينمو بشكل جيد";
+"message.missed_yesterday_take_two" = "نسيتِ أمس؟ تناولي حبتين اليوم!";
+"message.take_within_two_hours" = "تناولي الحبة في نفس الوقت كل يوم ضمن ساعتين.";
+"message.need_one_pill_more" = "تحتاجين إلى حبة واحدة إضافية!";
+"message.taken_delayed_ok" = "لا بأس، تأخير ساعتين فقط!";
+"message.took_too_early" = "تم تناولها أبكر بأكثر من ساعتين";
+"message.see_tomorrow" = "اكتملت حبتان! أداء رائع";
+"message.start_taking_today" = "ابدئي التناول اليوم";
+"message.start_taking_tomorrow" = "ابدئي التناول غدًا";
+"message.days_until_start" = "متبقي %d أيام حتى البدء";
+"message.one_pill_more" = "حبة واحدة إضافية!";
+"message.over_two_hours" = "تجاوز ساعتين";
+"message.over_four_hours" = "تجاوز 4 ساعات";
+"message.no_record_for_days" = "لا يوجد سجل لمدة %d أيام. هل كل شيء بخير؟";
+"message.widget_plant_grass" = "ازرعي العشب!";
+"message.widget_planting_complete" = "تمت زراعة العشب!";
+"message.widget_grass_waiting" = "العشب بانتظارك";
+"message.widget_rest_time" = "وقت التوقف الآن";
+"message.widget_over_two_hours" = "تأخير ساعتين!";
+"message.widget_over_four_hours" = "تأخير 4 ساعات!";
+
+// MARK: - Notification
+"notification.title" = "وقت العشب";
+"notification.break_period" = "إنها فترة التوقف";
+"notification.default_message" = "حان وقت زراعة العشب 🌱";
+
+// MARK: - Side Effect Tag
+"side_effect.mood_down" = "انخفاض المزاج";
+"side_effect.spotting" = "نزيف خفيف";
+"side_effect.dry_mouth" = "جفاف الفم";
+"side_effect.section_title" = "الآثار الجانبية";
+"side_effect.add_button" = "إضافة";
+"side_effect.manage_title" = "إدارة الآثار الجانبية";
+"side_effect.edit_title" = "تعديل";
+"side_effect.done_title" = "تم";
+"side_effect.new_tag_title" = "إضافة وسم جديد";
+"side_effect.new_tag_message" = "أدخلي اسم الوسم";
+"side_effect.new_tag_placeholder" = "اسم الوسم";
+
+// MARK: - Error
+"error.invalid_time_format" = "تنسيق وقت غير صالح";
+"error.invalid_date_range" = "نطاق تاريخ غير صالح";
+"error.unknown_error" = "خطأ";
+"error.permission_error" = "إذن";
+"error.notification_permission_title" = "خطأ في الإشعارات";
+"error.notification_permission_required" = "إذن الإشعارات مطلوب.\nيرجى تفعيله من الإعدادات.";
+"error.notification_setting_failed" = "فشل إعداد الإشعارات.\nيرجى المحاولة مرة أخرى.";
+"error.invalid_time" = "وقت غير صالح.";
+"error.pill_info_not_found" = "لم يتم العثور على معلومات الحبة.\nيرجى إعدادها مرة أخرى.";
+"error.retry_later" = "حدث خطأ.\nيرجى المحاولة لاحقًا.";
+"error.data_load_failed" = "فشل تحميل البيانات";
+
+// MARK: - Time Setting
+"time_setting.main_title" = "حددي وقت الإشعار!";
+"time_setting.subtitle" = "يمكنكِ تغيير هذا لاحقًا.";
+"time_setting.time_button_title" = "وقت التذكير";
+"time_setting.confirm_button" = "تم!";
+"time_setting.picker_confirm_button" = "موافق";
+"time_setting.navigation_title" = "إعدادات الوقت";
+
+// MARK: - Onboarding
+"onboarding.next_button" = "التالي";
+"onboarding.start_button" = "بدء التناول";
+"onboarding.page1_title" = "ابني روتينًا ثابتًا\nلدورتك مع Pilling";
+"onboarding.page1_description" = "احصلي على تذكير يومي في الوقت المحدد.\nتناولي الحبة وسجّليها.";
+"onboarding.page2_title" = "تابعي الالتزام\nبمخططات بسيطة";
+"onboarding.page2_description" = "إدارة دورتك وفترات التوقف\nفي مكان واحد";
+"onboarding.page3_title" = "تحققي من حالتك فورًا\nباستخدام الودجت";
+"onboarding.page3_description" = "سجّلي بنقرة واحدة\nوتحققي في أي وقت";

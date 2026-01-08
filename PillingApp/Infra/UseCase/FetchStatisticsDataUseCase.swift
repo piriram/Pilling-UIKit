@@ -102,24 +102,32 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
         }
 
         // Calculate statistics by category
+        var tooEarlyCount = 0
         var onTimeCount = 0
-        var lateCount = 0
-        var missedOrDoubleCount = 0
+        var delayedCount = 0
+        var doubleCount = 0
+        var missedCount = 0
+        var scheduledCount = 0
         var totalTaken = 0
 
         for record in activeDayRecords {
             switch record.status {
+            case .takenTooEarly:
+                tooEarlyCount += 1
+                totalTaken += 1
             case .taken:
                 onTimeCount += 1
                 totalTaken += 1
-            case .takenDelayed, .takenTooEarly:
-                lateCount += 1
+            case .takenDelayed:
+                delayedCount += 1
                 totalTaken += 1
             case .takenDouble:
-                missedOrDoubleCount += 1
+                doubleCount += 1
                 totalTaken += 1
-            case .missed, .recentlyMissed, .notTaken, .scheduled:
-                missedOrDoubleCount += 1
+            case .missed, .recentlyMissed, .notTaken:
+                missedCount += 1
+            case .scheduled:
+                scheduledCount += 1
             case .rest:
                 break
             }
@@ -129,36 +137,72 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
         let completionRate = totalActiveDays > 0 ? Int((Double(totalTaken) / Double(totalActiveDays)) * 100) : 0
 
         // Calculate percentages
+        let tooEarlyPercentage = totalActiveDays > 0 ? Int((Double(tooEarlyCount) / Double(totalActiveDays)) * 100) : 0
         let onTimePercentage = totalActiveDays > 0 ? Int((Double(onTimeCount) / Double(totalActiveDays)) * 100) : 0
-        let latePercentage = totalActiveDays > 0 ? Int((Double(lateCount) / Double(totalActiveDays)) * 100) : 0
-        let missedPercentage = totalActiveDays > 0 ? Int((Double(missedOrDoubleCount) / Double(totalActiveDays)) * 100) : 0
+        let delayedPercentage = totalActiveDays > 0 ? Int((Double(delayedCount) / Double(totalActiveDays)) * 100) : 0
+        let doublePercentage = totalActiveDays > 0 ? Int((Double(doubleCount) / Double(totalActiveDays)) * 100) : 0
+        let missedPercentage = totalActiveDays > 0 ? Int((Double(missedCount) / Double(totalActiveDays)) * 100) : 0
+        let scheduledPercentage = totalActiveDays > 0 ? Int((Double(scheduledCount) / Double(totalActiveDays)) * 100) : 0
 
         var recordItems: [RecordItemDTO] = []
+
+        if tooEarlyCount > 0 {
+            recordItems.append(RecordItemDTO(
+                category: AppStrings.Statistics.categoryTooEarly,
+                percentage: tooEarlyPercentage,
+                days: tooEarlyCount,
+                colorHex: "#AFF466",
+                isChartOnly: false
+            ))
+        }
 
         if onTimeCount > 0 {
             recordItems.append(RecordItemDTO(
                 category: AppStrings.Statistics.categoryOnTime,
                 percentage: onTimePercentage,
                 days: onTimeCount,
-                colorHex: "#99D94C"
+                colorHex: "#79DA10",
+                isChartOnly: false
             ))
         }
 
-        if lateCount > 0 {
+        if delayedCount > 0 {
             recordItems.append(RecordItemDTO(
                 category: AppStrings.Statistics.categoryDelayed,
-                percentage: latePercentage,
-                days: lateCount,
-                colorHex: "#4C8033"
+                percentage: delayedPercentage,
+                days: delayedCount,
+                colorHex: "#325A07",
+                isChartOnly: false
             ))
         }
 
-        if missedOrDoubleCount > 0 {
+        if doubleCount > 0 {
             recordItems.append(RecordItemDTO(
-                category: AppStrings.Statistics.categoryMissedOrDouble,
+                category: AppStrings.Statistics.categoryDouble,
+                percentage: doublePercentage,
+                days: doubleCount,
+                colorHex: "#B05511",
+                isChartOnly: false
+            ))
+        }
+
+        if missedCount > 0 {
+            recordItems.append(RecordItemDTO(
+                category: AppStrings.Statistics.categoryMissed,
                 percentage: missedPercentage,
-                days: missedOrDoubleCount,
-                colorHex: "#B3B3B3"
+                days: missedCount,
+                colorHex: "#8C8C8C",
+                isChartOnly: false
+            ))
+        }
+
+        if scheduledCount > 0 {
+            recordItems.append(RecordItemDTO(
+                category: AppStrings.Statistics.categoryScheduled,
+                percentage: scheduledPercentage,
+                days: scheduledCount,
+                colorHex: "#E5E5E5",
+                isChartOnly: true
             ))
         }
 

@@ -29,11 +29,13 @@ struct UserSettings {
     }
     
     static var `default`: UserSettings {
-        let now = Date()
         let calendar = Calendar.current
-        let components = calendar.dateComponents([.hour, .minute], from: now)
-        let scheduledTime = calendar.date(from: components) ?? now
-        
+        // 고정된 기본 시간 사용 (9:00 AM)
+        var components = DateComponents()
+        components.hour = 9
+        components.minute = 0
+        let scheduledTime = calendar.date(from: components) ?? Date()
+
         return UserSettings(
             scheduledTime: scheduledTime,
             notificationEnabled: true,

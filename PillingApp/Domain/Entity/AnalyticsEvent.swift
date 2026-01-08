@@ -61,6 +61,11 @@ enum AnalyticsEvent {
     case dataLoadFailed(errorType: String)
     case retryButtonTapped
 
+    // 약 검색 & 선택
+    case medicationSearched(keyword: String)
+    case medicationSelected(id: String, name: String, keyword: String)
+    case medicationListViewed(count: Int)
+
     // MARK: - 이벤트명 (Firebase 전송용)
     var name: String {
         switch self {
@@ -123,6 +128,11 @@ enum AnalyticsEvent {
         // 에러
         case .dataLoadFailed: return "data_load_failed"
         case .retryButtonTapped: return "retry_button_tapped"
+
+        // 약 검색
+        case .medicationSearched: return "medication_searched"
+        case .medicationSelected: return "medication_selected"
+        case .medicationListViewed: return "medication_list_viewed"
         }
     }
 
@@ -286,6 +296,27 @@ enum AnalyticsEvent {
 
         case .retryButtonTapped:
             return [:]
+
+        // 약 검색
+        case .medicationSearched(let keyword):
+            return [
+                "keyword": keyword,
+                "timestamp": Date().timeIntervalSince1970
+            ]
+
+        case .medicationSelected(let id, let name, let keyword):
+            return [
+                "medication_id": id,
+                "medication_name": name,
+                "search_keyword": keyword,
+                "timestamp": Date().timeIntervalSince1970
+            ]
+
+        case .medicationListViewed(let count):
+            return [
+                "medication_count": count,
+                "timestamp": Date().timeIntervalSince1970
+            ]
         }
     }
 }

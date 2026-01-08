@@ -4,26 +4,16 @@ final class ConsecutiveMissedRule: MessageRule {
     let priority = 100
 
     func shouldEvaluate(context: MessageContext) -> Bool {
-        let hasMissed = context.consecutiveMissedDays > 0
+        // 2일 이상 연속 누락만 처리
+        let hasMissed = context.consecutiveMissedDays >= 2
         return hasMissed
     }
 
     func evaluate(context: MessageContext) -> MessageType? {
         let days = context.consecutiveMissedDays
 
-        if days >= 3 {
-            return .waiting
-        }
         if days >= 2 {
-            return .fire
-        }
-
-        if days >= 1 {
-            if context.todayIsTaken {
-                return .pilledTwo
-            } else {
-                return .groomy
-            }
+            return .consecutiveMissedWarning(days: days)
         }
 
         return nil

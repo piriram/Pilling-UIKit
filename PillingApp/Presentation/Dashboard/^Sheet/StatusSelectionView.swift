@@ -24,6 +24,8 @@ final class StatusSelectionView: UIView {
         let view = UIView()
         view.backgroundColor = AppColor.grayBackground
         view.layer.cornerRadius = 12
+        view.isUserInteractionEnabled = true
+        view.clipsToBounds = true
         return view
     }()
     
@@ -40,16 +42,17 @@ final class StatusSelectionView: UIView {
     private lazy var takenDoubleButton = createButton(title: str.takenDouble, tag: 2)
     
     // MARK: - Initialization
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
         bindButtons()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
     
     // MARK: - Setup
     
@@ -78,14 +81,14 @@ final class StatusSelectionView: UIView {
             })
             .bind(to: notTakenTapped)
             .disposed(by: disposeBag)
-        
+
         takenButton.rx.tap
             .do(onNext: { [weak self] in
                 self?.selectButton(tag: 1)
             })
             .bind(to: takenTapped)
             .disposed(by: disposeBag)
-        
+
         takenDoubleButton.rx.tap
             .do(onNext: { [weak self] in
                 self?.selectButton(tag: 2)
@@ -106,6 +109,7 @@ final class StatusSelectionView: UIView {
         button.backgroundColor = .clear
         button.layer.cornerRadius = 10
         button.clipsToBounds = true
+        button.isUserInteractionEnabled = true
         return button
     }
     

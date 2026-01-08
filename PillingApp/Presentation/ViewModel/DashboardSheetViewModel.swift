@@ -79,7 +79,9 @@ final class DefaultDashboardSheetViewModel: DashboardSheetViewModel {
 
         input.tapTakenDouble
             .subscribe(onNext: { [weak self] in
+                print("🔍 [SheetViewModel] tapTakenDouble - 2알 복용 상태로 변경")
                 self?.selectedStatus = .takenDouble
+                print("🔍 [SheetViewModel] selectedStatus = \(String(describing: self?.selectedStatus))")
             })
             .disposed(by: disposeBag)
         
@@ -119,6 +121,7 @@ final class DefaultDashboardSheetViewModel: DashboardSheetViewModel {
         let dismiss = dismissTrigger
             .map { [weak self] _ -> (PillStatus?, String) in
                 guard let self = self else { return (nil, "") }
+                print("🔍 [SheetViewModel] dismiss - selectedStatus: \(String(describing: self.selectedStatus)), memo: \(self.currentMemo)")
                 return (self.selectedStatus, self.currentMemo)
             }
             .asSignal(onErrorSignalWith: .empty())

@@ -5,7 +5,7 @@
 	<key>message.days_until_start</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@days@ until start</string>
+		<string>%#@days@ until you start taking</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
@@ -21,7 +21,7 @@
 	<key>history.active_days_format</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@days@ active</string>
+		<string>Taking %#@days@</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>
@@ -37,7 +37,7 @@
 	<key>history.break_days_format</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%#@days@ break</string>
+		<string>Break %#@days@</string>
 		<key>days</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>

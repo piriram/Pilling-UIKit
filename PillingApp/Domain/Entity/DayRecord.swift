@@ -5,6 +5,20 @@ struct PillInfo: Codable{
     let name: String
     let takingDays: Int
     let breakDays: Int
+    let manufacturer: String?
+    let mainIngredient: String?
+    let dosageInstructions: String?
+    let itemSeq: String?
+
+    init(name: String, takingDays: Int, breakDays: Int, manufacturer: String? = nil, mainIngredient: String? = nil, dosageInstructions: String? = nil, itemSeq: String? = nil) {
+        self.name = name
+        self.takingDays = takingDays
+        self.breakDays = breakDays
+        self.manufacturer = manufacturer
+        self.mainIngredient = mainIngredient
+        self.dosageInstructions = dosageInstructions
+        self.itemSeq = itemSeq
+    }
 }
 
 // MARK: - PillRecordMemo

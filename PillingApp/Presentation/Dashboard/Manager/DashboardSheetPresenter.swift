@@ -57,12 +57,15 @@ final class DashboardSheetPresenter {
             timeProvider: timeProvider,
             onDataChanged: { [weak self] chosenStatus, memo in
                 guard let self = self else { return }
+                print("🔍 [SheetPresenter] onDataChanged - chosenStatus: \(String(describing: chosenStatus)), memo: \(memo)")
                 // If status not chosen, maintain existing status
                 let finalStatus = chosenStatus ?? item.status
+                print("🔍 [SheetPresenter] finalStatus: \(finalStatus)")
 
                 // 복용 상태일 때만 takenAt 전달, 미복용 상태면 nil
                 let finalTakenAt = finalStatus.isTaken ? currentTakenAt : nil
 
+                print("🔍 [SheetPresenter] Calling onStatusUpdate with index: \(index), status: \(finalStatus)")
                 onStatusUpdate(index, finalStatus, memo, finalTakenAt)
             },
             onTimeChanged: { [weak self] newTime in

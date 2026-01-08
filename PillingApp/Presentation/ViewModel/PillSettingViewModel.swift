@@ -22,31 +22,35 @@ final class PillSettingViewModel {
         let presentPillTypePicker: Signal<Void>
         let proceed: Signal<Void>
         let alertMessage: Signal<String>
+        let dosageMismatchAlert: Signal<(current: (Int, Int), api: (Int, Int), itemSeq: String)>
     }
     
     // MARK: - Properties
-    
+
     let input: Input
     let output: Output
-    
+
     private let userDefaultsManager: UserDefaultsManagerProtocol
-    
+    private let detailAPIService: MedicationDetailAPIServiceProtocol
+
     private let pillTypeButtonTappedSubject = PublishSubject<Void>()
     private let startDateButtonTappedSubject = PublishSubject<Void>()
     private let dateSelectedSubject = PublishSubject<Date>()
     private let pillInfoSelectedSubject = PublishSubject<PillInfo>()
     private let nextButtonTappedSubject = PublishSubject<Void>()
     private let alertMessageSubject = PublishSubject<String>()
-    
+    private let dosageMismatchAlertSubject = PublishSubject<(current: (Int, Int), api: (Int, Int), itemSeq: String)>()
+
     private let selectedPillInfoRelay = BehaviorRelay<PillInfo?>(value: nil)
     private let selectedStartDateRelay = BehaviorRelay<Date?>(value: nil)
-    
+
     private let disposeBag = DisposeBag()
-    
+
     // MARK: - Initialization
-    
-    init(userDefaultsManager: UserDefaultsManagerProtocol) {
+
+    init(userDefaultsManager: UserDefaultsManagerProtocol, detailAPIService: MedicationDetailAPIServiceProtocol) {
         self.userDefaultsManager = userDefaultsManager
+        self.detailAPIService = detailAPIService
         
         // Input 초기화
         self.input = Input(
@@ -81,7 +85,7 @@ final class PillSettingViewModel {
                 return PillSettingViewModel.formatDateWithDayInfo(date: date)
             }
         
-        // userDefaultsManager를 캡처하여 사용
+        // userDefaultsManager, detailAPIService를 캡처하여 사용
         let proceed = nextButtonTappedSubject
             .withLatestFrom(
                 Observable.combineLatest(
@@ -96,9 +100,41 @@ final class PillSettingViewModel {
                 return (pillInfo, startDate)
             }
             .filter { pillInfo, _ in (pillInfo.takingDays + pillInfo.breakDays) <= 28 }
-            .do(onNext: { [userDefaultsManager] pillInfo, startDate in
+            .do(onNext: { [userDefaultsManager, detailAPIService, dosageMismatchAlertSubject, disposeBag] pillInfo, startDate in
+                // 기본 정보 저장
                 userDefaultsManager.savePillInfo(pillInfo)
                 userDefaultsManager.savePillStartDate(startDate)
+
+                // itemSeq가 있으면 백그라운드에서 상세 API 호출
+                if let itemSeq = pillInfo.itemSeq {
+                    detailAPIService.fetchMedicationDetail(itemSeq: itemSeq)
+                        .observe(on: MainScheduler.instance)
+                        .subscribe(
+                            onNext: { detailInfo in
+                                guard let detail = detailInfo else { return }
+
+                                // 상세 정보 저장
+                                let storedInfo = detail.toStoredInfo()
+                                userDefaultsManager.saveMedicationDetail(storedInfo, forItemSeq: itemSeq)
+
+                                // 복용 주기 비교
+                                let apiDosage = detail.parsedDosage()
+                                let currentDosage = (pillInfo.takingDays, pillInfo.breakDays)
+
+                                if apiDosage != currentDosage {
+                                    dosageMismatchAlertSubject.onNext((
+                                        current: currentDosage,
+                                        api: apiDosage,
+                                        itemSeq: itemSeq
+                                    ))
+                                }
+                            },
+                            onError: { error in
+                                print("⚠️ 상세 정보 조회 실패: \(error.localizedDescription)")
+                            }
+                        )
+                        .disposed(by: disposeBag)
+                }
             })
             .map { _ in () }
             .asSignal(onErrorSignalWith: .empty())
@@ -111,7 +147,8 @@ final class PillSettingViewModel {
             presentDatePicker: startDateButtonTappedSubject.asSignal(onErrorSignalWith: .empty()),
             presentPillTypePicker: pillTypeButtonTappedSubject.asSignal(onErrorSignalWith: .empty()),
             proceed: proceed,
-            alertMessage: alertMessageSubject.asSignal(onErrorSignalWith: .empty())
+            alertMessage: alertMessageSubject.asSignal(onErrorSignalWith: .empty()),
+            dosageMismatchAlert: dosageMismatchAlertSubject.asSignal(onErrorSignalWith: .empty())
         )
         
         // 바인딩

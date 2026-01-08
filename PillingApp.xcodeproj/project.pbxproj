@@ -74,6 +74,7 @@
 		9A7A6B5C4D3E2F1A0B0C0C02 /* Localizable.stringsdict */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = Localizable.stringsdict; path = DaillyWidget/Resources/en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		9A7A6B5C4D3E2F1A0B0C0C03 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = DaillyWidget/Resources/ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		9A7A6B5C4D3E2F1A0B0C0C04 /* Localizable.stringsdict */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = Localizable.stringsdict; path = DaillyWidget/Resources/ko.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
+		9A7A6B5C4D3E2F1A0B0C0C05 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -225,6 +226,7 @@
 			children = (
 				211FEFE12EE916A700C51E33 /* GoogleService-Info.plist */,
 				2124FC3A2EA77F14001578C9 /* .gitignore */,
+				9A7A6B5C4D3E2F1A0B0C0C05 /* Config.xcconfig */,
 				2124F79E2EA25B84001578C9 /* DaillyWidgetExtension.entitlements */,
 				218AFB1C2E996BF7008A77DB /* PillingApp */,
 				2124F7662EA23E3A001578C9 /* DaillyWidget */,
@@ -367,6 +369,7 @@
 				Base,
 				ko,
 				en,
+				ar,
 			);
 			mainGroup = 218AFB112E996BF7008A77DB;
 			minimizedProjectReferenceProxies = 1;
@@ -536,6 +539,7 @@
 		};
 		218AFB2E2E996BF9008A77DB /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9A7A6B5C4D3E2F1A0B0C0C05 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -550,6 +554,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "필링";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
+				INFOPLIST_KEY_MFDS_API_KEY = "$(MFDS_API_KEY)";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -559,7 +564,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.2;
+				MARKETING_VERSION = 2.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Pilltastic.Pilling;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -579,6 +584,7 @@
 		};
 		218AFB2F2E996BF9008A77DB /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 9A7A6B5C4D3E2F1A0B0C0C05 /* Config.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -593,6 +599,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "필링";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.medical";
+				INFOPLIST_KEY_MFDS_API_KEY = "$(MFDS_API_KEY)";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -602,7 +609,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.1.2;
+				MARKETING_VERSION = 2.2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = app.Pilltastic.Pilling;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

@@ -38,6 +38,8 @@ final class DashboardSheetViewController: UIViewController {
         let scrollView = UIScrollView()
         scrollView.showsVerticalScrollIndicator = false
         scrollView.showsHorizontalScrollIndicator = false
+        scrollView.isUserInteractionEnabled = true
+        scrollView.delaysContentTouches = false
         return scrollView
     }()
     
@@ -51,6 +53,7 @@ final class DashboardSheetViewController: UIViewController {
         let stack = UIStackView()
         stack.axis = .vertical
         stack.spacing = 20
+        stack.isUserInteractionEnabled = true
         return stack
     }()
     
@@ -82,12 +85,15 @@ final class DashboardSheetViewController: UIViewController {
         self.onTimeChanged = onTimeChanged
         self.userDefaultsManager = userDefaultsManager
         self.timeProvider = timeProvider
-        
+
         // 초기 메모에서 부작용 태그 파싱
         let parsedMemo = PillRecordMemo.fromJSONString(initialMemo)
         self.initialSideEffectIds = parsedMemo.sideEffectIds
-        
-        
+
+        print("🔍 [DashboardSheet] init - initialMemo: \(initialMemo)")
+        print("🔍 [DashboardSheet] init - parsedMemo.sideEffectIds: \(parsedMemo.sideEffectIds)")
+        print("🔍 [DashboardSheet] init - parsedMemo.text: \(parsedMemo.text)")
+
         self.viewModel = DefaultDashboardSheetViewModel(
             selectedDate: selectedDate,
             initialMemo: parsedMemo.text,
@@ -115,11 +121,19 @@ final class DashboardSheetViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        
+
+        // 🔍 DEBUG: 부작용 초기화 상태 로깅
+        print("🔍 [DashboardSheet] viewWillAppear - initialSideEffectIds: \(initialSideEffectIds)")
+        print("🔍 [DashboardSheet] viewWillAppear - before setSelectedTagIds: \(sideEffectTagsView.getSelectedTagIds())")
+
         // 부작용 관리에서 돌아올 때를 대비해 태그 목록을 다시 로드
         // (태그 추가/삭제/순서변경/visibility 변경 반영)
         sideEffectTagsView.reloadTags()
+
+        // 🔧 FIX: 초기 부작용 선택 상태 복원
+        sideEffectTagsView.setSelectedTagIds(initialSideEffectIds)
+
+        print("🔍 [DashboardSheet] viewWillAppear - after setSelectedTagIds: \(sideEffectTagsView.getSelectedTagIds())")
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -183,6 +197,10 @@ final class DashboardSheetViewController: UIViewController {
         if let titleText = titleText ?? title {
             subtitleLabel.attributedText = formatTitleText(titleText)
         }
+
+        // StatusSelectionView의 터치 이벤트 활성화
+        statusSelectionView.isUserInteractionEnabled = true
+
         contentStackView.addArrangedSubview(subtitleLabel)
         contentStackView.addArrangedSubview(statusSelectionView)
         contentStackView.addArrangedSubview(timeSettingButton)
@@ -210,10 +228,12 @@ final class DashboardSheetViewController: UIViewController {
     private func setupGestures() {
         let dimmedTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleDimmedViewTap))
         sheetAnimator.dimmedView.addGestureRecognizer(dimmedTapGesture)
-        
+
         let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture))
+        panGesture.cancelsTouchesInView = false  // 🔧 하위 뷰의 터치를 방해하지 않도록 설정
+        panGesture.delegate = self
         sheetAnimator.containerView.addGestureRecognizer(panGesture)
-        
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         tapGesture.cancelsTouchesInView = false
         view.addGestureRecognizer(tapGesture)
@@ -277,9 +297,11 @@ final class DashboardSheetViewController: UIViewController {
         output.dismiss
             .emit(onNext: { [weak self] status, memoText in
                 guard let self else { return }
-                
+
                 // 선택된 부작용 태그 ID 수집
                 let selectedTagIds = self.sideEffectTagsView.getSelectedTagIds()
+
+                print("🔍 [DashboardSheet] dismiss - selectedTagIds: \(selectedTagIds)")
 
                 // 선택된 태그의 이름을 함께 저장 (삭제된 태그 대비)
                 let allTags = self.userDefaultsManager.loadSideEffectTags()
@@ -295,8 +317,9 @@ final class DashboardSheetViewController: UIViewController {
                     sideEffectNames: sideEffectNames.isEmpty ? nil : sideEffectNames
                 )
                 let memoJSON = pillMemo.toJSONString()
-                
-                
+
+                print("🔍 [DashboardSheet] dismiss - memoJSON: \(memoJSON)")
+
                 self.onDataChanged(status, memoJSON)
                 self.sheetAnimator.hide()
             })
@@ -342,5 +365,22 @@ final class DashboardSheetViewController: UIViewController {
         let managementVC = SideEffectManagementViewController(userDefaultsManager: userDefaultsManager)
         navigationController?.setNavigationBarHidden(false, animated: false)
         navigationController?.pushViewController(managementVC, animated: true)
+    }
+}
+
+// MARK: - UIGestureRecognizerDelegate
+
+extension DashboardSheetViewController: UIGestureRecognizerDelegate {
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+        // Pan gesture와 다른 제스처(버튼 탭 등)를 동시에 인식하도록 허용
+        return true
+    }
+
+    func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        // 버튼이나 인터랙티브한 뷰를 터치한 경우 Pan gesture가 터치를 받지 않도록 함
+        if touch.view is UIButton || touch.view is UIControl {
+            return false
+        }
+        return true
     }
 }

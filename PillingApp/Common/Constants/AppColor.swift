@@ -16,7 +16,8 @@ public enum AppColor {
     public static let pillWhite = UIColor.white
     public static let pillBorder = UIColor(hexString: "7EDD1C")
     public static let textBlack = UIColor(hexString: "222222")
-    
+    public static let black = UIColor(hexString: "242E2C")
+
     public static let secondary = UIColor(hexString: "3C3C43").withAlphaComponent(0.6)
     public static let weekdayText = UIColor(hexString: "3C3C43").withAlphaComponent(0.3)
     public static let borderGray = UIColor(hexString: "D9D9D9")
@@ -29,7 +30,8 @@ public enum AppColor {
     public static let gray600 = UIColor(hexString: "757575")
     public static let gray400 = UIColor(hexString: "A3A3A3")
     public static let gray300 = UIColor(hexString: "BABABA")
-    
+    public static let gray100 = UIColor(hexString: "E8E8E8")
+
     public static let breakPeriodBg = UIColor(hexString: "E8DAC5")
     public static let breakPeriodText = UIColor(hexString: "A58351")
 }

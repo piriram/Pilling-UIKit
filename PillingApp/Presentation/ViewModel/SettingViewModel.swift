@@ -42,28 +42,31 @@ final class SettingViewModel {
     }
     
     // MARK: - Properties
-    
+
     private let settingsRepository: UserDefaultsProtocol
     private let notificationManager: NotificationManagerProtocol
     private let pillCycleRepository: CycleRepositoryProtocol
     private let userDefaultsManager: UserDefaultsManagerProtocol
+    private let updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
     private let disposeBag = DisposeBag()
-    
+
     private let currentSettingsRelay = BehaviorRelay<UserSettings>(value: .default)
     private let navigateToPillSettingSubject = PublishSubject<Void>()
-    
+
     // MARK: - Initialization
-    
+
     init(
         settingsRepository: UserDefaultsProtocol,
         notificationManager: NotificationManagerProtocol,
         pillCycleRepository: CycleRepositoryProtocol,
-        userDefaultsManager: UserDefaultsManagerProtocol
+        userDefaultsManager: UserDefaultsManagerProtocol,
+        updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
     ) {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
         self.pillCycleRepository = pillCycleRepository
         self.userDefaultsManager = userDefaultsManager
+        self.updateScheduledTimeUseCase = updateScheduledTimeUseCase
     }
     
     // MARK: - Transform
@@ -155,7 +158,7 @@ final class SettingViewModel {
     
     func updateTime(_ date: Date) -> Observable<Void> {
         let currentSettings = currentSettingsRelay.value
-        
+
         // NOTE: assuming UserSettings has a fifth field for HealthKit/other state
         let updatedSettings = UserSettings(
             scheduledTime: date,
@@ -163,15 +166,21 @@ final class SettingViewModel {
             delayThresholdMinutes: currentSettings.delayThresholdMinutes,
             notificationMessage: currentSettings.notificationMessage
         )
-        
+
         return settingsRepository.saveSettings(updatedSettings)
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
-                
+
+                // 현재 사이클의 미래 레코드들의 scheduledDateTime 업데이트
+                return self.updateScheduledTimeUseCase.execute(newTime: date)
+            }
+            .flatMap { [weak self] _ -> Observable<Void> in
+                guard let self = self else { return .empty() }
+
                 guard currentSettings.notificationEnabled else {
                     return .just(())
                 }
-                
+
                 return self.notificationManager.scheduleDailyNotification(
                     at: date,
                     isEnabled: currentSettings.notificationEnabled,

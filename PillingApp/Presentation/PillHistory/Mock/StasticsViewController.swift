@@ -33,7 +33,6 @@ final class StasticsViewController: UIViewController {
         button.setImage(UIImage(systemName: "chevron.down"), for: .normal)
         button.tintColor = .black
         button.semanticContentAttribute = .forceRightToLeft
-        button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 4, bottom: 0, right: -4)
         return button
     }()
     
@@ -185,13 +184,28 @@ final class StasticsViewController: UIViewController {
             recordListStackView.isHidden = false
 
             let attributedString = NSMutableAttributedString()
+
+            let labelParagraphStyle = NSMutableParagraphStyle()
+            labelParagraphStyle.lineHeightMultiple = 22.0 / 16.0
+
+            let nameParagraphStyle = NSMutableParagraphStyle()
+            nameParagraphStyle.lineHeightMultiple = 27.0 / 20.0
+
             attributedString.append(NSAttributedString(
                 string: "\(AppStrings.Statistics.takingPillLabel) ",
-                attributes: [.font: UIFont.systemFont(ofSize: 18, weight: .bold)]
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 16, weight: .regular),
+                    .foregroundColor: AppColor.black,
+                    .paragraphStyle: labelParagraphStyle
+                ]
             ))
             attributedString.append(NSAttributedString(
                 string: data.medicineName,
-                attributes: [.font: UIFont.systemFont(ofSize: 18, weight: .bold)]
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 20, weight: .semibold),
+                    .foregroundColor: AppColor.black,
+                    .paragraphStyle: nameParagraphStyle
+                ]
             ))
             medicineLabel.attributedText = attributedString
 
@@ -206,6 +220,12 @@ final class StasticsViewController: UIViewController {
         for item in records {
             let itemView = createRecordItemView(item: item)
             recordListStackView.addArrangedSubview(itemView)
+        }
+
+        // Add divider before side effect statistics if they exist
+        if !sideEffectStats.isEmpty {
+            let dividerView = createDividerView()
+            recordListStackView.addArrangedSubview(dividerView)
         }
 
         // Add side effect statistics
@@ -224,8 +244,9 @@ final class StasticsViewController: UIViewController {
         percentageLabel.textColor = .white
         percentageLabel.textAlignment = .center
         percentageLabel.backgroundColor = UIColor(hex: item.colorHex) ?? .gray
-        percentageLabel.layer.cornerRadius = 6
+        percentageLabel.layer.cornerRadius = 10
         percentageLabel.clipsToBounds = true
+        percentageLabel.semanticContentAttribute = .forceLeftToRight
         
         let categoryLabel = UILabel()
         categoryLabel.text = item.category
@@ -244,8 +265,8 @@ final class StasticsViewController: UIViewController {
         percentageLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
             make.centerY.equalToSuperview()
-            make.width.equalTo(60)
-            make.height.equalTo(32)
+            make.width.equalTo(51)
+            make.height.equalTo(34)
         }
         
         categoryLabel.snp.makeConstraints { make in
@@ -259,9 +280,9 @@ final class StasticsViewController: UIViewController {
         }
         
         containerView.snp.makeConstraints { make in
-            make.height.equalTo(56)
+            make.height.equalTo(34)
         }
-        
+
         return containerView
     }
     
@@ -269,9 +290,8 @@ final class StasticsViewController: UIViewController {
         let containerView = UIView()
 
         let iconImageView = UIImageView()
-        iconImageView.image = UIImage(systemName: "exclamationmark.circle.fill")
-        iconImageView.tintColor = AppColor.pillGreen600
-        iconImageView.contentMode = .center
+        iconImageView.image = UIImage(named: "side_drop")
+        iconImageView.contentMode = .scaleAspectFit
 
         let categoryLabel = UILabel()
         categoryLabel.text = stat.tagName
@@ -305,12 +325,23 @@ final class StasticsViewController: UIViewController {
         }
 
         containerView.snp.makeConstraints { make in
-            make.height.equalTo(56)
+            make.height.equalTo(34)
         }
 
         return containerView
     }
-    
+
+    private func createDividerView() -> UIView {
+        let dividerView = UIView()
+        dividerView.backgroundColor = AppColor.gray100
+
+        dividerView.snp.makeConstraints { make in
+            make.height.equalTo(1)
+        }
+
+        return dividerView
+    }
+
     private func showPeriodSelectionAlert(periodList: [PeriodRecordDTO]) {
         let alert = UIAlertController(title: AppStrings.Statistics.periodSelectionTitle, message: nil, preferredStyle: .actionSheet)
         

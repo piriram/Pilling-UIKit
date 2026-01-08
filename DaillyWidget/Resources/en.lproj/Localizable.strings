@@ -34,12 +34,13 @@
 "message.need_one_pill_more" = "Need one more!";
 "message.taken_delayed_ok" = "Over 2 hours late, but okay!";
 "message.took_too_early" = "Taken 2+ hours early";
-"message.see_tomorrow" = "See you tomorrow!";
+"message.see_tomorrow" = "2 pills done! You're doing great";
 "message.start_taking_today" = "Starting today";
 "message.start_taking_tomorrow" = "Starting tomorrow";
 "message.one_pill_more" = "One more!";
 "message.over_two_hours" = "2 hours late";
 "message.over_four_hours" = "4 hours late";
+"message.no_record_for_days" = "No record for %d days. Everything okay?";
 "message.widget_plant_grass" = "Plant grass!";
 "message.widget_planting_complete" = "Planted!";
 "message.widget_grass_waiting" = "Grass is waiting";
