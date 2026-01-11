@@ -28,6 +28,7 @@
 "message.pilling_searching" = "Pilling is looking...";
 "message.pilling_angry" = "Pilling is upset";
 "message.take_two_pills" = "Take two pills today";
+"message.double_dose_complete" = "Two pills taken!";
 "message.grass_growing_well" = "Grass growing well";
 "message.missed_yesterday_take_two" = "Missed yesterday? Take 2 today!!";
 "message.take_within_two_hours" = "Take at the same time daily, within 2 hours";

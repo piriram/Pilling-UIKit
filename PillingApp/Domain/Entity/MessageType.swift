@@ -86,7 +86,7 @@ enum MessageType {
         case .yesterdayMissedNeedOne:
             return AppStrings.Message.needOnePillMore
         case .doubleDoseComplete:
-            return AppStrings.Message.takeTwoPills
+            return AppStrings.Message.doubleDoseComplete
         case .beforeStart(let daysUntilStart):
             if daysUntilStart == 0 {
                 return AppStrings.Message.startTakingToday

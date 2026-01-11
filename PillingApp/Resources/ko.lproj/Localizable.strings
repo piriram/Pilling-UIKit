@@ -130,6 +130,7 @@
 "message.pilling_searching" = "필링이가 찾아요...";
 "message.pilling_angry" = "필링이 화남";
 "message.take_two_pills" = "오늘은 두알을 복용하세요.";
+"message.double_dose_complete" = "2알 복용 완료했어요!";
 "message.grass_growing_well" = "잔디가 잘 자라고 있어요";
 "message.missed_yesterday_take_two" = "어제 미복용했다면 오늘은 2알!!";
 "message.take_within_two_hours" = "매일 2시간 이내의 같은 시간에 복용해주세요.";

@@ -129,6 +129,7 @@
 "message.pilling_searching" = "Pilling يبحث عنكِ...";
 "message.pilling_angry" = "Pilling غاضب";
 "message.take_two_pills" = "تناولي حبتين اليوم.";
+"message.double_dose_complete" = "تم تناول حبتين!";
 "message.grass_growing_well" = "العشب ينمو بشكل جيد";
 "message.missed_yesterday_take_two" = "نسيتِ أمس؟ تناولي حبتين اليوم!";
 "message.take_within_two_hours" = "تناولي الحبة في نفس الوقت كل يوم ضمن ساعتين.";

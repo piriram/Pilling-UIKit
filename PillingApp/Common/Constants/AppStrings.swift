@@ -176,6 +176,7 @@ enum AppStrings{
         static let pillingSearching = "message.pilling_searching".localized
         static let pillingAngry = "message.pilling_angry".localized
         static let takeTwoPills = "message.take_two_pills".localized
+        static let doubleDoseComplete = "message.double_dose_complete".localized
         static let grassGrowingWell = "message.grass_growing_well".localized
         static let missedYesterdayTakeTwo = "message.missed_yesterday_take_two".localized
         static let takeWithinTwoHours = "message.take_within_two_hours".localized
