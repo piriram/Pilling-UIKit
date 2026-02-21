@@ -12,9 +12,15 @@ final class DIContainer {
     }()
     
     // MARK: - Time Provider
-    
+
     lazy var timeProvider: TimeProvider = {
         SystemTimeProvider()
+    }()
+
+    // MARK: - Factories
+
+    private lazy var pillStatusFactory: PillStatusFactory = {
+        PillStatusFactory(timeProvider: timeProvider)
     }()
     
     // MARK: - Managers(싱글톤)
@@ -26,7 +32,25 @@ final class DIContainer {
     private lazy var notificationManager: NotificationManagerProtocol = {
         return LocalNotificationManager()
     }()
-    
+
+    // MARK: - Analytics
+
+    private lazy var analyticsService: AnalyticsServiceProtocol = {
+        #if DEBUG
+        return ConsoleAnalyticsService()  // 개발 환경: 콘솔 출력
+        #else
+        return FirebaseAnalyticsService()  // 프로덕션: Firebase (설치 후 활성화)
+        #endif
+    }()
+
+    private lazy var crashlyticsService: CrashlyticsServiceProtocol = {
+        #if DEBUG
+        return ConsoleCrashlyticsService()
+        #else
+        return FirebaseCrashlyticsService()
+        #endif
+    }()
+
     // MARK: - Repositories (싱글톤)
     
     private lazy var cycleRepository: CycleRepositoryProtocol = {
@@ -39,6 +63,17 @@ final class DIContainer {
 
     private lazy var cycleHistoryRepository: CycleHistoryProtocol = {
         return CycleHistoryRepository(context: coreDataManager.viewContext)
+    }()
+
+    private lazy var medicationRepository: MedicationRepositoryProtocol = {
+        let apiKey = Bundle.main.object(forInfoDictionaryKey: "MFDS_API_KEY") as? String ?? ""
+        let apiService = MedicationAPIService(apiKey: apiKey)
+        return MedicationRepository(apiService: apiService)
+    }()
+
+    private lazy var medicationDetailAPIService: MedicationDetailAPIServiceProtocol = {
+        let apiKey = Bundle.main.object(forInfoDictionaryKey: "MFDS_DETAIL_API_KEY") as? String ?? ""
+        return MedicationDetailAPIService(apiKey: apiKey)
     }()
 
     // MARK: - UseCases
@@ -54,7 +89,8 @@ final class DIContainer {
     func makeTakePillUseCase() -> TakePillUseCaseProtocol {
         return TakePillUseCase(
             cycleRepository: cycleRepository,
-            timeProvider: timeProvider
+            timeProvider: timeProvider,
+            analytics: analyticsService
         )
     }
     
@@ -67,6 +103,7 @@ final class DIContainer {
     
     func makeCalculateDashboardMessageUseCase() -> CalculateDashboardMessageUseCaseProtocol {
         return CalculateDashboardMessageUseCase(
+            statusFactory: pillStatusFactory,
             timeProvider: timeProvider
         )
     }
@@ -96,12 +133,16 @@ final class DIContainer {
             calculateDashboardMessageUseCase: makeCalculateDashboardMessageUseCase(),
             userDefaultsManager: userDefaultsManager,
             settingsRepository: settingsRepository,
-            notificationManager: notificationManager
+            notificationManager: notificationManager,
+            analytics: analyticsService
         )
     }
     
     func makePillSettingViewModel() -> PillSettingViewModel {
-        return PillSettingViewModel(userDefaultsManager: userDefaultsManager)
+        return PillSettingViewModel(
+            userDefaultsManager: userDefaultsManager,
+            detailAPIService: medicationDetailAPIService
+        )
     }
     
     func makeTimeSettingViewModel() -> TimeSettingViewModel {
@@ -123,10 +164,18 @@ final class DIContainer {
             settingsRepository: settingsRepository,
             notificationManager: notificationManager,
             pillCycleRepository: cycleRepository,
+            userDefaultsManager: userDefaultsManager,
+            updateScheduledTimeUseCase: makeUpdateScheduledTimeUseCase()
+        )
+    }
+
+    func makeUpdateScheduledTimeUseCase() -> UpdateScheduledTimeUseCaseProtocol {
+        return UpdateScheduledTimeUseCase(
+            cycleRepository: cycleRepository,
             userDefaultsManager: userDefaultsManager
         )
     }
-    
+
     func makeSettingViewController() -> SettingViewController {
         let viewModel = makeSettingViewModel()
         return SettingViewController(viewModel: viewModel)
@@ -150,5 +199,27 @@ final class DIContainer {
     
     func getUserDefaultsManager() -> UserDefaultsManagerProtocol {
         return userDefaultsManager
+    }
+
+    func getMedicationRepository() -> MedicationRepositoryProtocol {
+        return medicationRepository
+    }
+
+    func getAnalyticsService() -> AnalyticsServiceProtocol {
+        return analyticsService
+    }
+
+    func getCrashlyticsService() -> CrashlyticsServiceProtocol {
+        return crashlyticsService
+    }
+
+    func getMedicationDetailAPIService() -> MedicationDetailAPIServiceProtocol {
+        return medicationDetailAPIService
+    }
+
+    // MARK: - Test ViewControllers
+
+    func makeMedicationDetailTestViewController() -> MedicationDetailTestViewController {
+        return MedicationDetailTestViewController(detailAPIService: medicationDetailAPIService)
     }
 }

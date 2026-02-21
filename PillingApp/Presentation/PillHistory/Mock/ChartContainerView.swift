@@ -8,14 +8,14 @@ final class ChartContainerView: UIView {
     
     let leftArrowButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(systemName: "chevron.left"), for: .normal)
+        button.setImage(UIImage(systemName: "chevron.backward"), for: .normal)
         button.tintColor = AppColor.secondary
         return button
     }()
-    
+
     let rightArrowButton: UIButton = {
         let button = UIButton()
-        button.setImage(UIImage(systemName: "chevron.right"), for: .normal)
+        button.setImage(UIImage(systemName: "chevron.forward"), for: .normal)
         button.tintColor = AppColor.secondary
         return button
     }()

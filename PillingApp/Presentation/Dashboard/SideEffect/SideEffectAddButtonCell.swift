@@ -12,7 +12,7 @@ final class SideEffectAddButtonCell: UICollectionViewCell {
     private let iconView: UIImageView = {
         let iv = UIImageView(image: UIImage(systemName: "plus"))
         iv.contentMode = .scaleAspectFit
-        iv.tintColor = AppColor.pillGreen600
+        iv.tintColor = AppColor.pillGreen800
         return iv
     }()
 
@@ -20,7 +20,7 @@ final class SideEffectAddButtonCell: UICollectionViewCell {
         let label = UILabel()
         label.font = Typography.caption(.semibold)
         label.textColor = AppColor.green800
-        label.text = "추가"
+        label.text = AppStrings.SideEffectTag.addButton
         return label
     }()
 
@@ -42,7 +42,7 @@ final class SideEffectAddButtonCell: UICollectionViewCell {
         contentView.layer.masksToBounds = true
         contentView.backgroundColor = AppColor.card
         contentView.layer.borderWidth = 1
-        contentView.layer.borderColor = AppColor.pillGreen600.withAlphaComponent(0.3).cgColor
+        contentView.layer.borderColor = AppColor.pillGreen800.withAlphaComponent(0.9).cgColor
 
         contentView.addSubview(stack)
         stack.addArrangedSubview(iconView)

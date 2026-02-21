@@ -99,8 +99,8 @@ final class TimePickerBottomSheet: UIViewController {
         
         containerView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.bottom.equalToSuperview().offset(350)
-            $0.height.equalTo(320)
+            $0.bottom.equalToSuperview().offset(360)
+            $0.height.equalTo(360)
         }
         
         handleBar.snp.makeConstraints {
@@ -184,7 +184,7 @@ final class TimePickerBottomSheet: UIViewController {
     
     private func hideBottomSheet() {
         containerView.snp.updateConstraints {
-            $0.bottom.equalToSuperview().offset(350)
+            $0.bottom.equalToSuperview().offset(360)
         }
         
         UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {

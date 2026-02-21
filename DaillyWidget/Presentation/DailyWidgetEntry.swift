@@ -1,6 +1,4 @@
 import WidgetKit
-
-import WidgetKit
 import SwiftUI
 
 // MARK: - PillingDailyWidgetEntry
@@ -20,7 +18,7 @@ struct DailyWidgetEntry: TimelineEntry {
             )
         )
     }
-    
+
     static var empty: DailyWidgetEntry {
         DailyWidgetEntry(
             date: Date(),

@@ -8,9 +8,15 @@ protocol UserDefaultsManagerProtocol {
     func clearPillSettings()
     func saveCurrentCycleID(_ id: UUID)
     func loadCurrentCycleID() -> UUID?
-    
+    func hasCompletedOnboarding() -> Bool
+    func setHasCompletedOnboarding(_ completed: Bool)
+
     func saveSideEffectTags(_ tags: [SideEffectTag])
     func loadSideEffectTags() -> [SideEffectTag]
+
+    // 의약품 상세 정보 저장/로드
+    func saveMedicationDetail(_ detail: MedicationDetailStoredInfo, forItemSeq itemSeq: String)
+    func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo?
 }
 
 
@@ -79,15 +85,28 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
     
     func loadPillInfo() -> PillInfo? {
         // 새 방식으로 먼저 시도
-        if let data = userDefaults.data(forKey: UserDefaultsKey.pillInfo.rawValue),
-           let pillInfo = try? JSONDecoder().decode(PillInfo.self, from: data) {
-            return pillInfo
+        if let data = userDefaults.data(forKey: UserDefaultsKey.pillInfo.rawValue) {
+            print("🔍 [UserDefaults] PillInfo 데이터 존재, 디코딩 시도")
+            if let pillInfo = try? JSONDecoder().decode(PillInfo.self, from: data) {
+                print("🔍 [UserDefaults] PillInfo 로드 성공: \(pillInfo)")
+                return pillInfo
+            } else {
+                print("❌ [UserDefaults] PillInfo JSON 디코딩 실패")
+            }
+        } else {
+            print("🔍 [UserDefaults] PillInfo 데이터 없음, 기존 방식 시도")
         }
-        
+
         // 혹시 마이그레이션이 안됐을 경우를 대비해 기존 방식으로도 시도
-        guard let name = userDefaults.string(forKey: UserDefaultsKey.pillName.rawValue),
-              userDefaults.object(forKey: UserDefaultsKey.pillTakingDays.rawValue) != nil,
-              userDefaults.object(forKey: UserDefaultsKey.pillBreakDays.rawValue) != nil else {
+        let name = userDefaults.string(forKey: UserDefaultsKey.pillName.rawValue)
+        let takingDaysObj = userDefaults.object(forKey: UserDefaultsKey.pillTakingDays.rawValue)
+        let breakDaysObj = userDefaults.object(forKey: UserDefaultsKey.pillBreakDays.rawValue)
+
+        print("🔍 [UserDefaults] 기존 방식 - name: \(name ?? "nil"), takingDays: \(takingDaysObj != nil), breakDays: \(breakDaysObj != nil)")
+
+        guard let name = name,
+              takingDaysObj != nil,
+              breakDaysObj != nil else {
             print("❌ PillInfo 로드 실패: 저장된 데이터가 없습니다")
             return nil
         }
@@ -112,6 +131,14 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
             return nil
         }
         return UUID(uuidString: uuidString)
+    }
+
+    func hasCompletedOnboarding() -> Bool {
+        return userDefaults.bool(forKey: UserDefaultsKey.hasCompletedOnboarding.rawValue)
+    }
+
+    func setHasCompletedOnboarding(_ completed: Bool) {
+        userDefaults.set(completed, forKey: UserDefaultsKey.hasCompletedOnboarding.rawValue)
     }
     
     // MARK: - Clear Methods
@@ -142,16 +169,19 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
             return tags
         }
 
+        print("⚠️ 저장된 태그 없음 - 기본 태그 생성 및 저장")
         let defaultTags = createDefaultSideEffectTags()
+        saveSideEffectTags(defaultTags)  // 최초 생성 시 저장하여 UUID 고정
         return defaultTags
     }
     
     /// 기본 부작용 태그 생성
     private func createDefaultSideEffectTags() -> [SideEffectTag] {
         let defaultNames = [
-           "부정출혈","메스꺼움","식욕 증가","우울","가슴 통증","피부 건조함","두통","여드름"
+            AppStrings.SideEffectTag.moodDown,
+            AppStrings.SideEffectTag.spotting,
         ]
-        
+
         return defaultNames.enumerated().map { index, name in
             SideEffectTag(
                 name: name,
@@ -160,5 +190,25 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
                 isDefault: true
             )
         }
+    }
+
+    // MARK: - Medication Detail Methods
+
+    /// 의약품 상세 정보 저장
+    func saveMedicationDetail(_ detail: MedicationDetailStoredInfo, forItemSeq itemSeq: String) {
+        let key = UserDefaultsKey.medicationDetailKey(forItemSeq: itemSeq)
+        if let encoded = try? JSONEncoder().encode(detail) {
+            userDefaults.set(encoded, forKey: key)
+        }
+    }
+
+    /// 의약품 상세 정보 로드
+    func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo? {
+        let key = UserDefaultsKey.medicationDetailKey(forItemSeq: itemSeq)
+        guard let data = userDefaults.data(forKey: key),
+              let detail = try? JSONDecoder().decode(MedicationDetailStoredInfo.self, from: data) else {
+            return nil
+        }
+        return detail
     }
 }

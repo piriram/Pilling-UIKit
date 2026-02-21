@@ -31,7 +31,8 @@ final class DashboardViewBindingManager {
         sheetPresenter: DashboardSheetPresenter,
         onBackgroundUpdate: @escaping () -> Void,
         onRetryAlert: @escaping (@escaping () -> Void) -> Void,
-        onNewCycleAlert: @escaping () -> Void
+        onNewCycleAlert: @escaping () -> Void,
+        onCompletionFloatingView: @escaping () -> Void
     ) {
         bindViewModel(
             infoView: infoView,
@@ -54,7 +55,11 @@ final class DashboardViewBindingManager {
 
         bindBottomView(bottomView: bottomView)
 
-        bindAlert(onRetryAlert: onRetryAlert, onNewCycleAlert: onNewCycleAlert)
+        bindAlert(
+            onRetryAlert: onRetryAlert,
+            onNewCycleAlert: onNewCycleAlert,
+            onCompletionFloatingView: onCompletionFloatingView
+        )
     }
     
     // MARK: - Private Binding Methods
@@ -113,7 +118,7 @@ final class DashboardViewBindingManager {
         // Dashboard message
         viewModel.dashboardMessage
             .compactMap { $0 }
-            .asDriver(onErrorJustReturn: DashboardMessage(text: "", imageName: .rest, icon: .rest))
+            .asDriver(onErrorJustReturn: DashboardMessage(text: "", imageName: .rest, icon: .rest, backgroundImageName: "background_rest"))
             .drive(onNext: { message in
                 infoView.configure(with: message)
                 onBackgroundUpdate()
@@ -141,6 +146,7 @@ final class DashboardViewBindingManager {
                 item: item,
                 cycle: cycle,
                 onStatusUpdate: { [weak self] index, status, memo, takenAt in
+                    print("🔍 [ViewBindingManager] onStatusUpdate - index: \(index), status: \(status), memo: \(memo ?? "nil"), takenAt: \(String(describing: takenAt))")
                     self?.viewModel.updateState(
                         at: index,
                         to: status,
@@ -254,12 +260,20 @@ final class DashboardViewBindingManager {
     private func bindBottomView(bottomView: DashboardBottomView) {
         bottomView.takePillButton.rx.tap
             .subscribe(onNext: { [weak self] in
-                self?.viewModel.takePill()
+                if bottomView.isRestPeriod {
+                    bottomView.showRestPeriodTooltip()
+                } else {
+                    self?.viewModel.takePill()
+                }
             })
             .disposed(by: disposeBag)
     }
     
-    private func bindAlert(onRetryAlert: @escaping (@escaping () -> Void) -> Void, onNewCycleAlert: @escaping () -> Void) {
+    private func bindAlert(
+        onRetryAlert: @escaping (@escaping () -> Void) -> Void,
+        onNewCycleAlert: @escaping () -> Void,
+        onCompletionFloatingView: @escaping () -> Void
+    ) {
         viewModel.showRetryAlert
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: { [weak self] in
@@ -274,6 +288,13 @@ final class DashboardViewBindingManager {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: {
                 onNewCycleAlert()
+            })
+            .disposed(by: disposeBag)
+
+        viewModel.showCompletionFloatingView
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: {
+                onCompletionFloatingView()
             })
             .disposed(by: disposeBag)
     }

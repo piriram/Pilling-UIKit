@@ -83,6 +83,8 @@ final class DashboardMiddleView: UIView {
         messageLabel.font = Typography.body2(.medium)
         messageLabel.textColor = AppColor.textBlack
         messageLabel.numberOfLines = 1
+        messageLabel.adjustsFontSizeToFitWidth = true
+        messageLabel.minimumScaleFactor = 0.6
     }
     
     private func setupStackViews() {
@@ -94,11 +96,13 @@ final class DashboardMiddleView: UIView {
         dateLine.axis = .horizontal
         dateLine.spacing = 8
         dateLine.alignment = .center
-        
+        dateLine.semanticContentAttribute = .forceLeftToRight
+
         let timeLine = UIStackView(arrangedSubviews: [timeIconImageView, timeLabel])
         timeLine.axis = .horizontal
         timeLine.spacing = 8
         timeLine.alignment = .center
+        timeLine.semanticContentAttribute = .forceLeftToRight
         
         dateIconImageView.snp.makeConstraints { $0.width.height.equalTo(20) }
         timeIconImageView.snp.makeConstraints { $0.width.height.equalTo(20) }
@@ -109,6 +113,7 @@ final class DashboardMiddleView: UIView {
         progressRowStackView.axis = .horizontal
         progressRowStackView.alignment = .firstBaseline
         progressRowStackView.spacing = 2
+        progressRowStackView.semanticContentAttribute = .forceLeftToRight
         progressRowStackView.addArrangedSubview(progressLabel)
         progressRowStackView.addArrangedSubview(totalLabel)
         
@@ -170,7 +175,7 @@ final class DashboardMiddleView: UIView {
         let daysSinceStart = calendar.dateComponents([.day], from: cycle.startDate, to: now).day ?? 0
         let currentDay = daysSinceStart + 1
 
-        progressLabel.text = daysSinceStart < 0 ? "시작전": "\(currentDay)일차"
+        progressLabel.text = daysSinceStart < 0 ? AppStrings.Dashboard.progressBeforeStart : AppStrings.Dashboard.progressDay(currentDay)
         progressLabel.textColor = AppColor.textBlack
         totalLabel.text = "/\(cycle.totalDays)"
     }

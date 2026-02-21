@@ -3,45 +3,6 @@ import RxSwift
 import RxCocoa
 import SnapKit
 
-// MARK: - CenterAlignedCollectionViewFlowLayout
-
-final class CenterAlignedCollectionViewFlowLayout: UICollectionViewFlowLayout {
-    override func layoutAttributesForElements(in rect: CGRect) -> [UICollectionViewLayoutAttributes]? {
-        guard let attributes = super.layoutAttributesForElements(in: rect) else { return nil }
-
-        var rows: [[UICollectionViewLayoutAttributes]] = []
-        var currentRowY: CGFloat = -1
-
-        for attribute in attributes {
-            if currentRowY != attribute.frame.origin.y {
-                currentRowY = attribute.frame.origin.y
-                rows.append([])
-            }
-            rows[rows.count - 1].append(attribute)
-        }
-
-        for row in rows {
-            guard let collectionView = collectionView else { continue }
-
-            let totalWidth = row.reduce(0) { $0 + $1.frame.width }
-            let totalSpacing = CGFloat(row.count - 1) * minimumInteritemSpacing
-            let totalContentWidth = totalWidth + totalSpacing
-
-            let inset = (collectionView.bounds.width - totalContentWidth) / 2
-            var currentX = max(sectionInset.left, inset)
-
-            for attribute in row {
-                var frame = attribute.frame
-                frame.origin.x = currentX
-                attribute.frame = frame
-                currentX += frame.width + minimumInteritemSpacing
-            }
-        }
-
-        return attributes
-    }
-}
-
 final class SideEffectTagsView: UIView {
     
     // MARK: - Properties
@@ -58,7 +19,7 @@ final class SideEffectTagsView: UIView {
     
     private let sectionLabel: UILabel = {
         let label = UILabel()
-        label.text = "오늘의 컨디션"
+        label.text = AppStrings.SideEffectTag.sectionTitle
         label.font = Typography.body1(.semibold)
         label.textColor = AppColor.textBlack
         return label
@@ -129,12 +90,31 @@ final class SideEffectTagsView: UIView {
         }
     }
     
+  
     private func createCollectionViewLayout() -> UICollectionViewLayout {
-        let layout = CenterAlignedCollectionViewFlowLayout()
-        layout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-        layout.minimumInteritemSpacing = 8
-        layout.minimumLineSpacing = 8
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        let itemSize = NSCollectionLayoutSize(
+            widthDimension: .estimated(80),
+            heightDimension: .absolute(36)
+        )
+        let item = NSCollectionLayoutItem(layoutSize: itemSize)
+        
+        let groupSize = NSCollectionLayoutSize(
+            widthDimension: .fractionalWidth(1.0),
+            heightDimension: .estimated(36)
+        )
+        let group = NSCollectionLayoutGroup.horizontal(
+            layoutSize: groupSize,
+            subitems: [item]
+        )
+        group.interItemSpacing = .fixed(8)
+        
+        let section = NSCollectionLayoutSection(group: group)
+        section.interGroupSpacing = 8
+        section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+        
+        let config = UICollectionViewCompositionalLayoutConfiguration()
+        let layout = UICollectionViewCompositionalLayout(section: section, configuration: config)
+        
         return layout
     }
     

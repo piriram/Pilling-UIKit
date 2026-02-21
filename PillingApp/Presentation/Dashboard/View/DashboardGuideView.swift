@@ -79,7 +79,7 @@ final class DashboardGuideView: UIView {
         let guideItem1 = makeGuideItemWithCalendarCell(status: .taken, text: str.guideTaken)
         let guideItem2 = makeGuideItemWithCalendarCell(status: .takenDouble, text: str.guideTakenDouble)
         let guideItem3 = makeGuideItemWithCalendarCell(status: .missed, text: str.guideMissed)
-        let guideItem4 = makeGuideItemWithCalendarCell(status: .todayNotTaken, text: str.guideToday)
+        let guideItem4 = makeGuideItemWithCalendarCell(status: .notTaken, text: str.guideToday)
         
         [guideItem1, guideItem2, guideItem3, guideItem4].forEach { guideStackView.addArrangedSubview($0) }
         
@@ -150,17 +150,17 @@ final class DashboardGuideView: UIView {
     // MARK: - Helpers
     private func makeGuideItemWithCalendarCell(status: PillStatus, text: String) -> UIView {
         let containerView = UIView()
-        
+
         let calendarCell = DashboardCalendarCell()
-        
+
         let textLabel = UILabel()
         textLabel.text = text
         textLabel.font = Typography.body2(.regular)
         textLabel.textColor = AppColor.textBlack
-        
+
         containerView.addSubview(calendarCell)
         containerView.addSubview(textLabel)
-        
+
         calendarCell.snp.makeConstraints { make in
             make.leading.equalToSuperview()
             make.centerY.equalToSuperview()
@@ -174,17 +174,18 @@ final class DashboardGuideView: UIView {
         containerView.snp.makeConstraints { make in
             make.height.equalTo(40)
         }
-        
+
         containerView.layoutIfNeeded()
-        
+
+        let itemDate = status == .notTaken ? Date() : Date().addingTimeInterval(-86400)
         let dummyItem = DayItem(
             cycleDay: 1,
-            date: Date(),
+            date: itemDate,
             status: status,
             scheduledDateTime: Date()
         )
         calendarCell.configure(with: dummyItem)
-        
+
         return containerView
     }
 }

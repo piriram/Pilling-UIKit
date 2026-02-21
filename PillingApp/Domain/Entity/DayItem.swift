@@ -6,7 +6,7 @@ struct DayItem: Hashable, Sendable, Identifiable {
     let date: Date
     let status: PillStatus
     let scheduledDateTime: Date
-    
+
     init(
         id: UUID = UUID(),
         cycleDay: Int,
@@ -19,5 +19,9 @@ struct DayItem: Hashable, Sendable, Identifiable {
         self.date = date
         self.status = status
         self.scheduledDateTime = scheduledDateTime
+    }
+
+    var isToday: Bool {
+        Calendar.current.isDateInToday(date)
     }
 }

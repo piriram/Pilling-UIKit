@@ -6,36 +6,73 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     var window: UIWindow?
     private let disposeBag = DisposeBag()
+    private let userDefaultsManager = DIContainer.shared.getUserDefaultsManager()
     
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
-        
+
         configureIQKeyboardManager()
-        
-        // Window 생성
+
+        DIContainer.shared.getAnalyticsService().logEvent(.appLaunched)
+
         let window = UIWindow(windowScene: windowScene)
         self.window = window
-        //        self.showTest()
-        //        window.makeKeyAndVisible()
-        // 기록 중인 사이클이 있는지 확인
-        checkExistingCycle { hasExistingCycle in
-            DispatchQueue.main.async {
-                if hasExistingCycle {
-                    // 기록 중인 사이클이 있으면 DashboardViewController
-                    self.showDashboard()
-                } else {
-                    // 기록 중인 사이클이 없으면 PillSettingViewController
-                    self.showPillSetting()
-                }
-                
-                window.makeKeyAndVisible()
-            }
+        let crashlytics = DIContainer.shared.getCrashlyticsService()
+        if let installID = UserDefaults.standard.string(forKey: "app_install_id") {
+            crashlytics.setUserID(installID)
+        } else {
+            let newID = UUID().uuidString
+            UserDefaults.standard.set(newID, forKey: "app_install_id")
+            crashlytics.setUserID(newID)
         }
+        crashlytics.setCustomValue(UIDevice.current.systemVersion, forKey: "ios_version")
+        crashlytics.setCustomValue(UIDevice.current.model, forKey: "device_model")
+
+        DIContainer.shared.getPillCycleRepository()
+            .fetchCurrentCycle()
+            .subscribe(onNext: { cycle in
+                if let cycle = cycle {
+                    crashlytics.setCustomValue(cycle.startDate.ISO8601Format(), forKey: "cycle_start_date")
+                    crashlytics.setCustomValue(cycle.activeDays, forKey: "cycle_active_days")
+                    crashlytics.setCustomValue(cycle.breakDays, forKey: "cycle_break_days")
+                }
+            })
+            .disposed(by: disposeBag)
+
+        if !userDefaultsManager.hasCompletedOnboarding() {
+            showOnboarding()
+            window.makeKeyAndVisible()
+            return
+        }
+
+        startMainFlow()
     }
     
     private func configureIQKeyboardManager() {
         IQKeyboardManager.shared.isEnabled = true
         IQKeyboardManager.shared.resignOnTouchOutside = true
+    }
+
+    private func startMainFlow() {
+        let wasReset = VersionManager.shared.checkAndResetIfNeeded()
+
+        if wasReset {
+            showPillSetting()
+            window?.makeKeyAndVisible()
+            return
+        }
+
+        checkExistingCycle { hasExistingCycle in
+            DispatchQueue.main.async {
+                if hasExistingCycle {
+                    self.showDashboard()
+                } else {
+                    self.showPillSetting()
+                }
+
+                self.window?.makeKeyAndVisible()
+            }
+        }
     }
     
     private func checkExistingCycle(completion: @escaping (Bool) -> Void) {
@@ -72,6 +109,16 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         navigationController.navigationBar.isHidden = false
         window?.rootViewController = navigationController
     }
+
+    private func showOnboarding() {
+        let onboardingVC = OnboardingViewController(
+            userDefaultsManager: userDefaultsManager,
+            onCompletion: { [weak self] in
+                self?.startMainFlow()
+            }
+        )
+        window?.rootViewController = onboardingVC
+    }
     private func showTest() {
         let viewModel = DIContainer.shared.makeStasticsViewModel()
         let pillSettingVC = StasticsViewController(viewModel: viewModel)
@@ -94,9 +141,11 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func sceneWillEnterForeground(_ scene: UIScene) {
         // Called as the scene transitions from the background to the foreground.
+        DIContainer.shared.getAnalyticsService().logEvent(.appForegrounded)
     }
     
     func sceneDidEnterBackground(_ scene: UIScene) {
         // Called as the scene transitions from the foreground to the background.
+        DIContainer.shared.getAnalyticsService().logEvent(.appBackgrounded)
     }
 }

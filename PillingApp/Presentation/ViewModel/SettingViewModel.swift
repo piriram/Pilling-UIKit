@@ -42,28 +42,31 @@ final class SettingViewModel {
     }
     
     // MARK: - Properties
-    
+
     private let settingsRepository: UserDefaultsProtocol
     private let notificationManager: NotificationManagerProtocol
     private let pillCycleRepository: CycleRepositoryProtocol
     private let userDefaultsManager: UserDefaultsManagerProtocol
+    private let updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
     private let disposeBag = DisposeBag()
-    
+
     private let currentSettingsRelay = BehaviorRelay<UserSettings>(value: .default)
     private let navigateToPillSettingSubject = PublishSubject<Void>()
-    
+
     // MARK: - Initialization
-    
+
     init(
         settingsRepository: UserDefaultsProtocol,
         notificationManager: NotificationManagerProtocol,
         pillCycleRepository: CycleRepositoryProtocol,
-        userDefaultsManager: UserDefaultsManagerProtocol
+        userDefaultsManager: UserDefaultsManagerProtocol,
+        updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
     ) {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
         self.pillCycleRepository = pillCycleRepository
         self.userDefaultsManager = userDefaultsManager
+        self.updateScheduledTimeUseCase = updateScheduledTimeUseCase
     }
     
     // MARK: - Transform
@@ -88,7 +91,7 @@ final class SettingViewModel {
                     guard let self = self else { return .empty() }
                     return self.updateAlarmSetting(isEnabled: isEnabled)
                         .do(onNext: {
-                            successTracker.onNext("알림 설정이 변경되었습니다")
+                            successTracker.onNext(AppStrings.Setting.successMessageUpdated)
                         })
                         .catch { error in
                             errorTracker.onNext(self.handleError(error))
@@ -106,7 +109,7 @@ final class SettingViewModel {
                     guard let self = self else { return .empty() }
                     return self.updateHealthSetting(isEnabled: isEnabled)
                         .do(onNext: {
-                            successTracker.onNext("Health 연동 설정이 변경되었습니다")
+                            successTracker.onNext(AppStrings.Setting.successMessageUpdated)
                         })
                         .catch { error in
                             errorTracker.onNext(self.handleError(error))
@@ -155,7 +158,7 @@ final class SettingViewModel {
     
     func updateTime(_ date: Date) -> Observable<Void> {
         let currentSettings = currentSettingsRelay.value
-        
+
         // NOTE: assuming UserSettings has a fifth field for HealthKit/other state
         let updatedSettings = UserSettings(
             scheduledTime: date,
@@ -163,15 +166,21 @@ final class SettingViewModel {
             delayThresholdMinutes: currentSettings.delayThresholdMinutes,
             notificationMessage: currentSettings.notificationMessage
         )
-        
+
         return settingsRepository.saveSettings(updatedSettings)
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
-                
+
+                // 현재 사이클의 미래 레코드들의 scheduledDateTime 업데이트
+                return self.updateScheduledTimeUseCase.execute(newTime: date)
+            }
+            .flatMap { [weak self] _ -> Observable<Void> in
+                guard let self = self else { return .empty() }
+
                 guard currentSettings.notificationEnabled else {
                     return .just(())
                 }
-                
+
                 return self.notificationManager.scheduleDailyNotification(
                     at: date,
                     isEnabled: currentSettings.notificationEnabled,
@@ -237,7 +246,7 @@ final class SettingViewModel {
     
     private func updateAlarmSetting(isEnabled: Bool) -> Observable<Void> {
         let currentSettings = currentSettingsRelay.value
-        
+
         // NOTE: assuming UserSettings has a fifth field for HealthKit/other state
         let updatedSettings = UserSettings(
             scheduledTime: currentSettings.scheduledTime,
@@ -245,21 +254,38 @@ final class SettingViewModel {
             delayThresholdMinutes: currentSettings.delayThresholdMinutes,
             notificationMessage: currentSettings.notificationMessage
         )
-        
+
         return notificationManager.requestAuthorization()
             .flatMap { [weak self] granted -> Observable<Void> in
                 guard let self = self else { return .empty() }
-                
+
+                // 권한이 거부되면 에러 발생 (사용자가 설정에서 권한 허용 필요)
                 guard granted else {
                     return .error(NotificationError.permissionDenied)
                 }
-                
+
                 return self.notificationManager.scheduleDailyNotification(
                     at: currentSettings.scheduledTime,
                     isEnabled: isEnabled,
                     message: currentSettings.notificationMessage,
                     cycle: nil
                 )
+            }
+            .catch { error -> Observable<Void> in
+                // 알림 권한 거부 시에도 설정은 저장 (토글은 꺼진 상태로)
+                let fallbackSettings = UserSettings(
+                    scheduledTime: currentSettings.scheduledTime,
+                    notificationEnabled: false,
+                    delayThresholdMinutes: currentSettings.delayThresholdMinutes,
+                    notificationMessage: currentSettings.notificationMessage
+                )
+                return self.settingsRepository.saveSettings(fallbackSettings)
+                    .do(onNext: { [weak self] in
+                        self?.currentSettingsRelay.accept(fallbackSettings)
+                    })
+                    .flatMap { _ -> Observable<Void> in
+                        return .error(error)
+                    }
             }
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
@@ -295,13 +321,13 @@ final class SettingViewModel {
         if let notificationError = error as? NotificationError {
             switch notificationError {
             case .permissionDenied:
-                return "알림 권한이 필요합니다.\n설정에서 알림을 허용해주세요."
+                return AppStrings.Error.notificationPermissionRequired
             case .schedulingFailed:
-                return "알림 설정에 실패했습니다.\n다시 시도해주세요."
+                return AppStrings.Error.notificationSettingFailed
             case .invalidTime:
-                return "유효하지 않은 시간입니다."
+                return AppStrings.Error.invalidTime
             }
         }
-        return "오류가 발생했습니다.\n다시 시도해주세요."
+        return AppStrings.Error.retryLater
     }
 }

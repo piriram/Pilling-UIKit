@@ -40,40 +40,42 @@ final class DashboardCalendarCell: UICollectionViewCell {
         backgroundShapeView.addSubview(capsuleContainer)
         capsuleContainer.addSubview(capsule1)
         capsuleContainer.addSubview(capsule2)
-        
+
         backgroundShapeView.layer.masksToBounds = true
-        backgroundShapeView.snp.makeConstraints { $0.edges.equalToSuperview() }
-        
+        backgroundShapeView.snp.makeConstraints {
+            $0.edges.equalToSuperview().priority(.high)
+        }
+
         // inner shadow 효과를 내는 border view
         innerBorderView.isUserInteractionEnabled = false
         innerBorderView.backgroundColor = .clear
         innerBorderView.layer.borderWidth = 3
         innerBorderView.snp.makeConstraints { make in
-            make.edges.equalToSuperview().inset(3)
+            make.edges.equalToSuperview().inset(3).priority(.high)
         }
-        
+
         capsuleContainer.snp.makeConstraints { make in
             make.center.equalToSuperview()
             make.height.equalToSuperview()
             make.width.equalTo(backgroundShapeView.snp.width)
         }
-        
+
         capsule1.snp.makeConstraints { make in
             make.leading.equalToSuperview().inset(0.5)
             make.top.bottom.equalToSuperview()
-            make.width.equalTo(capsuleContainer.snp.width).multipliedBy(0.5).offset(-1.5)
+            make.width.equalTo(capsuleContainer.snp.width).multipliedBy(0.5).offset(-1.5).priority(.high)
         }
-        
+
         capsule2.snp.makeConstraints { make in
-            make.leading.equalTo(capsule1.snp.trailing).offset(2)
+            make.leading.equalTo(capsule1.snp.trailing).offset(2).priority(.high)
             make.trailing.equalToSuperview().inset(0.5)
             make.top.bottom.equalToSuperview()
             make.width.equalTo(capsule1)
         }
-        
+
         capsule1.backgroundColor = AppColor.pillGreen800
         capsule2.backgroundColor = AppColor.pillGreen800
-        
+
         capsuleContainer.isHidden = true
         innerBorderView.isHidden = true
         contentView.backgroundColor = .clear
@@ -97,16 +99,12 @@ final class DashboardCalendarCell: UICollectionViewCell {
             innerBorderView.layer.cornerRadius = defaultCornerRadius - 3
         }
         
-        if item.status.isToday {
-            backgroundShapeView.layer.borderWidth = 3
-            backgroundShapeView.layer.borderColor = AppColor.pillBorder.cgColor
-            
-            // inner shadow 대체: 안쪽에 반투명 녹색 border
-            innerBorderView.isHidden = false
-            innerBorderView.layer.borderColor = AppColor.pillGreen800.withAlphaComponent(0.3).cgColor
+        if item.isToday && item.status != .takenDouble {
+            backgroundShapeView.layer.borderWidth = 4
+            backgroundShapeView.layer.borderColor = AppColor.pillGreen800.cgColor
         }
         
-        if case .rest = item.status {
+        if case .rest = item.status, !item.isToday {
             backgroundShapeView.layer.borderWidth = 1
             backgroundShapeView.layer.borderColor = AppColor.notYetGray.cgColor
         }

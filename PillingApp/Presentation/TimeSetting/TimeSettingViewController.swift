@@ -7,6 +7,7 @@ final class TimeSettingViewController: UIViewController {
     
     // MARK: - Properties
     
+    private typealias Str = AppStrings.TimeSetting
     private let viewModel: TimeSettingViewModel
     private let disposeBag = DisposeBag()
     private let contentInset: CGFloat = 16
@@ -23,32 +24,32 @@ final class TimeSettingViewController: UIViewController {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = "알람 받을 시간을 설정해주세요!"
+        label.text = Str.mainTitle
         label.font = Typography.headline3(.bold)
         label.textColor = AppColor.textBlack
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "설정은 추후에 변경가능합니다."
+        label.text = Str.subtitle
         label.font = Typography.body2(.regular)
         label.textColor = .gray
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
     private let timeSettingButton: SettingItemButton = {
         let button = SettingItemButton()
-        button.configure(title: "복용 시간", iconSystemName: "clock.fill")
+        button.configure(title: Str.timeButtonTitle, iconSystemName: "clock.fill")
         button.setValue(nil)
         return button
     }()
     
     private let completeButton: PrimaryActionButton = {
         let button = PrimaryActionButton()
-        button.setTitle("설정 완료!", for: .normal)
+        button.setTitle(Str.confirmButton, for: .normal)
         return button
     }()
     
@@ -81,7 +82,7 @@ final class TimeSettingViewController: UIViewController {
     private func setupUI() {
         view.backgroundColor = .systemBackground
         navigationController?.setNavigationBarHidden(false, animated: false)
-        navigationItem.title = "시간 설정"
+        navigationItem.title = Str.navigationTitle
         navigationItem.hidesBackButton = false
         navigationItem.backButtonDisplayMode = .default
         
@@ -145,9 +146,9 @@ final class TimeSettingViewController: UIViewController {
         
         output.showError
             .drive(onNext: { [weak self] errorMessage in
-                let includeSettings = errorMessage.contains("권한")
+                let includeSettings = errorMessage == AppStrings.Error.notificationPermissionRequired
                 self?.presentError(
-                    title: "알림 설정 오류",
+                    title: AppStrings.Error.notificationPermissionTitle,
                     message: errorMessage,
                     includeSettingsOption: includeSettings,
                     settingsHandler: includeSettings ? {

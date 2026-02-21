@@ -4,7 +4,7 @@ import DGCharts
 
 // MARK: - DonutChartView
 final class DonutChartView: UIView {
-    
+
     private let pieChartView: PieChartView = {
         let chartView = PieChartView()
         chartView.usePercentValuesEnabled = true
@@ -19,6 +19,7 @@ final class DonutChartView: UIView {
         chartView.rotationEnabled = true
         chartView.highlightPerTapEnabled = true
         chartView.legend.enabled = false
+        chartView.rotationAngle = 270
         return chartView
     }()
     
@@ -34,7 +35,7 @@ final class DonutChartView: UIView {
     
     private let centerTitleLabel: UILabel = {
         let label = UILabel()
-        label.text = "필링타임"
+        label.text = AppStrings.Statistics.chartTitle
         label.font = .systemFont(
             ofSize: ChartLayoutConstants.Data.centerTitleFontSize,
             weight: .semibold
@@ -95,28 +96,28 @@ final class DonutChartView: UIView {
         addSubview(medicineIconView)
         medicineIconView.addSubview(medicineImageView)
         addSubview(closeImageView)
-        
+
         centerStackView.addArrangedSubview(centerTitleLabel)
         centerStackView.addArrangedSubview(centerPercentageLabel)
-        
+
         pieChartView.snp.makeConstraints { make in
             make.edges.equalToSuperview()
         }
-        
+
         centerStackView.snp.makeConstraints { make in
             make.center.equalToSuperview()
         }
-        
+
         medicineIconView.snp.makeConstraints { make in
             make.center.equalToSuperview()
             make.width.height.equalTo(ChartLayoutConstants.centerIconSize)
         }
-        
+
         medicineImageView.snp.makeConstraints { make in
             make.center.equalToSuperview()
             make.width.height.equalTo(ChartLayoutConstants.centerIconSize)
         }
-        
+
         closeImageView.snp.makeConstraints { make in
             make.trailing.equalTo(medicineIconView.snp.trailing)
                 .offset(ChartLayoutConstants.Empty.closeIconOffset)

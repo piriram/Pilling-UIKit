@@ -1,0 +1,4 @@
+# API Key Configuration
+Config.xcconfig
+
+# Add this to your main .gitignore file

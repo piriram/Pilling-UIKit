@@ -34,7 +34,7 @@ final class DashboardSheetPresenter {
         let calendar = Calendar.current
         let daysSinceStart = max(0, calendar.dateComponents([.day], from: cycle.startDate, to: item.date).day ?? 0)
         let currentDay = min(daysSinceStart + 1, cycle.totalDays)
-        let dayText = "\(currentDay)일차/\(cycle.totalDays)"
+        let dayText = AppStrings.Dashboard.dayProgressFormat(current: currentDay, total: cycle.totalDays)
         
         // Safely access existing memo/taken time
         let existingMemo: String = {
@@ -57,9 +57,16 @@ final class DashboardSheetPresenter {
             timeProvider: timeProvider,
             onDataChanged: { [weak self] chosenStatus, memo in
                 guard let self = self else { return }
+                print("🔍 [SheetPresenter] onDataChanged - chosenStatus: \(String(describing: chosenStatus)), memo: \(memo)")
                 // If status not chosen, maintain existing status
                 let finalStatus = chosenStatus ?? item.status
-                onStatusUpdate(index, finalStatus, memo, currentTakenAt)
+                print("🔍 [SheetPresenter] finalStatus: \(finalStatus)")
+
+                // 복용 상태일 때만 takenAt 전달, 미복용 상태면 nil
+                let finalTakenAt = finalStatus.isTaken ? currentTakenAt : nil
+
+                print("🔍 [SheetPresenter] Calling onStatusUpdate with index: \(index), status: \(finalStatus)")
+                onStatusUpdate(index, finalStatus, memo, finalTakenAt)
             },
             onTimeChanged: { [weak self] newTime in
                 guard let self = self else { return }
@@ -70,7 +77,7 @@ final class DashboardSheetPresenter {
         )
         
         sheetVC.titleText = dayText
-        sheetVC.title = dayText
+        sheetVC.title = ""
         
         // Initial selection is now handled automatically by ViewModel
         
@@ -106,7 +113,7 @@ final class DashboardSheetPresenter {
     ) {
         guard let viewController = viewController else { return }
         
-        let alert = UIAlertController(title: "기간 선택", message: nil, preferredStyle: .actionSheet)
+        let alert = UIAlertController(title: AppStrings.Statistics.periodSelectionTitle, message: nil, preferredStyle: .actionSheet)
         
         for (index, data) in periodList.enumerated() {
             let action = UIAlertAction(title: "\(data.startDate) - \(data.endDate)", style: .default) { _ in

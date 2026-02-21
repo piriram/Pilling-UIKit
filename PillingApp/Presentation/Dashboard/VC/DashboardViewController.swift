@@ -91,6 +91,11 @@ final class DashboardViewController: UIViewController {
         super.viewWillDisappear(animated)
         navigationController?.setNavigationBarHidden(false, animated: false)
     }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        DIContainer.shared.getAnalyticsService().logEvent(.screenViewed(screenName: "Dashboard"))
+    }
     
     // MARK: - Setup
     
@@ -162,6 +167,9 @@ final class DashboardViewController: UIViewController {
             },
             onNewCycleAlert: { [weak self] in
                 self?.presentNewCycleAlert()
+            },
+            onCompletionFloatingView: { [weak self] in
+                self?.presentCompletionFloatingView()
             }
         )
     }
@@ -185,6 +193,19 @@ final class DashboardViewController: UIViewController {
         present(alert, animated: true)
     }
 
+    private func presentCompletionFloatingView() {
+        let pillName = viewModel.pillInfo.value?.name ?? "피임약"
+        let floatingView = CycleCompleteFloatingView(pillName: pillName)
+
+        floatingView.onStartNewCycle = { [weak self] in
+            // Analytics: 새 약 시작하기 버튼 탭
+            DIContainer.shared.getAnalyticsService().logEvent(.newCycleStarted)
+            self?.coordinator.navigateToPillSetting()
+        }
+
+        floatingView.show(in: view)
+    }
+
     private func presentRetryAlert(retryHandler: @escaping () -> Void) {
         let alert = UIAlertController(
             title: "오류",
@@ -193,6 +214,7 @@ final class DashboardViewController: UIViewController {
         )
 
         let retryAction = UIAlertAction(title: "재시도", style: .default) { _ in
+            DIContainer.shared.getAnalyticsService().logEvent(.retryButtonTapped)
             retryHandler()
         }
 
@@ -217,20 +239,12 @@ final class DashboardViewController: UIViewController {
     // MARK: - UI Updates
     
     private func updateBackgroundForToday() {
-        guard let cycle = viewModel.currentCycle.value else { return }
-        
-        let calendar = Calendar.current
-        let now = Date()
-        
-        guard let todayRecord = cycle.records.first(where: {
-            calendar.isDate($0.scheduledDateTime, inSameDayAs: now)
-        }) else {
-            backgroundImageView.image = UIImage(named: "background")
+        guard let message = viewModel.dashboardMessage.value else {
+            backgroundImageView.image = UIImage(named: "background_rest")
             return
         }
-        
-        let adjustedStatus = todayRecord.status.adjustedForDate(todayRecord.scheduledDateTime, calendar: calendar)
-        backgroundImageView.image = UIImage(named: adjustedStatus.backgroundImageName)
+
+        backgroundImageView.image = UIImage(named: message.backgroundImageName)
     }
     
     private func handleViewIndexChanged(_ index: DashboardViewTransitionManager.ViewIndex) {

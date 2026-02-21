@@ -5,15 +5,19 @@ public enum AppColor {
     public static let bg = UIColor(hexString: "FFFFFF")
     public static let card = UIColor.secondarySystemBackground
     public static let pillGreen800 = UIColor(hexString: "7EDD1C")
+    public static let pillGreen700 = UIColor(hexString: "61AF0D")
     public static let pillGreen600 = UIColor(hexString: "AFF466")
     public static let pillGreen400 = UIColor.systemGreen.withAlphaComponent(0.4)
+    public static let pillGreen300 = UIColor(hexString: "BCF57F")
     public static let pillGreen200 = UIColor(hexString: "AFF466")
+    public static let pillGreen100 = UIColor(hexString: "E9FCD4")
     public static let pillBrown = UIColor(hexString: "B8A07D")
     public static let notYetGray = UIColor(hexString: "3C3C43").withAlphaComponent(0.18)
     public static let pillWhite = UIColor.white
     public static let pillBorder = UIColor(hexString: "7EDD1C")
     public static let textBlack = UIColor(hexString: "222222")
-    
+    public static let black = UIColor(hexString: "242E2C")
+
     public static let secondary = UIColor(hexString: "3C3C43").withAlphaComponent(0.6)
     public static let weekdayText = UIColor(hexString: "3C3C43").withAlphaComponent(0.3)
     public static let borderGray = UIColor(hexString: "D9D9D9")
@@ -23,9 +27,11 @@ public enum AppColor {
     public static let gray700 = UIColor(hexString: "4B4B4B")
     public static let gray800 = UIColor(hexString: "474747")
     public static let green800 = UIColor(hexString: "49850A")
+    public static let gray600 = UIColor(hexString: "757575")
     public static let gray400 = UIColor(hexString: "A3A3A3")
     public static let gray300 = UIColor(hexString: "BABABA")
-    
+    public static let gray100 = UIColor(hexString: "E8E8E8")
+
     public static let breakPeriodBg = UIColor(hexString: "E8DAC5")
     public static let breakPeriodText = UIColor(hexString: "A58351")
 }

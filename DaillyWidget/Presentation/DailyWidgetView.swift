@@ -17,7 +17,7 @@ struct DailyWidgetView: View {
             
             // N일차
             if entry.displayData.cycleDay > 0 {
-                Text("\(entry.displayData.cycleDay)일차")
+                Text(AppStrings.Widget.dayLabel(entry.displayData.cycleDay))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.gray)
             }

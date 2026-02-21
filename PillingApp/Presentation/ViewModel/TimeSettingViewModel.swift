@@ -68,7 +68,7 @@ final class TimeSettingViewModel {
             .asDriver(onErrorJustReturn: ())
         
         let showError = errorTracker
-            .asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다.")
+            .asDriver(onErrorJustReturn: AppStrings.Error.retryLater)
         
         return Output(
             showTimePicker: showTimePicker,
@@ -110,23 +110,28 @@ final class TimeSettingViewModel {
         return notificationManager.requestAuthorization()
             .flatMap { [weak self] granted -> Observable<Void> in
                 guard let self = self else { return .empty() }
-                
-                // 권한이 거부되면 에러 발생
-                guard granted else {
-                    return .error(NotificationError.permissionDenied)
+
+                // 권한이 거부되어도 계속 진행 (알림은 선택사항)
+                if granted {
+                    // 2. 알림 스케줄링 (기본 메시지 사용)
+                    return self.notificationManager.scheduleDailyNotification(
+                        at: self.selectedTime.value,
+                        isEnabled: self.isAlarmEnabled.value,
+                        message: UserSettings.default.notificationMessage,
+                        cycle: nil
+                    )
+                    .catch { _ in
+                        // 알림 스케줄링 실패해도 계속 진행
+                        return .just(())
+                    }
+                } else {
+                    // 권한이 거부되면 알림 없이 계속 진행
+                    return .just(())
                 }
-                
-                // 2. 알림 스케줄링 (기본 메시지 사용)
-                return self.notificationManager.scheduleDailyNotification(
-                    at: self.selectedTime.value,
-                    isEnabled: self.isAlarmEnabled.value,
-                    message: UserSettings.default.notificationMessage,
-                    cycle: nil
-                )
             }
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
-                
+
                 // 3. 설정 저장
                 return self.saveSettings()
             }
@@ -152,22 +157,21 @@ final class TimeSettingViewModel {
         if let notificationError = error as? NotificationError {
             switch notificationError {
             case .permissionDenied:
-                return "알림 권한이 필요합니다.\n설정에서 알림을 허용해주세요."
+                return AppStrings.Error.notificationPermissionRequired
             case .schedulingFailed:
-                return "알림 설정에 실패했습니다.\n다시 시도해주세요."
+                return AppStrings.Error.notificationSettingFailed
             case .invalidTime:
-                return "유효하지 않은 시간입니다."
+                return AppStrings.Error.invalidTime
             }
         }
         
         if let setupError = error as? SetupError {
             switch setupError {
             case .missingPillInfo:
-                return "약 정보를 찾을 수 없습니다.\n처음부터 다시 설정해주세요."
+                return AppStrings.Error.pillInfoNotFound
             }
         }
         
-        return "오류가 발생했습니다.\n다시 시도해주세요."
+        return AppStrings.Error.retryLater
     }
 }
-

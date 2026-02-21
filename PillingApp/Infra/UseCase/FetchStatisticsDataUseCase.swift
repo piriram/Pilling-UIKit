@@ -51,11 +51,32 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
         let endDate = calendar.date(byAdding: .day, value: cycle.totalDays - 1, to: startDate) ?? startDate
 
         let dateFormatter = DateFormatter()
-        dateFormatter.locale = Locale(identifier: "ko_KR")
-        dateFormatter.dateFormat = "M월 d일"
+        dateFormatter.locale = Locale.current
 
-        let startDateString = dateFormatter.string(from: startDate)
-        let endDateString = dateFormatter.string(from: endDate)
+        // Full date format (for sheet)
+        let startDateString: String
+        let endDateString: String
+        let startDateShortString: String
+        let endDateShortString: String
+
+        if Locale.current.language.languageCode?.identifier == "en" {
+            // 영어: 년/월/일 (시트용)
+            dateFormatter.dateFormat = "yyyy/MM/dd"
+            startDateString = dateFormatter.string(from: startDate)
+            endDateString = dateFormatter.string(from: endDate)
+
+            // 영어: 월/일 (버튼용)
+            dateFormatter.dateFormat = "MM/dd"
+            startDateShortString = dateFormatter.string(from: startDate)
+            endDateShortString = dateFormatter.string(from: endDate)
+        } else {
+            // 한글: 월/일 (공통)
+            dateFormatter.setLocalizedDateFormatFromTemplate("MMMMd")
+            startDateString = dateFormatter.string(from: startDate)
+            endDateString = dateFormatter.string(from: endDate)
+            startDateShortString = startDateString
+            endDateShortString = endDateString
+        }
 
         // Filter only active days (exclude rest days)
         let activeDayRecords = cycle.records.filter { record in
@@ -69,6 +90,8 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
             return PeriodRecordDTO(
                 startDate: startDateString,
                 endDate: endDateString,
+                startDateShort: startDateShortString,
+                endDateShort: endDateShortString,
                 completionRate: 0,
                 medicineName: pillInfo?.name ?? "",
                 records: [],
@@ -79,26 +102,32 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
         }
 
         // Calculate statistics by category
+        var tooEarlyCount = 0
         var onTimeCount = 0
-        var lateCount = 0
-        var missedOrDoubleCount = 0
+        var delayedCount = 0
+        var doubleCount = 0
+        var missedCount = 0
+        var scheduledCount = 0
         var totalTaken = 0
 
         for record in activeDayRecords {
-            let adjustedStatus = record.status.adjustedForDate(record.scheduledDateTime, calendar: calendar)
-
-            switch adjustedStatus {
-            case .taken, .todayTaken:
+            switch record.status {
+            case .takenTooEarly:
+                tooEarlyCount += 1
+                totalTaken += 1
+            case .taken:
                 onTimeCount += 1
                 totalTaken += 1
-            case .takenDelayed, .todayTakenDelayed, .takenTooEarly, .todayTakenTooEarly:
-                lateCount += 1
+            case .takenDelayed:
+                delayedCount += 1
                 totalTaken += 1
             case .takenDouble:
-                missedOrDoubleCount += 1
+                doubleCount += 1
                 totalTaken += 1
-            case .missed, .todayDelayed, .todayDelayedCritical, .todayNotTaken, .scheduled:
-                missedOrDoubleCount += 1
+            case .missed, .recentlyMissed, .notTaken:
+                missedCount += 1
+            case .scheduled:
+                scheduledCount += 1
             case .rest:
                 break
             }
@@ -108,36 +137,72 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
         let completionRate = totalActiveDays > 0 ? Int((Double(totalTaken) / Double(totalActiveDays)) * 100) : 0
 
         // Calculate percentages
+        let tooEarlyPercentage = totalActiveDays > 0 ? Int((Double(tooEarlyCount) / Double(totalActiveDays)) * 100) : 0
         let onTimePercentage = totalActiveDays > 0 ? Int((Double(onTimeCount) / Double(totalActiveDays)) * 100) : 0
-        let latePercentage = totalActiveDays > 0 ? Int((Double(lateCount) / Double(totalActiveDays)) * 100) : 0
-        let missedPercentage = totalActiveDays > 0 ? Int((Double(missedOrDoubleCount) / Double(totalActiveDays)) * 100) : 0
+        let delayedPercentage = totalActiveDays > 0 ? Int((Double(delayedCount) / Double(totalActiveDays)) * 100) : 0
+        let doublePercentage = totalActiveDays > 0 ? Int((Double(doubleCount) / Double(totalActiveDays)) * 100) : 0
+        let missedPercentage = totalActiveDays > 0 ? Int((Double(missedCount) / Double(totalActiveDays)) * 100) : 0
+        let scheduledPercentage = totalActiveDays > 0 ? Int((Double(scheduledCount) / Double(totalActiveDays)) * 100) : 0
 
         var recordItems: [RecordItemDTO] = []
 
+        if tooEarlyCount > 0 {
+            recordItems.append(RecordItemDTO(
+                category: AppStrings.Statistics.categoryTooEarly,
+                percentage: tooEarlyPercentage,
+                days: tooEarlyCount,
+                colorHex: "#AFF466",
+                isChartOnly: false
+            ))
+        }
+
         if onTimeCount > 0 {
             recordItems.append(RecordItemDTO(
-                category: "정시에 복용했어요",
+                category: AppStrings.Statistics.categoryOnTime,
                 percentage: onTimePercentage,
                 days: onTimeCount,
-                colorHex: "#99D94C"
+                colorHex: "#79DA10",
+                isChartOnly: false
             ))
         }
 
-        if lateCount > 0 {
+        if delayedCount > 0 {
             recordItems.append(RecordItemDTO(
-                category: "조금 늦었어요",
-                percentage: latePercentage,
-                days: lateCount,
-                colorHex: "#4C8033"
+                category: AppStrings.Statistics.categoryDelayed,
+                percentage: delayedPercentage,
+                days: delayedCount,
+                colorHex: "#325A07",
+                isChartOnly: false
             ))
         }
 
-        if missedOrDoubleCount > 0 {
+        if doubleCount > 0 {
             recordItems.append(RecordItemDTO(
-                category: "미복용 및 2알 복용",
+                category: AppStrings.Statistics.categoryDouble,
+                percentage: doublePercentage,
+                days: doubleCount,
+                colorHex: "#B05511",
+                isChartOnly: false
+            ))
+        }
+
+        if missedCount > 0 {
+            recordItems.append(RecordItemDTO(
+                category: AppStrings.Statistics.categoryMissed,
                 percentage: missedPercentage,
-                days: missedOrDoubleCount,
-                colorHex: "#B3B3B3"
+                days: missedCount,
+                colorHex: "#8C8C8C",
+                isChartOnly: false
+            ))
+        }
+
+        if scheduledCount > 0 {
+            recordItems.append(RecordItemDTO(
+                category: AppStrings.Statistics.categoryScheduled,
+                percentage: scheduledPercentage,
+                days: scheduledCount,
+                colorHex: "#E5E5E5",
+                isChartOnly: true
             ))
         }
 
@@ -147,6 +212,8 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
         return PeriodRecordDTO(
             startDate: startDateString,
             endDate: endDateString,
+            startDateShort: startDateShortString,
+            endDateShort: endDateShortString,
             completionRate: completionRate,
             medicineName: pillInfo?.name ?? "",
             records: recordItems,
@@ -191,7 +258,7 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
                     tagName = savedName
                 } else {
                     // 저장된 이름도 없으면 fallback
-                    tagName = "삭제된 부작용"
+                    tagName = AppStrings.Statistics.deletedSideEffect
                 }
                 return SideEffectStatDTO(tagId: tagId, tagName: tagName, count: count)
             }

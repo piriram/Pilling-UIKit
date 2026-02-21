@@ -1,0 +1,50 @@
+/*
+  Localizable.strings (English)
+  DaillyWidgetExtension
+*/
+
+// MARK: - Widget
+"widget.configuration_display_name" = "Pill Widget";
+"widget.configuration_description" = "Today's status";
+"widget.day_label" = "Day %d";
+"widget.message_plant_grass" = "Plant your grass!";
+"widget.message_setup_pill" = "Set up pill";
+"widget.message_grass_waiting" = "Grass is waiting";
+"widget.message_one_pill_complete" = "One planted!";
+"widget.message_rest_time" = "Rest time";
+"widget.message_over_two_hours" = "2 hours late!";
+"widget.message_over_four_hours" = "4 hours late!";
+"widget.message_two_today" = "Two pills today";
+"widget.message_today_complete" = "Today done";
+
+// MARK: - Message (Shared with app)
+"message.empty" = "Set up your pill";
+"message.cycle_complete" = "Start a new cycle";
+"message.setup_required" = "Set up your pill";
+"message.rest_period" = "Grass resting today";
+"message.forgot_me" = "Did you forget about me...?";
+"message.plant_today_grass" = "Plant today's grass";
+"message.plant_steadily" = "Keep planting steadily";
+"message.pilling_searching" = "Pilling is looking...";
+"message.pilling_angry" = "Pilling is upset";
+"message.take_two_pills" = "Take two pills today";
+"message.double_dose_complete" = "Two pills taken!";
+"message.grass_growing_well" = "Grass growing well";
+"message.missed_yesterday_take_two" = "Missed yesterday? Take 2 today!!";
+"message.take_within_two_hours" = "Take at the same time daily, within 2 hours";
+"message.need_one_pill_more" = "Need one more!";
+"message.taken_delayed_ok" = "Over 2 hours late, but okay!";
+"message.took_too_early" = "Taken 2+ hours early";
+"message.see_tomorrow" = "2 pills done! You're doing great";
+"message.start_taking_today" = "Starting today";
+"message.start_taking_tomorrow" = "Starting tomorrow";
+"message.one_pill_more" = "One more!";
+"message.over_two_hours" = "2 hours late";
+"message.over_four_hours" = "4 hours late";
+"message.no_record_for_days" = "No record for %d days. Everything okay?";
+"message.widget_plant_grass" = "Plant grass!";
+"message.widget_planting_complete" = "Planted!";
+"message.widget_grass_waiting" = "Grass is waiting";
+"message.widget_rest_time" = "Rest time";
+"message.widget_over_two_hours" = "2 hours late!";
+"message.widget_over_four_hours" = "4 hours late!";

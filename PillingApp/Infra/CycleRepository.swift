@@ -1,5 +1,3 @@
-// MARK: - 복용 사이클 데이터를 rx로 다룸 & 위젯 갱신까지 책임
-// TODO: - 위젯에 새약 설정해야하는 것도 설정하기
 import CoreData
 import RxSwift
 import WidgetKit
@@ -50,6 +48,13 @@ final class CycleRepository: CycleRepositoryProtocol {
 
                 // 없으면 최신 사이클
                 return cycles.first
+            }
+            .catch { error in
+                DIContainer.shared.getCrashlyticsService().logError(
+                    error,
+                    userInfo: ["context": "fetchCurrentCycle", "repository": "CycleRepository"]
+                )
+                return .error(error)
             }
     }
     
@@ -147,6 +152,89 @@ final class CycleRepository: CycleRepositoryProtocol {
             return Disposables.create()
         }
     }
+
+    func updateScheduledTimes(in cycleID: UUID, newTimeString: String) -> Observable<Void> {
+        return Observable.create { [weak self] observer in
+            guard let self = self else {
+                observer.onError(CoreDataError.contextNotAvailable)
+                return Disposables.create()
+            }
+
+            let context = self.coreDataManager.viewContext
+
+            // 사이클 찾기
+            let cycleFetchRequest: NSFetchRequest<PillCycleEntity> = NSFetchRequest(entityName: "PillCycleEntity")
+            cycleFetchRequest.predicate = NSPredicate(format: "id == %@", cycleID as CVarArg)
+
+            do {
+                guard let cycleEntity = try context.fetch(cycleFetchRequest).first else {
+                    observer.onError(CoreDataError.invalidData)
+                    return Disposables.create()
+                }
+
+                // 사이클의 scheduledTime 업데이트
+                cycleEntity.scheduledTime = newTimeString
+
+                // 레코드들 가져오기
+                let recordsFetchRequest: NSFetchRequest<PillRecordEntity> = NSFetchRequest(entityName: "PillRecordEntity")
+                recordsFetchRequest.predicate = NSPredicate(format: "cycle == %@", cycleEntity)
+                let recordEntities = try context.fetch(recordsFetchRequest)
+
+                let calendar = Calendar.current
+                let now = Date()
+                let todayStart = calendar.startOfDay(for: now)
+
+                let timeFormatter = DateFormatter()
+                timeFormatter.dateFormat = "HH:mm"
+                timeFormatter.timeZone = TimeZone.current
+
+                guard let timeDate = timeFormatter.date(from: newTimeString) else {
+                    observer.onError(CoreDataError.invalidData)
+                    return Disposables.create()
+                }
+
+                let timeComponents = calendar.dateComponents([.hour, .minute], from: timeDate)
+
+                // 오늘 이후의 아직 복용하지 않은 레코드들만 업데이트
+                for recordEntity in recordEntities {
+                    guard let scheduledDateTime = recordEntity.scheduledDateTime else { continue }
+
+                    let recordDateStart = calendar.startOfDay(for: scheduledDateTime)
+
+                    // 오늘 이후이고, 아직 복용하지 않은 상태인 경우만 업데이트
+                    let isNotTaken = recordEntity.takenAt == nil
+                    let isTodayOrFuture = recordDateStart >= todayStart
+
+                    if isTodayOrFuture && isNotTaken {
+                        let dateComponents = calendar.dateComponents([.year, .month, .day], from: scheduledDateTime)
+
+                        var combined = DateComponents()
+                        combined.year = dateComponents.year
+                        combined.month = dateComponents.month
+                        combined.day = dateComponents.day
+                        combined.hour = timeComponents.hour
+                        combined.minute = timeComponents.minute
+                        combined.timeZone = TimeZone.current
+
+                        if let newScheduledDateTime = calendar.date(from: combined) {
+                            recordEntity.scheduledDateTime = newScheduledDateTime
+                        }
+                    }
+                }
+
+                try context.save()
+
+                WidgetCenter.shared.reloadAllTimelines()
+
+                observer.onNext(())
+                observer.onCompleted()
+            } catch {
+                observer.onError(CoreDataError.saveFailed(error))
+            }
+
+            return Disposables.create()
+        }
+    }
     
     // MARK: - Additional Methods
     
@@ -195,5 +283,4 @@ final class CycleRepository: CycleRepositoryProtocol {
         }
     }
 }
-
 

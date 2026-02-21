@@ -8,8 +8,11 @@ final class SettingCompleteFloatingView: UIView {
     // MARK: - Properties
     private typealias str = AppStrings.SettingFloating
     var onAutoDismiss: (() -> Void)?
-    
+
     private let disposeBag = DisposeBag()
+
+    private let titleText: String
+    private let subtitleText: String
     
     // MARK: - UI Components
     
@@ -37,16 +40,14 @@ final class SettingCompleteFloatingView: UIView {
     
     private let titleLabel: UILabel = {
         let label = UILabel()
-        label.text = str.titleLabel
         label.font = Typography.headline2(.bold)
         label.textColor = AppColor.textBlack
         label.textAlignment = .center
         return label
     }()
-    
+
     private let subtitleLabel: UILabel = {
         let label = UILabel()
-        label.text = str.subTitleLabel
         label.font = Typography.body2(.regular)
         label.textColor = AppColor.secondary
         label.textAlignment = .center
@@ -54,13 +55,23 @@ final class SettingCompleteFloatingView: UIView {
     }()
     
     // MARK: - Initialization
-    
+
+    init(title: String? = nil, subtitle: String? = nil) {
+        self.titleText = title ?? str.titleLabel
+        self.subtitleText = subtitle ?? str.subTitleLabel
+        super.init(frame: .zero)
+        setupViews()
+        setupConstraints()
+    }
+
     override init(frame: CGRect) {
+        self.titleText = str.titleLabel
+        self.subtitleText = str.subTitleLabel
         super.init(frame: frame)
         setupViews()
         setupConstraints()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -69,10 +80,13 @@ final class SettingCompleteFloatingView: UIView {
     
     private func setupViews() {
         backgroundColor = .clear
-        
+
+        titleLabel.text = titleText
+        subtitleLabel.text = subtitleText
+
         addSubview(dimmedBackgroundView)
         addSubview(floatingCardView)
-        
+
         [checkmarkImageView, titleLabel, subtitleLabel].forEach {
             floatingCardView.addSubview($0)
         }

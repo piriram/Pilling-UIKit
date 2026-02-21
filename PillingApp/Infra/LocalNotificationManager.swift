@@ -58,14 +58,14 @@ final class LocalNotificationManager: NotificationManagerProtocol {
             // 위약 기간인지 확인하여 메시지 결정
             let finalMessage: String
             if let cycle = cycle, cycle.isCurrentlyInBreakPeriod() {
-                finalMessage = "지금은 휴식 기간이에요"
+                finalMessage = AppStrings.Notification.breakPeriodMessage
             } else {
                 finalMessage = message
             }
 
             // 알림 콘텐츠 설정
             let content = UNMutableNotificationContent()
-            content.title = "잔디 타임"
+            content.title = AppStrings.Notification.title
             content.body = finalMessage
             content.sound = .default
             content.badge = 1

@@ -13,6 +13,7 @@ final class DashboardViewModel {
     private let userDefaultsManager: UserDefaultsManagerProtocol
     private let settingsRepository: UserDefaultsProtocol
     private let notificationManager: NotificationManagerProtocol
+    private let analytics: AnalyticsServiceProtocol
 
     private let disposeBag = DisposeBag()
     private let calendar = Calendar.current
@@ -27,6 +28,7 @@ final class DashboardViewModel {
     let pillInfo = BehaviorRelay<PillInfo?>(value: nil)
     let showRetryAlert = PublishRelay<Void>()
     let showNewCycleAlert = PublishRelay<Void>()
+    let showCompletionFloatingView = PublishRelay<Void>()
     
     // MARK: - Initialization
     
@@ -37,7 +39,8 @@ final class DashboardViewModel {
         calculateDashboardMessageUseCase: CalculateDashboardMessageUseCaseProtocol,
         userDefaultsManager: UserDefaultsManagerProtocol,
         settingsRepository: UserDefaultsProtocol,
-        notificationManager: NotificationManagerProtocol
+        notificationManager: NotificationManagerProtocol,
+        analytics: AnalyticsServiceProtocol
     ) {
         self.fetchDashboardDataUseCase = fetchDashboardDataUseCase
         self.takePillUseCase = takePillUseCase
@@ -46,6 +49,7 @@ final class DashboardViewModel {
         self.userDefaultsManager = userDefaultsManager
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
+        self.analytics = analytics
 
 
         loadDashboardData()
@@ -98,6 +102,9 @@ final class DashboardViewModel {
                     self?.handleSuccess(data)
                 },
                 onError: { [weak self] error in
+                    let crashlytics = DIContainer.shared.getCrashlyticsService()
+                    crashlytics.log("DashboardViewModel: loadDashboardData failed")
+                    crashlytics.logError(error, userInfo: ["screen": "Dashboard"])
                     self?.handleError(error)
                 }
             )
@@ -107,14 +114,37 @@ final class DashboardViewModel {
     private func handleSuccess(_ data: (cycle: Cycle?, settings: UserSettings)) {
         self.settings.accept(data.settings)
         self.currentCycle.accept(data.cycle)
+
+        // PillInfo가 없으면 Cycle에서 복원
+        if let cycle = data.cycle, userDefaultsManager.loadPillInfo() == nil {
+            let restoredPillInfo = PillInfo(
+                name: "",  // 약 이름은 Cycle에 없으므로 빈 문자열
+                takingDays: cycle.activeDays,
+                breakDays: cycle.breakDays
+            )
+            userDefaultsManager.savePillInfo(restoredPillInfo)
+            print("🔧 [DashboardViewModel] PillInfo를 Cycle에서 복원: takingDays=\(cycle.activeDays), breakDays=\(cycle.breakDays)")
+        }
+
         self.updateItems()
         self.updateDashboardMessage()
         self.updateCanTakePill()
         self.autoMarkPastScheduledAsMissed()
+
+        if let cycle = data.cycle {
+            self.checkCompletionFloating(cycle)
+        }
     }
     
     private func handleError(_ error: Error) {
         print("❌ 데이터 로드 실패: \(error)")
+        analytics.logEvent(.dataLoadFailed(errorType: "\(error)"))
+        let crashlytics = DIContainer.shared.getCrashlyticsService()
+        crashlytics.log("DashboardViewModel: loadDashboardData failed")
+        crashlytics.logError(error, userInfo: [
+            "context": "loadDashboardData",
+            "timestamp": Date().ISO8601Format()
+        ])
         self.showRetryAlert.accept(())
     }
     
@@ -144,44 +174,37 @@ final class DashboardViewModel {
         let currentScheduledTime = settings.value.scheduledTime
 
         let dayItems = visibleRecords.map { record in
-            var adjustedStatus = record.status.adjustedForDate(record.scheduledDateTime, calendar: calendar)
-            
-            if calendar.isDateInToday(record.scheduledDateTime) {
+            var displayStatus = record.status
+            let isToday = calendar.isDateInToday(record.scheduledDateTime)
+
+            if isToday {
                 let todayScheduledDateTime = calculateTodayScheduledTime(
                     from: currentScheduledTime,
                     calendar: calendar
                 )
-                
-                if adjustedStatus != .rest {
+
+                if displayStatus != .rest {
                     if record.status == .takenDouble {
-                        adjustedStatus = .takenDouble
+                        displayStatus = .takenDouble
                     }
-                    else if !adjustedStatus.isTaken {
-                        let timeInterval = now.timeIntervalSince(todayScheduledDateTime)
-                        let twoHours: TimeInterval = 2 * 60 * 60
-                        let fourHours: TimeInterval = 4 * 60 * 60
-                        
-                        if timeInterval >= fourHours {
-                            adjustedStatus = .todayDelayedCritical
-                        } else if timeInterval >= twoHours {
-                            adjustedStatus = .todayDelayed
-                        } else {
-                            adjustedStatus = .todayNotTaken
-                        }
+                    else if !record.status.isTaken {
+                        // 오늘 날짜는 늦었어도 notTaken(회색)으로 표시
+                        // recentlyMissed는 과거 날짜에만 사용
+                        displayStatus = .notTaken
                     }
                     else if let takenAt = record.takenAt {
-                        adjustedStatus = calculateTakenStatus(
+                        displayStatus = calculateTakenStatus(
                             takenAt: takenAt,
                             scheduledDateTime: todayScheduledDateTime
                         )
                     }
                 }
             }
-            
+
             return DayItem(
                 cycleDay: record.cycleDay,
                 date: record.scheduledDateTime,
-                status: adjustedStatus,
+                status: displayStatus,
                 scheduledDateTime: record.scheduledDateTime
             )
         }
@@ -213,21 +236,49 @@ final class DashboardViewModel {
     ) -> PillStatus {
         let timeInterval = takenAt.timeIntervalSince(scheduledDateTime)
         let twoHours: TimeInterval = 2 * 60 * 60
-        
+
         if timeInterval < -twoHours {
-            return .todayTakenTooEarly
+            return .takenTooEarly
         }
         else if timeInterval > twoHours {
-            return .todayTakenDelayed
+            return .takenDelayed
         }
         else {
-            return .todayTaken
+            return .taken
         }
     }
     
     private func updateDashboardMessage() {
-        let message = calculateDashboardMessageUseCase.execute(cycle: currentCycle.value)
+        guard let cycle = currentCycle.value else {
+            return
+        }
+
+        let message = calculateDashboardMessageUseCase.execute(cycle: cycle)
+        debugLogCycleAndMessage(cycle: cycle, message: message)
         dashboardMessage.accept(message)
+    }
+
+    private func debugLogCycleAndMessage(cycle: Cycle, message: DashboardMessage) {
+        #if DEBUG
+        let dayLimit = 28
+        let calendar = Calendar.current
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        dateFormatter.dateFormat = "yyyy-MM-dd (EEE) HH:mm"
+//
+//        print("=== Dashboard Debug ===")
+        print("cycleNumber=\(cycle.cycleNumber) startDate=\(dateFormatter.string(from: cycle.startDate)) activeDays=\(cycle.activeDays) breakDays=\(cycle.breakDays) scheduledTime=\(cycle.scheduledTime) totalRecords=\(cycle.records.count)")
+        print("dashboardMessage=\(message.text) icon=\(message.icon.rawValue) characterImage=\(message.imageName.rawValue) background=\(message.backgroundImageName)")
+        print("-- Cycle Records Statuses (first \(dayLimit) days) --")
+
+        let sortedRecords = cycle.records.sorted { $0.scheduledDateTime < $1.scheduledDateTime }
+        let statuses = sortedRecords
+            .prefix(dayLimit)
+            .map { $0.status.rawValue }
+            .joined(separator: " | ")
+        print(statuses)
+        print("=== End Dashboard Debug ===")
+        #endif
     }
     
     private func updateCanTakePill() {
@@ -249,13 +300,12 @@ final class DashboardViewModel {
             canTakePill.accept(false)
             return
         }
-        
-        let adjustedStatus = todayRecord.status.adjustedForDate(todayRecord.scheduledDateTime, calendar: calendar)
-        if adjustedStatus.isTaken {
+
+        if todayRecord.status.isTaken {
             canTakePill.accept(false)
             return
         }
-        
+
         canTakePill.accept(true)
     }
     
@@ -268,14 +318,14 @@ final class DashboardViewModel {
             updateCanTakePill()
             return
         }
-        
+
         let now = Date()
         let startOfToday = calendar.startOfDay(for: now)
-        
+
         let hasPastScheduled = cycle.records.contains { record in
             record.scheduledDateTime < startOfToday && record.status == .scheduled
         }
-        
+
         if hasPastScheduled {
             autoMarkPastScheduledAsMissed()
         } else {
@@ -283,6 +333,8 @@ final class DashboardViewModel {
             updateDashboardMessage()
             updateCanTakePill()
         }
+
+        checkCompletionFloating(cycle)
     }
     
     func reloadData() {
@@ -297,6 +349,9 @@ final class DashboardViewModel {
         guard let cycle = currentCycle.value else { return }
         let takenAt = Date()
 
+        // Analytics: 복용하기 버튼 탭
+        analytics.logEvent(.pillButtonTapped)
+
         takePillUseCase.execute(cycle: cycle, settings: settings.value, takenAt: takenAt)
             .subscribe(onNext: { [weak self] updatedCycle in
                 guard let self = self else { return }
@@ -310,6 +365,9 @@ final class DashboardViewModel {
 
                 // 사이클 완료 확인
                 self.checkCycleCompletion(updatedCycle)
+
+                // 복용일 마지막 날 확인
+                self.checkCompletionFloating(updatedCycle)
             })
             .disposed(by: disposeBag)
     }
@@ -334,11 +392,13 @@ final class DashboardViewModel {
     }
     
     func updateState(at index: Int, to newStatus: PillStatus, memo: String?, takenAt: Date? = nil) {
+        print("🔍 [DashboardViewModel] updateState - index: \(index), newStatus: \(newStatus), memo: \(memo ?? "nil"), takenAt: \(String(describing: takenAt))")
         guard let cycle = currentCycle.value else {
             print("❌ updateState: cycle이 nil입니다")
             return
         }
 
+        print("🔍 [DashboardViewModel] Calling updatePillStatusUseCase")
         updatePillStatusUseCase.execute(
             cycle: cycle,
             recordIndex: index,
@@ -349,9 +409,7 @@ final class DashboardViewModel {
         .subscribe(
             onNext: { [weak self] updatedCycle in
                 guard let self = self else { return }
-
-                if index < updatedCycle.records.count {
-                }
+                print("🔍 [DashboardViewModel] UseCase success - updatedCycle.records[\(index)].status: \(updatedCycle.records[index].status)")
 
                 self.currentCycle.accept(updatedCycle)
 
@@ -366,6 +424,9 @@ final class DashboardViewModel {
 
                 // 사이클 완료 확인
                 self.checkCycleCompletion(updatedCycle)
+
+                // 복용일 마지막 날 확인
+                self.checkCompletionFloating(updatedCycle)
             },
             onError: { error in
                 print("❌ UseCase 에러: \(error)")
@@ -391,6 +452,20 @@ final class DashboardViewModel {
     private func checkCycleCompletion(_ cycle: Cycle) {
         if cycle.isCycleCompleted() {
             showNewCycleAlert.accept(())
+        }
+    }
+
+    private func checkCompletionFloating(_ cycle: Cycle) {
+        let now = Date()
+        let totalDays = cycle.activeDays + cycle.breakDays
+
+        let daysSinceStart = calendar.dateComponents([.day], from: cycle.startDate, to: now).day ?? 0
+        let currentCycleDay = daysSinceStart + 1
+
+        if currentCycleDay >= totalDays {
+            // Analytics: 사이클 완료 플로팅뷰 표시
+            analytics.logEvent(.cycleCompletionFloatingShown)
+            showCompletionFloatingView.accept(())
         }
     }
 }

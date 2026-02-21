@@ -16,7 +16,7 @@ final class StatisticsContentView: UIView {
     
     private let headerLabel: UILabel = {
         let label = UILabel()
-        label.text = "나의 기록"
+        label.text = AppStrings.Statistics.myRecordTitle
         label.font = .systemFont(ofSize: 28, weight: .bold)
         return label
     }()
@@ -89,7 +89,7 @@ final class StatisticsContentView: UIView {
             make.top.equalToSuperview().offset(60)
             make.leading.equalToSuperview().offset(20)
         }
-        
+
         periodButton.snp.makeConstraints { make in
             make.centerY.equalTo(headerLabel)
             make.trailing.equalToSuperview().offset(-20)
@@ -136,7 +136,7 @@ final class StatisticsContentView: UIView {
     // MARK: - Public Methods
     
     func configure(with data: PeriodRecordDTO) {
-        periodButton.setTitle("\(data.startDate) - \(data.endDate)", for: .normal)
+        periodButton.setTitle("\(data.startDateShort) - \(data.endDateShort)", for: .normal)
 
         chartContainerView.configure(with: data)
 
@@ -148,13 +148,28 @@ final class StatisticsContentView: UIView {
             recordListStackView.isHidden = false
 
             let attributedString = NSMutableAttributedString()
+
+            let labelParagraphStyle = NSMutableParagraphStyle()
+            labelParagraphStyle.lineHeightMultiple = 22.0 / 16.0
+
+            let nameParagraphStyle = NSMutableParagraphStyle()
+            nameParagraphStyle.lineHeightMultiple = 27.0 / 20.0
+
             attributedString.append(NSAttributedString(
-                string: "복용약 ",
-                attributes: [.font: UIFont.systemFont(ofSize: 18, weight: .bold)]
+                string: "\(AppStrings.Statistics.takingPillLabel) ",
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 16, weight: .regular),
+                    .foregroundColor: AppColor.black,
+                    .paragraphStyle: labelParagraphStyle
+                ]
             ))
             attributedString.append(NSAttributedString(
                 string: data.medicineName,
-                attributes: [.font: UIFont.systemFont(ofSize: 18, weight: .bold)]
+                attributes: [
+                    .font: UIFont.systemFont(ofSize: 20, weight: .semibold),
+                    .foregroundColor: AppColor.black,
+                    .paragraphStyle: nameParagraphStyle
+                ]
             ))
             medicineLabel.attributedText = attributedString
 
@@ -172,9 +187,15 @@ final class StatisticsContentView: UIView {
     private func updateRecordList(records: [RecordItemDTO], skippedCount: Int, sideEffectStats: [SideEffectStatDTO]) {
         recordListStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        for item in records {
+        for item in records where !item.isChartOnly {
             let itemView = createRecordItemView(item: item)
             recordListStackView.addArrangedSubview(itemView)
+        }
+
+        // Add divider before side effect statistics if they exist
+        if !sideEffectStats.isEmpty {
+            let dividerView = createDividerView()
+            recordListStackView.addArrangedSubview(dividerView)
         }
 
         // Add side effect statistics
@@ -193,8 +214,9 @@ final class StatisticsContentView: UIView {
         percentageLabel.textColor = .white
         percentageLabel.textAlignment = .center
         percentageLabel.backgroundColor = UIColor(hex: item.colorHex) ?? .gray
-        percentageLabel.layer.cornerRadius = 6
+        percentageLabel.layer.cornerRadius = 10
         percentageLabel.clipsToBounds = true
+        percentageLabel.semanticContentAttribute = .forceLeftToRight
         
         let categoryLabel = UILabel()
         categoryLabel.text = item.category
@@ -202,7 +224,7 @@ final class StatisticsContentView: UIView {
         categoryLabel.textColor = .black
         
         let daysLabel = UILabel()
-        daysLabel.text = "\(item.days)일"
+        daysLabel.text = AppStrings.Statistics.dayCount(item.days)
         daysLabel.font = .systemFont(ofSize: 16)
         daysLabel.textColor = .gray
         
@@ -213,8 +235,8 @@ final class StatisticsContentView: UIView {
         percentageLabel.snp.makeConstraints { make in
             make.leading.equalToSuperview().offset(20)
             make.centerY.equalToSuperview()
-            make.width.equalTo(60)
-            make.height.equalTo(32)
+            make.width.equalTo(51)
+            make.height.equalTo(34)
         }
         
         categoryLabel.snp.makeConstraints { make in
@@ -228,19 +250,18 @@ final class StatisticsContentView: UIView {
         }
         
         containerView.snp.makeConstraints { make in
-            make.height.equalTo(48)
+            make.height.equalTo(34)
         }
-        
+
         return containerView
     }
-    
+
     private func createSideEffectItemView(stat: SideEffectStatDTO) -> UIView {
         let containerView = UIView()
 
         let iconImageView = UIImageView()
-        iconImageView.image = UIImage(systemName: "exclamationmark.circle.fill")
-        iconImageView.tintColor = AppColor.pillGreen600
-        iconImageView.contentMode = .center
+        iconImageView.image = UIImage(named: "side_drop")
+        iconImageView.contentMode = .scaleAspectFit
 
         let categoryLabel = UILabel()
         categoryLabel.text = stat.tagName
@@ -248,7 +269,7 @@ final class StatisticsContentView: UIView {
         categoryLabel.textColor = .black
 
         let countLabel = UILabel()
-        countLabel.text = "\(stat.count)회"
+        countLabel.text = AppStrings.Statistics.sideEffectCount(stat.count)
         countLabel.font = .systemFont(ofSize: 16)
         countLabel.textColor = .gray
 
@@ -274,9 +295,20 @@ final class StatisticsContentView: UIView {
         }
 
         containerView.snp.makeConstraints { make in
-            make.height.equalTo(48)
+            make.height.equalTo(34)
         }
 
         return containerView
+    }
+
+    private func createDividerView() -> UIView {
+        let dividerView = UIView()
+        dividerView.backgroundColor = AppColor.gray100
+
+        dividerView.snp.makeConstraints { make in
+            make.height.equalTo(1)
+        }
+
+        return dividerView
     }
 }

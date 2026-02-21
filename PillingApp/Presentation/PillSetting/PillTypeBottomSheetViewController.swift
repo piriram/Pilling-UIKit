@@ -3,28 +3,32 @@ import RxSwift
 import RxCocoa
 import SnapKit
 import IQKeyboardManagerSwift
+import Kingfisher
 
 // MARK: - PillTypeBottomSheetViewController
 
 final class PillTypeBottomSheetViewController: UIViewController {
     
     // MARK: - Properties
-    
+
     private let disposeBag = DisposeBag()
     private let selectedPillInfo = PublishSubject<PillInfo>()
     private typealias str = AppStrings.PillSetting
     var pillInfoSelected: Observable<PillInfo> {
         return selectedPillInfo.asObservable()
     }
-    
-    private let takingDaysOptions = Array(1...31)
-    private let breakDaysOptions = Array(0...14)
-    
-    private var selectedTakingDays = 24
-    private var selectedBreakDays = 4
-    
-    private let selectedTakingDaysRelay = BehaviorRelay<Int>(value: 24)
-    private let selectedBreakDaysRelay = BehaviorRelay<Int>(value: 4)
+
+    private let medicationRepository: MedicationRepositoryProtocol
+    private let analyticsService: AnalyticsServiceProtocol
+    private let searchResultsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
+    private let hardcodedMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
+    private let initialMedicationsRelay = BehaviorRelay<[MedicationInfo]>(value: [])
+    private let isLoadingRelay = BehaviorRelay<Bool>(value: true)
+    private let initialSearchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민","디어미순","클래라"]
+    private let contraceptiveTypeKeyword = "피임제"
+    private var selectedMedicationId: String?
+    private var currentSearchKeyword: String = ""
+    private var imagePrefetcher: ImagePrefetcher?
     
     // MARK: - UI Components
     
@@ -50,110 +54,60 @@ final class PillTypeBottomSheetViewController: UIViewController {
         return view
     }()
     
-    private let titleLabel: UILabel = {
-        let label = UILabel()
-        label.text = str.titleLabel
-        label.font = .systemFont(ofSize: 20, weight: .bold)
-        label.textColor = .black
-        return label
-    }()
-    
     private let pillNameTextField: UITextField = {
         let textField = UITextField()
-        textField.placeholder = str.nameTitle
         textField.font = .systemFont(ofSize: 16, weight: .regular)
         textField.borderStyle = .none
-        textField.backgroundColor = UIColor(white: 0.97, alpha: 1.0)
-        textField.layer.cornerRadius = 12
-        textField.leftView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 0))
+        textField.backgroundColor = UIColor(hex: "#F7F7F7")
+        textField.layer.cornerRadius = 20
+
+        let leftPaddingView = UIView(frame: CGRect(x: 0, y: 0, width: 20, height: 0))
+        textField.leftView = leftPaddingView
         textField.leftViewMode = .always
-        textField.rightView = UIView(frame: CGRect(x: 0, y: 0, width: 16, height: 0))
+
+        let searchIconImageView = UIImageView(image: UIImage(systemName: "magnifyingglass"))
+        searchIconImageView.tintColor = .lightGray
+        searchIconImageView.contentMode = .scaleAspectFit
+        let rightContainerView = UIView(frame: CGRect(x: 0, y: 0, width: 44, height: 50))
+        searchIconImageView.frame = CGRect(x: 0, y: 15, width: 20, height: 20)
+        rightContainerView.addSubview(searchIconImageView)
+        textField.rightView = rightContainerView
         textField.rightViewMode = .always
+
         return textField
     }()
     
-    private let takingDaysLabel: UILabel = {
-        let label = UILabel()
-        label.text = str.takingDays
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
-        return label
-    }()
-    
-    private let takingDaysButton: UIButton = {
-        let button = UIButton()
-        button.setTitle(str.takingBtn, for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .regular)
-        button.backgroundColor = UIColor(white: 0.97, alpha: 1.0)
-        button.layer.cornerRadius = 12
-        button.contentHorizontalAlignment = .center
-        return button
-    }()
-    
-    private let breakDaysLabel: UILabel = {
-        let label = UILabel()
-        label.text = str.breakLabel
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
-        return label
-    }()
-    
-    private let breakDaysButton: UIButton = {
-        let button = UIButton()
-        button.setTitle(str.breakDay, for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .regular)
-        button.backgroundColor = UIColor(white: 0.97, alpha: 1.0)
-        button.layer.cornerRadius = 12
-        button.contentHorizontalAlignment = .center
-        return button
-    }()
-    
-    private let warningLabel: UILabel = {
-        let label = UILabel()
-        label.text = str.warningLabel
-        label.font = .systemFont(ofSize: 13, weight: .regular)
-        label.textColor = .systemRed
-        label.numberOfLines = 0
-        label.isHidden = true
-        label.textAlignment = .left
-        return label
-    }()
-    
-    private let pickerContainerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .white
-        view.isHidden = true
-        return view
-    }()
-    
-    private let pickerToolbar: UIToolbar = {
-        let toolbar = UIToolbar()
-        toolbar.backgroundColor = .white
-        toolbar.barTintColor = .white
-        return toolbar
-    }()
-    
-    private let pickerView: UIPickerView = {
-        let picker = UIPickerView()
-        picker.backgroundColor = .white
-        return picker
-    }()
-    
     private let confirmButton = PrimaryActionButton()
+
+    private let searchResultsTableView: UITableView = {
+        let tableView = UITableView()
+        tableView.backgroundColor = .white
+        tableView.separatorStyle = .none
+        tableView.isHidden = false
+        tableView.register(MedicationSearchTableViewCell.self, forCellReuseIdentifier: MedicationSearchTableViewCell.identifier)
+        tableView.rowHeight = UITableView.automaticDimension
+        tableView.estimatedRowHeight = 80
+        tableView.tableHeaderView = UIView(frame: .zero)
+        tableView.tableFooterView = UIView(frame: .zero)
+        return tableView
+    }()
     
+    private let loadingIndicator: UIActivityIndicatorView = {
+        let indicator = UIActivityIndicatorView(style: .medium)
+        indicator.hidesWhenStopped = true
+        return indicator
+    }()
+
     private var containerViewBottomConstraint: Constraint?
-    private var currentPickerType: PickerType = .takingDays
-    
-    private enum PickerType {
-        case takingDays
-        case breakDays
-    }
     
     // MARK: - Initialization
-    
-    init() {
+
+    init(
+        medicationRepository: MedicationRepositoryProtocol = DIContainer.shared.getMedicationRepository(),
+        analyticsService: AnalyticsServiceProtocol = DIContainer.shared.getAnalyticsService()
+    ) {
+        self.medicationRepository = medicationRepository
+        self.analyticsService = analyticsService
         super.init(nibName: nil, bundle: nil)
         modalPresentationStyle = .overFullScreen
         modalTransitionStyle = .crossDissolve
@@ -170,9 +124,27 @@ final class PillTypeBottomSheetViewController: UIViewController {
         IQKeyboardManager.shared.keyboardDistance = 60
         setupUI()
         setupConstraints()
-        setupPickerView()
         bind()
         setupGestures()
+
+        // 즉시 하드코딩 데이터 표시
+        loadHardcodedMedications()
+
+        // 백그라운드에서 API 업데이트
+        fetchInitialMedications()
+    }
+
+    private func loadHardcodedMedications() {
+        let hardcodedPills = medicationRepository.getHardcodedPills()
+        let contraceptivePills = hardcodedPills.filter { $0.isContraceptivePill }
+
+        hardcodedMedicationsRelay.accept(contraceptivePills)
+        initialMedicationsRelay.accept(contraceptivePills)
+        searchResultsRelay.accept(contraceptivePills)
+        isLoadingRelay.accept(false)
+
+        // 하드코딩 데이터 표시 로깅
+        analyticsService.logEvent(.medicationListViewed(count: contraceptivePills.count))
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -184,185 +156,200 @@ final class PillTypeBottomSheetViewController: UIViewController {
     
     private func setupUI() {
         view.backgroundColor = .clear
-        
+
         view.addSubview(dimmedView)
         view.addSubview(containerView)
-        
+
         containerView.addSubview(handleBar)
-        containerView.addSubview(titleLabel)
         containerView.addSubview(pillNameTextField)
-        containerView.addSubview(takingDaysLabel)
-        containerView.addSubview(takingDaysButton)
-        containerView.addSubview(breakDaysLabel)
-        containerView.addSubview(breakDaysButton)
-        containerView.addSubview(warningLabel)
         containerView.addSubview(confirmButton)
+        containerView.addSubview(searchResultsTableView)
+        containerView.addSubview(loadingIndicator)
         confirmButton.setTitle(str.settingComplete, for: .normal)
-        
-        selectedTakingDaysRelay.accept(selectedTakingDays)
-        selectedBreakDaysRelay.accept(selectedBreakDays)
-        
-        view.addSubview(pickerContainerView)
-        pickerContainerView.addSubview(pickerToolbar)
-        pickerContainerView.addSubview(pickerView)
+        confirmButton.isEnabled = false
+
+        // 이미지 프리페칭 설정
+        searchResultsTableView.prefetchDataSource = self
     }
     
     private func setupConstraints() {
         dimmedView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
-        
+
         containerView.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview()
-            $0.height.equalTo(460)
-            containerViewBottomConstraint = $0.bottom.equalTo(view.snp.bottom).offset(460).constraint
+            $0.height.equalTo(500)
+            containerViewBottomConstraint = $0.bottom.equalTo(view.snp.bottom).offset(500).constraint
         }
-        
+
         handleBar.snp.makeConstraints {
             $0.top.equalToSuperview().offset(12)
             $0.centerX.equalToSuperview()
             $0.width.equalTo(40)
             $0.height.equalTo(5)
         }
-        
-        titleLabel.snp.makeConstraints {
-            $0.top.equalTo(handleBar.snp.bottom).offset(20)
-            $0.leading.equalToSuperview().offset(24)
-        }
-        
+
         pillNameTextField.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(24)
-            $0.leading.trailing.equalToSuperview().inset(24)
-            $0.height.equalTo(52)
+            $0.top.equalTo(handleBar.snp.bottom).offset(24)
+            $0.centerX.equalToSuperview()
+            $0.width.equalTo(342)
+            $0.height.equalTo(50)
         }
-        
-        takingDaysLabel.snp.makeConstraints {
-            $0.top.equalTo(pillNameTextField.snp.bottom).offset(24)
-            $0.leading.equalToSuperview().offset(24)
+
+        searchResultsTableView.snp.makeConstraints {
+            $0.top.equalTo(pillNameTextField.snp.bottom).offset(16)
+            $0.leading.trailing.equalToSuperview().inset(0)
+            $0.bottom.equalTo(confirmButton.snp.top).offset(-24)
         }
-        
-        takingDaysButton.snp.makeConstraints {
-            $0.top.equalTo(takingDaysLabel.snp.bottom).offset(12)
-            $0.leading.equalToSuperview().offset(24)
-            $0.width.equalTo(140)
-            $0.height.equalTo(52)
-        }
-        
-        breakDaysLabel.snp.makeConstraints {
-            $0.top.equalTo(pillNameTextField.snp.bottom).offset(24)
-            $0.trailing.equalToSuperview().offset(-24)
-        }
-        
-        breakDaysButton.snp.makeConstraints {
-            $0.top.equalTo(breakDaysLabel.snp.bottom).offset(12)
-            $0.trailing.equalToSuperview().offset(-24)
-            $0.width.equalTo(140)
-            $0.height.equalTo(52)
-        }
-        
-        warningLabel.snp.makeConstraints {
-            $0.top.equalTo(breakDaysButton.snp.bottom).offset(8)
-            $0.leading.trailing.equalToSuperview().inset(24)
-        }
-        
+
         confirmButton.snp.makeConstraints {
             $0.leading.trailing.equalToSuperview().inset(24)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-20)
-            $0.height.equalTo(56)
+            $0.bottom.equalToSuperview().offset(-20)
         }
         
-        pickerContainerView.snp.makeConstraints {
-            $0.leading.trailing.bottom.equalToSuperview()
-            $0.height.equalTo(260)
-        }
-        
-        pickerToolbar.snp.makeConstraints {
-            $0.top.leading.trailing.equalToSuperview()
-            $0.height.equalTo(44)
-        }
-        
-        pickerView.snp.makeConstraints {
-            $0.top.equalTo(pickerToolbar.snp.bottom)
-            $0.leading.trailing.bottom.equalToSuperview()
+        loadingIndicator.snp.makeConstraints {
+            $0.centerX.equalToSuperview()
+            $0.centerY.equalTo(searchResultsTableView.snp.centerY)
         }
     }
     
-    private func setupPickerView() {
-        pickerView.delegate = self
-        pickerView.dataSource = self
-        
-        // 기본값 설정
-        if let takingIndex = takingDaysOptions.firstIndex(of: selectedTakingDays) {
-            pickerView.selectRow(takingIndex, inComponent: 0, animated: false)
-        }
-        if let breakIndex = breakDaysOptions.firstIndex(of: selectedBreakDays) {
-            pickerView.selectRow(breakIndex, inComponent: 0, animated: false)
-        }
-        
-        let doneButton = UIBarButtonItem(
-            title: AppStrings.Common.confirmTitle,
-            style: .done,
-            target: self,
-            action: #selector(pickerDoneButtonTapped)
-        )
-        let cancelButton = UIBarButtonItem(
-            title: AppStrings.Common.cancelTitle,
-            style: .plain,
-            target: self,
-            action: #selector(pickerCancelButtonTapped)
-        )
-        let flexibleSpace = UIBarButtonItem(
-            barButtonSystemItem: .flexibleSpace,
-            target: nil,
-            action: nil
-        )
-        
-        pickerToolbar.items = [cancelButton, flexibleSpace, doneButton]
-    }
     
     private func bind() {
-        Observable
-            .combineLatest(selectedTakingDaysRelay.asObservable(), selectedBreakDaysRelay.asObservable())
-            .map { taking, breaking in (taking + breaking) <= 28 }
-            .bind(to: confirmButton.rx.isEnabled)
-            .disposed(by: disposeBag)
-        
-        Observable
-            .combineLatest(selectedTakingDaysRelay.asObservable(), selectedBreakDaysRelay.asObservable())
-            .map { taking, breaking in !((taking + breaking) > 28) }
-            .bind(to: warningLabel.rx.isHidden)
-            .disposed(by: disposeBag)
-        
-        takingDaysButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.showPicker(for: .takingDays)
-            })
-            .disposed(by: disposeBag)
-        
-        breakDaysButton.rx.tap
-            .subscribe(onNext: { [weak self] in
-                self?.showPicker(for: .breakDays)
-            })
-            .disposed(by: disposeBag)
-        
         confirmButton.rx.tap
-            .withLatestFrom(pillNameTextField.rx.text.orEmpty)
-            .map { [weak self] name -> PillInfo in
-                guard let self = self else {
-                    return PillInfo(name: name, takingDays: 24, breakDays: 4)
+            .subscribe(onNext: { [weak self] in
+                guard let self = self,
+                      let selectedId = self.selectedMedicationId else { return }
+
+                let medications = self.searchResultsRelay.value
+                if let medication = medications.first(where: { ($0.id.isEmpty ? $0.name : $0.id) == selectedId }) {
+                    let pillInfo = medication.toPillInfo()
+                    self.selectedPillInfo.onNext(pillInfo)
+                    self.dismissBottomSheet()
                 }
-                return PillInfo(
-                    name: name,
-                    takingDays: self.selectedTakingDays,
-                    breakDays: self.selectedBreakDays
-                )
+            })
+            .disposed(by: disposeBag)
+
+        pillNameTextField.rx.text
+            .orEmpty
+            .debounce(.milliseconds(300), scheduler: MainScheduler.instance)
+            .distinctUntilChanged()
+            .flatMapLatest { [weak self] keyword -> Observable<[MedicationInfo]> in
+                guard let self = self else {
+                    return Observable.just([])
+                }
+
+                let trimmedKeyword = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
+                self.currentSearchKeyword = trimmedKeyword
+
+                if trimmedKeyword.isEmpty {
+                    self.isLoadingRelay.accept(false)
+                    return self.hardcodedMedicationsRelay.asObservable()
+                }
+
+                guard trimmedKeyword.count >= 1 else {
+                    self.isLoadingRelay.accept(false)
+                    return Observable.just([])
+                }
+
+                // 🔥 검색 이벤트 로깅
+                self.analyticsService.logEvent(.medicationSearched(keyword: trimmedKeyword))
+
+                self.isLoadingRelay.accept(true)
+                return self.medicationRepository.searchMedication(keyword: trimmedKeyword)
+                    .do(onNext: { [weak self] _ in
+                        self?.isLoadingRelay.accept(false)
+                    }, onError: { [weak self] _ in
+                        self?.isLoadingRelay.accept(false)
+                    }, onCompleted: { [weak self] in
+                        self?.isLoadingRelay.accept(false)
+                    })
+                    .catch { _ in
+                        return Observable.just([])
+                    }
             }
-            .subscribe(onNext: { [weak self] pillInfo in
+            .map { [weak self] results -> [MedicationInfo] in
+                guard let self = self else { return results }
+                return results.filter { $0.isContraceptivePill }
+            }
+            .observe(on: MainScheduler.instance)
+            .bind(to: searchResultsRelay)
+            .disposed(by: disposeBag)
+
+        isLoadingRelay
+            .distinctUntilChanged()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] isLoading in
                 guard let self = self else { return }
-                // Emit selected pill info
-                self.selectedPillInfo.onNext(pillInfo)
-                // Only dismiss the bottom sheet; do not navigate
-                self.dismissBottomSheet()
+                isLoading ? self.loadingIndicator.startAnimating() : self.loadingIndicator.stopAnimating()
+            })
+            .disposed(by: disposeBag)
+
+        searchResultsRelay
+            .bind(to: searchResultsTableView.rx.items(
+                cellIdentifier: MedicationSearchTableViewCell.identifier,
+                cellType: MedicationSearchTableViewCell.self
+            )) { [weak self] index, medication, cell in
+                guard let self = self else { return }
+                let medicationId = medication.id.isEmpty ? medication.name : medication.id
+                let isSelected = self.selectedMedicationId == medicationId
+                cell.configure(with: medication, isSelected: isSelected)
+            }
+            .disposed(by: disposeBag)
+
+        searchResultsTableView.rx.modelSelected(MedicationInfo.self)
+            .subscribe(onNext: { [weak self] medication in
+                guard let self = self else { return }
+                let medicationId = medication.id.isEmpty ? medication.name : medication.id
+                self.selectedMedicationId = medicationId
+                self.confirmButton.isEnabled = true
+                self.searchResultsTableView.reloadData()
+
+                // 🔥 약 선택 이벤트 로깅
+                self.analyticsService.logEvent(.medicationSelected(
+                    id: medication.id,
+                    name: medication.name,
+                    keyword: self.currentSearchKeyword
+                ))
+            })
+            .disposed(by: disposeBag)
+    }
+
+    private func fetchInitialMedications() {
+        Observable.from(initialSearchKeywords)
+            .concatMap { [weak self] keyword -> Observable<[MedicationInfo]> in
+                guard let self = self else { return Observable.just([]) }
+                return self.medicationRepository.searchMedication(keyword: keyword)
+                    .catch { _ in Observable.just([]) }
+            }
+            .toArray()
+            .map { resultsByKeyword -> [MedicationInfo] in
+                // 키워드 순서를 유지하기 위해 순서대로 추가
+                var orderedResults: [MedicationInfo] = []
+                var seenIds: Set<String> = []
+
+                for medications in resultsByKeyword {
+                    for medication in medications where medication.productTypeDisplay.contains(self.contraceptiveTypeKeyword) {
+                        let key = medication.id.isEmpty ? medication.name : medication.id
+                        if !seenIds.contains(key) {
+                            orderedResults.append(medication)
+                            seenIds.insert(key)
+                        }
+                    }
+                }
+
+                return orderedResults
+            }
+            .asObservable()
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] results in
+                guard let self = self else { return }
+
+                // 백그라운드에서 캐시만 업데이트 (UI는 하드코딩 데이터 유지)
+                // API 결과는 MedicationRepository에서 자동으로 캐시에 저장됨
+                // initialMedicationsRelay는 업데이트하여 다음 검색 시 최신 데이터 사용
+                self.initialMedicationsRelay.accept(results)
+                // searchResultsRelay는 업데이트하지 않음 (UI 변경 방지)
             })
             .disposed(by: disposeBag)
     }
@@ -389,52 +376,16 @@ final class PillTypeBottomSheetViewController: UIViewController {
     
     // MARK: - Private Methods
     
-    private func showPicker(for type: PickerType) {
-        currentPickerType = type
-        pillNameTextField.resignFirstResponder()
-        
-        // 피커 데이터 리로드 및 현재 선택값으로 이동
-        pickerView.reloadAllComponents()
-        
-        switch type {
-        case .takingDays:
-            if let index = takingDaysOptions.firstIndex(of: selectedTakingDays) {
-                pickerView.selectRow(index, inComponent: 0, animated: false)
-            }
-        case .breakDays:
-            if let index = breakDaysOptions.firstIndex(of: selectedBreakDays) {
-                pickerView.selectRow(index, inComponent: 0, animated: false)
-            }
-        }
-        
-        pickerContainerView.isHidden = false
-        pickerContainerView.transform = CGAffineTransform(translationX: 0, y: 260)
-        
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
-            self.pickerContainerView.transform = .identity
-        }
-    }
-    
-    private func hidePicker() {
-        UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
-            self.pickerContainerView.transform = CGAffineTransform(translationX: 0, y: 260)
-        } completion: { _ in
-            self.pickerContainerView.isHidden = true
-        }
-    }
-    
-    @objc private func pickerDoneButtonTapped() {
-        hidePicker()
-    }
-    
-    @objc private func pickerCancelButtonTapped() {
-        hidePicker()
-    }
-    
     private func animatePresentation() {
         containerViewBottomConstraint?.update(offset: 0)
         
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseOut) {
+        UIView.animate(
+            withDuration: DatePickerConfiguration.Animation.presentationDuration,
+            delay: 0,
+            usingSpringWithDamping: DatePickerConfiguration.Animation.springDamping,
+            initialSpringVelocity: DatePickerConfiguration.Animation.springVelocity,
+            options: .curveEaseOut
+        ) {
             self.dimmedView.alpha = 1
             self.view.layoutIfNeeded()
         }
@@ -442,10 +393,9 @@ final class PillTypeBottomSheetViewController: UIViewController {
     
     private func dismissBottomSheet() {
         view.endEditing(true)
-        hidePicker()
-        
-        containerViewBottomConstraint?.update(offset: 460)
-        
+
+        containerViewBottomConstraint?.update(offset: 500)
+
         UIView.animate(withDuration: 0.25, delay: 0, options: .curveEaseIn) {
             self.dimmedView.alpha = 0
             self.view.layoutIfNeeded()
@@ -478,42 +428,32 @@ final class PillTypeBottomSheetViewController: UIViewController {
     }
 }
 
-// MARK: - UIPickerViewDelegate, UIPickerViewDataSource
+// MARK: - UITableViewDataSourcePrefetching
 
-extension PillTypeBottomSheetViewController: UIPickerViewDelegate, UIPickerViewDataSource {
-    
-    func numberOfComponents(in pickerView: UIPickerView) -> Int {
-        return 1
-    }
-    
-    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
-        switch currentPickerType {
-        case .takingDays:
-            return takingDaysOptions.count
-        case .breakDays:
-            return breakDaysOptions.count
+extension PillTypeBottomSheetViewController: UITableViewDataSourcePrefetching {
+    func tableView(_ tableView: UITableView, prefetchRowsAt indexPaths: [IndexPath]) {
+        let medications = searchResultsRelay.value
+
+        // 프리페치할 이미지 URL 수집
+        let urls = indexPaths.compactMap { indexPath -> URL? in
+            guard indexPath.row < medications.count else { return nil }
+            let medication = medications[indexPath.row]
+            guard !medication.imageURL.isEmpty else { return nil }
+            return URL(string: medication.imageURL)
         }
+
+        guard !urls.isEmpty else { return }
+
+        // 기존 프리페처 취소
+        imagePrefetcher?.stop()
+
+        // 새로운 프리페처로 이미지 다운로드 시작
+        imagePrefetcher = ImagePrefetcher(urls: urls)
+        imagePrefetcher?.start()
     }
-    
-    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
-        switch currentPickerType {
-        case .takingDays:
-            return "\(takingDaysOptions[row])일"
-        case .breakDays:
-            return "\(breakDaysOptions[row])일"
-        }
-    }
-    
-    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
-        switch currentPickerType {
-        case .takingDays:
-            selectedTakingDays = takingDaysOptions[row]
-            takingDaysButton.setTitle("\(selectedTakingDays)일", for: .normal)
-            selectedTakingDaysRelay.accept(selectedTakingDays)
-        case .breakDays:
-            selectedBreakDays = breakDaysOptions[row]
-            breakDaysButton.setTitle("\(selectedBreakDays)일", for: .normal)
-            selectedBreakDaysRelay.accept(selectedBreakDays)
-        }
+
+    func tableView(_ tableView: UITableView, cancelPrefetchingForRowsAt indexPaths: [IndexPath]) {
+        // 프리페칭 취소
+        imagePrefetcher?.stop()
     }
 }

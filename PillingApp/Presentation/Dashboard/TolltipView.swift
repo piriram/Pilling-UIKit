@@ -19,7 +19,6 @@ final class TooltipView: UIView {
     private let messageLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14, weight: .regular)
-        label.textColor = .black
         label.numberOfLines = 0
         return label
     }()
@@ -31,6 +30,7 @@ final class TooltipView: UIView {
     
     private let arrowDirection: ArrowDirection
     private let arrowPosition: ArrowPosition
+    private let tooltipBackgroundColor: UIColor
     private let arrowSize: CGSize = CGSize(width: 12, height: 6)
     private let cornerRadius: CGFloat = 8
     private let contentPadding: UIEdgeInsets = UIEdgeInsets(top: 8, left: 12, bottom: 8, right: 12)
@@ -39,16 +39,19 @@ final class TooltipView: UIView {
     
     init(message: String,
          backgroundColor: UIColor,
+         textColor: UIColor = .black,
          arrowDirection: ArrowDirection,
          arrowPosition: ArrowPosition = .center) {
         self.arrowDirection = arrowDirection
         self.arrowPosition = arrowPosition
+        self.tooltipBackgroundColor = backgroundColor
         super.init(frame: .zero)
-        
+
         messageLabel.text = message
+        messageLabel.textColor = textColor
         contentContainer.backgroundColor = backgroundColor
-        arrowView.backgroundColor = backgroundColor
-        
+        arrowView.backgroundColor = .clear
+
         setupViews()
     }
     
@@ -139,8 +142,8 @@ final class TooltipView: UIView {
         
         let shapeLayer = CAShapeLayer()
         shapeLayer.path = path.cgPath
-        shapeLayer.fillColor = arrowView.backgroundColor?.cgColor
-        
+        shapeLayer.fillColor = tooltipBackgroundColor.cgColor
+
         arrowView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
         arrowView.layer.addSublayer(shapeLayer)
     }

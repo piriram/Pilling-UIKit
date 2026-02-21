@@ -135,13 +135,13 @@ final class CoreDataManager {
                 observer.onError(CoreDataError.contextNotAvailable)
                 return Disposables.create()
             }
-            
+
             let context = self.viewContext
-            
+
             context.perform {
                 let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: String(describing: entityType))
                 let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-                
+
                 do {
                     try context.execute(deleteRequest)
                     try context.save()
@@ -151,8 +151,37 @@ final class CoreDataManager {
                     observer.onError(CoreDataError.deleteFailed(error))
                 }
             }
-            
+
             return Disposables.create()
+        }
+    }
+
+    func deleteAllDataSync() {
+        let context = viewContext
+
+        context.performAndWait {
+            let entities = ["PillRecordEntity", "PillCycleEntity"]
+
+            for entityName in entities {
+                let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: entityName)
+                let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+                deleteRequest.resultType = .resultTypeObjectIDs
+
+                do {
+                    let result = try context.execute(deleteRequest) as? NSBatchDeleteResult
+                    let objectIDArray = result?.result as? [NSManagedObjectID] ?? []
+                    let changes = [NSDeletedObjectsKey: objectIDArray]
+                    NSManagedObjectContext.mergeChanges(fromRemoteContextSave: changes, into: [context])
+                } catch {
+                    print("Failed to delete \(entityName): \(error)")
+                }
+            }
+
+            do {
+                try context.save()
+            } catch {
+                print("Failed to save context after deletion: \(error)")
+            }
         }
     }
 }

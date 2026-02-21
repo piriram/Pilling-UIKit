@@ -4,11 +4,13 @@ import RxCocoa
 import SnapKit
 
 final class PillSettingViewController: UIViewController {
-    
+
     // MARK: - Properties
     private typealias str = AppStrings.PillSetting
     private let viewModel: PillSettingViewModel
     private let disposeBag = DisposeBag()
+    private let medicationRepository: MedicationRepositoryProtocol
+    private let prefetchKeywords = ["머시론","센스데이","멜리안","마이보라","야즈","야스민"]
     
     // MARK: - UI Components
     
@@ -24,7 +26,7 @@ final class PillSettingViewController: UIViewController {
         label.text = str.mainTitle
         label.font = Typography.headline3(.bold)
         label.textColor = AppColor.textBlack
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
@@ -33,7 +35,7 @@ final class PillSettingViewController: UIViewController {
         label.text = str.subtitle
         label.font = Typography.body2(.regular)
         label.textColor = .gray
-        label.textAlignment = .left
+        label.textAlignment = .natural
         return label
     }()
     
@@ -58,8 +60,9 @@ final class PillSettingViewController: UIViewController {
     
     // MARK: - Initialization
     
-    init(viewModel: PillSettingViewModel) {
+    init(viewModel: PillSettingViewModel, medicationRepository: MedicationRepositoryProtocol = DIContainer.shared.getMedicationRepository()) {
         self.viewModel = viewModel
+        self.medicationRepository = medicationRepository
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -73,6 +76,8 @@ final class PillSettingViewController: UIViewController {
         setupConstraints()
         configureNavigationBar()
         bind()
+        prefetchMedicationList()
+        // setupDebugGesture()  // 디버그 제스처 비활성화 (나중에 필요시 주석 해제)
     }
     
     // MARK: - Setup
@@ -126,7 +131,8 @@ final class PillSettingViewController: UIViewController {
     }
     
     private func configureNavigationBar() {
-        navigationItem.title = str.navTitle
+        navigationItem.title = ""
+        navigationItem.largeTitleDisplayMode = .never
         navigationItem.hidesBackButton = false
         navigationItem.backButtonDisplayMode = .default
     }
@@ -190,6 +196,105 @@ final class PillSettingViewController: UIViewController {
                 self?.presentNotification(message: message)
             })
             .disposed(by: disposeBag)
+
+        viewModel.output.dosageMismatchAlert
+            .emit(onNext: { [weak self] current, api, itemSeq in
+                self?.presentDosageMismatchAlert(
+                    currentDosage: current,
+                    apiDosage: api,
+                    itemSeq: itemSeq
+                )
+            })
+            .disposed(by: disposeBag)
+    }
+    
+    private func prefetchMedicationList() {
+        Observable.from(prefetchKeywords)
+            .concatMap { [weak self] keyword -> Observable<Void> in
+                guard let self = self else { return Observable.just(()) }
+                return self.medicationRepository.searchMedication(keyword: keyword)
+                    .map { _ in () }
+                    .catch { _ in Observable.just(()) }
+            }
+            .subscribe()
+            .disposed(by: disposeBag)
+    }
+
+    private func printHardcodedDataTemplate(_ medications: [String: [MedicationInfo]]) {
+        print("\n" + String(repeating: "=", count: 80))
+        print("📋 [Hardcoded Data Template] 아래 코드를 MedicationRepository.getHardcodedPills()에 복사하세요")
+        print(String(repeating: "=", count: 80) + "\n")
+
+        var hardcodedArray: [String] = []
+
+        for keyword in prefetchKeywords {
+            guard let meds = medications[keyword], !meds.isEmpty else {
+                print("❌ '\(keyword)' - 데이터 없음")
+                continue
+            }
+
+            // 피임제 타입만 선택
+            let contraceptives = meds.filter { $0.productType.contains("[02540]") }
+
+            guard let med = contraceptives.first else {
+                print("⚠️ '\(keyword)' - 피임제 없음 (검색 결과: \(meds.count)개)")
+                for m in meds {
+                    print("   - \(m.name) [\(m.productType)]")
+                }
+                continue
+            }
+
+            // 데이터 완성도 체크
+            var warnings: [String] = []
+            if med.mainIngredient.isEmpty { warnings.append("성분 누락") }
+            if med.dosageInstructions.isEmpty { warnings.append("용법 누락") }
+            if med.packUnit.isEmpty { warnings.append("포장단위 누락") }
+            if med.imageURL.isEmpty { warnings.append("이미지 누락") }
+
+            let template = """
+            MedicationInfo(
+                id: "\(med.id)",
+                name: "\(med.name)",
+                manufacturer: "\(med.manufacturer)",
+                mainIngredient: "\(med.mainIngredient)",
+                materialName: "\(med.materialName)",
+                dosageInstructions: "\(med.dosageInstructions)",
+                packUnit: "\(med.packUnit)",
+                storageMethod: "\(med.storageMethod)",
+                permitDate: "\(med.permitDate)",
+                imageURL: "\(med.imageURL)",
+                productType: "\(med.productType)"
+            )
+            """
+
+            hardcodedArray.append(template)
+
+            print("✅ '\(keyword)' → \(med.name)")
+            print("   제조사: \(med.manufacturer)")
+            print("   ID: \(med.id)")
+            print("   제품타입: \(med.productType)")
+            if !med.mainIngredient.isEmpty {
+                print("   성분: \(med.mainIngredient)")
+            }
+            if !med.dosageInstructions.isEmpty {
+                print("   용법: \(med.dosageInstructions)")
+            }
+            if !med.imageURL.isEmpty {
+                print("   이미지: ✓")
+            }
+            if !warnings.isEmpty {
+                print("   ⚠️ 주의: \(warnings.joined(separator: ", "))")
+            }
+            print()
+        }
+
+        print("\n// Copy this code:")
+        print("private static func getHardcodedPills() -> [MedicationInfo] {")
+        print("    return [")
+        print(hardcodedArray.joined(separator: ",\n"))
+        print("    ]")
+        print("}")
+        print("\n" + String(repeating: "=", count: 80) + "\n")
     }
     
     // MARK: - Private Methods
@@ -205,11 +310,188 @@ final class PillSettingViewController: UIViewController {
     
     private func presentPillTypeBottomSheet() {
         let pillTypeVC = PillTypeBottomSheetViewController()
-        
+
         pillTypeVC.pillInfoSelected
             .bind(to: viewModel.input.pillInfoSelected)
             .disposed(by: disposeBag)
-        
+
         present(pillTypeVC, animated: false)
     }
+
+    private func presentDosageMismatchAlert(
+        currentDosage: (Int, Int),
+        apiDosage: (Int, Int),
+        itemSeq: String
+    ) {
+        let alert = UIAlertController(
+            title: "복용 주기 불일치",
+            message: """
+            API에서 조회한 복용 주기가 선택한 주기와 다릅니다.
+
+            현재 선택: \(currentDosage.0)일 복용 / \(currentDosage.1)일 휴약
+            API 정보: \(apiDosage.0)일 복용 / \(apiDosage.1)일 휴약
+
+            API 정보로 업데이트하시겠습니까?
+            """,
+            preferredStyle: .alert
+        )
+
+        let updateAction = UIAlertAction(title: "업데이트", style: .default) { [weak self] _ in
+            guard let self = self else { return }
+
+            // PillInfo를 업데이트하고 다시 저장
+            let userDefaultsManager = DIContainer.shared.getUserDefaultsManager()
+            if let pillInfo = userDefaultsManager.loadPillInfo() {
+                let updatedPillInfo = PillInfo(
+                    name: pillInfo.name,
+                    takingDays: apiDosage.0,
+                    breakDays: apiDosage.1,
+                    manufacturer: pillInfo.manufacturer,
+                    mainIngredient: pillInfo.mainIngredient,
+                    dosageInstructions: pillInfo.dosageInstructions,
+                    itemSeq: pillInfo.itemSeq
+                )
+                userDefaultsManager.savePillInfo(updatedPillInfo)
+                print("✅ 복용 주기 업데이트: \(apiDosage.0)일 복용 / \(apiDosage.1)일 휴약")
+            }
+        }
+
+        let cancelAction = UIAlertAction(title: "취소", style: .cancel) { _ in
+            print("ℹ️ 복용 주기 업데이트 취소")
+        }
+
+        alert.addAction(updateAction)
+        alert.addAction(cancelAction)
+
+        present(alert, animated: true)
+    }
+
+    // MARK: - Debug Methods
+    
+    private func setupDebugGesture() {
+        let tripleTabGesture = UITapGestureRecognizer(target: self, action: #selector(handleDebugTap))
+        tripleTabGesture.numberOfTapsRequired = 3
+        view.addGestureRecognizer(tripleTabGesture)
+
+        let quadrupleTapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTestScreenTap))
+        quadrupleTapGesture.numberOfTapsRequired = 4
+        view.addGestureRecognizer(quadrupleTapGesture)
+
+        print("🔧 [Debug] 화면을 3번 탭: 캐시 상태 확인")
+        print("🧪 [Debug] 화면을 4번 탭: 상세 API 테스트 화면")
+    }
+    
+    @objc private func handleDebugTap() {
+        checkCacheStatus()
+    }
+
+    @objc private func handleTestScreenTap() {
+        let testVC = DIContainer.shared.makeMedicationDetailTestViewController()
+        let nav = UINavigationController(rootViewController: testVC)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true)
+    }
+
+    private func logCacheStatus() {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        let cacheKeys = allKeys.filter { $0.hasPrefix("medication_cache_") }
+        
+        print("\n📦 [Cache] 캐시 상태 요약")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("📦 [Cache] 총 캐시 항목: \(cacheKeys.count)개")
+        
+        for cacheKey in cacheKeys.sorted() {
+            let keyword = cacheKey.replacingOccurrences(of: "medication_cache_", with: "")
+            let timestampKey = "medication_timestamp_" + keyword
+            
+            if let data = defaults.data(forKey: cacheKey),
+               let medications = try? JSONDecoder().decode([MedicationInfo].self, from: data) {
+                
+                var status = "✅ '\(keyword)': \(medications.count)개 약물"
+                
+                if let timestamp = defaults.object(forKey: timestampKey) as? Date {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "MM-dd HH:mm:ss"
+                    status += " (저장: \(formatter.string(from: timestamp)))"
+                }
+                
+                print(status)
+                
+                for (index, med) in medications.prefix(3).enumerated() {
+                    print("   \(index + 1). \(med.name) - \(med.manufacturer)")
+                }
+                if medications.count > 3 {
+                    print("   ... 외 \(medications.count - 3)개")
+                }
+            }
+        }
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    }
+    
+    private func checkCacheStatus() {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        let cacheKeys = allKeys.filter { $0.hasPrefix("medication_cache_") }
+        
+        var message = "📦 캐시 상태\n\n"
+        message += "총 \(cacheKeys.count)개 키워드 캐시됨\n\n"
+        
+        let prefetchedKeywords = prefetchKeywords.filter { keyword in
+            let cacheKey = "medication_cache_" + keyword
+            return cacheKeys.contains(cacheKey)
+        }
+        
+        let missingKeywords = prefetchKeywords.filter { keyword in
+            let cacheKey = "medication_cache_" + keyword
+            return !cacheKeys.contains(cacheKey)
+        }
+        
+        message += "✅ 캐시됨 (\(prefetchedKeywords.count)/\(prefetchKeywords.count)):\n"
+        if !prefetchedKeywords.isEmpty {
+            message += prefetchedKeywords.joined(separator: ", ") + "\n\n"
+        } else {
+            message += "없음\n\n"
+        }
+        
+        if !missingKeywords.isEmpty {
+            message += "❌ 미캐시됨 (\(missingKeywords.count)):\n"
+            message += missingKeywords.joined(separator: ", ") + "\n\n"
+        }
+        
+        for cacheKey in cacheKeys.sorted().prefix(5) {
+            let keyword = cacheKey.replacingOccurrences(of: "medication_cache_", with: "")
+            if let data = defaults.data(forKey: cacheKey),
+               let medications = try? JSONDecoder().decode([MedicationInfo].self, from: data) {
+                message += "• \(keyword): \(medications.count)개\n"
+            }
+        }
+        
+        let alert = UIAlertController(title: "캐시 상태 확인", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        alert.addAction(UIAlertAction(title: "캐시 초기화", style: .destructive) { _ in
+            self.clearCache()
+        })
+        present(alert, animated: true)
+        
+        print("\n🔍 [Debug] 사용자가 캐시 상태를 확인했습니다.")
+        logCacheStatus()
+    }
+    
+    private func clearCache() {
+        let defaults = UserDefaults.standard
+        let allKeys = defaults.dictionaryRepresentation().keys
+        let cacheKeys = allKeys.filter { $0.hasPrefix("medication_cache_") || $0.hasPrefix("medication_timestamp_") }
+        
+        for key in cacheKeys {
+            defaults.removeObject(forKey: key)
+        }
+        
+        print("🗑️ [Cache] 모든 캐시 삭제 완료")
+        
+        let alert = UIAlertController(title: "캐시 초기화 완료", message: "모든 약물 캐시가 삭제되었습니다.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        present(alert, animated: true)
+    }
 }
+

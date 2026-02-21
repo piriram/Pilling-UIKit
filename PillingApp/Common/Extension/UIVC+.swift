@@ -25,7 +25,7 @@ extension UIViewController {
         
         if includeSettingsOption, let handler = settingsHandler {
             let settingsAction = UIAlertAction(
-                title: "설정으로 이동",
+                title: AppStrings.Common.goToSettings,
                 style: .default
             ) { _ in
                 handler()
@@ -42,10 +42,10 @@ extension UIViewController {
     
     /// 재시도 Alert 표시 (주 액션 + 취소)
     func presentRetryAlert(
-        title: String = "데이터를 불러올 수 없습니다",
-        message: String = "잠시 후 다시 시도해주세요.",
-        retryTitle: String = "재시도",
-        cancelTitle: String = "취소",
+        title: String = AppStrings.Error.dataLoadFailed,
+        message: String = AppStrings.Error.retryLater,
+        retryTitle: String = AppStrings.Common.retryTitle,
+        cancelTitle: String = AppStrings.Common.cancelTitle,
         retryHandler: @escaping () -> Void
     ) {
         

@@ -3,9 +3,8 @@ import WidgetKit
 // MARK: - PillingDailyWidgetProvider
 
 struct DailyWidgetProvider: TimelineProvider {
-    
+
     private let coreDataManager = SharedCoreDataManager.shared
-    private let calculateMessageUseCase = CalculateMessageUseCase()
     
     // MARK: - TimelineProvider
     
@@ -106,19 +105,23 @@ struct DailyWidgetProvider: TimelineProvider {
     }
     
     private func createEntry(for date: Date, cycle: Cycle) -> DailyWidgetEntry {
-        // 공통 UseCase 사용
+        let timeProvider = SystemTimeProvider()
+        let statusFactory = PillStatusFactory(timeProvider: timeProvider)
+        let calculateMessageUseCase = CalculateMessageUseCase(
+            statusFactory: statusFactory,
+            timeProvider: timeProvider
+        )
+
         let messageResult = calculateMessageUseCase.execute(cycle: cycle, for: date)
         let cycleDay = calculateCycleDay(from: cycle, for: date)
-        
-        // MessageResult를 WidgetDisplayData로 변환
-        // widgetText가 있으면 위젯용 텍스트 사용, 없으면 기본 텍스트 사용
+
         let displayData = WidgetDisplayData(
             cycleDay: cycleDay,
             message: messageResult.widgetText ?? messageResult.text,
             iconImageName: messageResult.characterImageName,
             backgroundImageName: messageResult.backgroundImageName
         )
-        
+
         return DailyWidgetEntry(date: date, displayData: displayData)
     }
     

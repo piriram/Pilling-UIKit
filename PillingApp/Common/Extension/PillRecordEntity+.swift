@@ -3,9 +3,9 @@ import CoreData
 // MARK: - Domain Model Conversion
 
 extension PillRecordEntity {
-    
+
     func toDomain() -> DayRecord {
-        let pillStatus = PillStatus(rawValue: Int(status)) ?? .scheduled
+        let pillStatus = CoreDataPillStatusMapper.fromLegacyInt(Int(status))
         let memoValue = memo ?? ""
 
         return DayRecord(
@@ -19,7 +19,7 @@ extension PillRecordEntity {
             updatedAt: updatedAt ?? Date()
         )
     }
-    
+
     static func from(
         domain: DayRecord,
         context: NSManagedObjectContext
@@ -27,7 +27,7 @@ extension PillRecordEntity {
         let entity = PillRecordEntity(context: context)
         entity.id = domain.id
         entity.cycleDay = Int16(domain.cycleDay)
-        entity.status = Int16(domain.status.rawValue)
+        entity.status = Int16(CoreDataPillStatusMapper.toLegacyInt(domain.status))
         entity.scheduledDateTime = domain.scheduledDateTime
         entity.takenAt = domain.takenAt
         entity.memo = domain.memo
@@ -36,10 +36,10 @@ extension PillRecordEntity {
 
         return entity
     }
-    
+
     func update(from domain: DayRecord) {
         cycleDay = Int16(domain.cycleDay)
-        status = Int16(domain.status.rawValue)
+        status = Int16(CoreDataPillStatusMapper.toLegacyInt(domain.status))
         scheduledDateTime = domain.scheduledDateTime
         takenAt = domain.takenAt
         memo = domain.memo

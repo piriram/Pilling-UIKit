@@ -8,12 +8,12 @@ enum StatusButtonTag: Int {
 }
 
 struct PillStatusMapper {
-    
+
     static func mapStatusToButtonTag(_ status: PillStatus) -> StatusButtonTag {
         switch status {
-        case .missed, .scheduled, .todayNotTaken, .todayDelayed, .todayDelayedCritical:
+        case .notTaken, .missed, .recentlyMissed, .scheduled:
             return .notTaken
-        case .taken, .takenDelayed, .todayTaken, .todayTakenDelayed, .todayTakenTooEarly, .takenTooEarly:
+        case .taken, .takenDelayed, .takenTooEarly:
             return .taken
         case .takenDouble:
             return .takenDouble
@@ -21,13 +21,13 @@ struct PillStatusMapper {
             return .none
         }
     }
-    
+
     static func mapButtonTagToStatus(_ tag: StatusButtonTag, currentDate: Date) -> PillStatus? {
         switch tag {
         case .notTaken:
-            return .todayNotTaken
+            return .notTaken
         case .taken:
-            return .todayTaken
+            return .taken
         case .takenDouble:
             return .takenDouble
         case .none:

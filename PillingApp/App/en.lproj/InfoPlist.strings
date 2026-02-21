@@ -1,0 +1,2 @@
+/* Notification permission description */
+"NSUserNotificationsUsageDescription" = "Notification permission is needed to remind you when it's time to take your pill.";

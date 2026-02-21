@@ -24,6 +24,8 @@ final class StatusSelectionView: UIView {
         let view = UIView()
         view.backgroundColor = AppColor.grayBackground
         view.layer.cornerRadius = 12
+        view.isUserInteractionEnabled = true
+        view.clipsToBounds = true
         return view
     }()
     
@@ -40,16 +42,17 @@ final class StatusSelectionView: UIView {
     private lazy var takenDoubleButton = createButton(title: str.takenDouble, tag: 2)
     
     // MARK: - Initialization
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupViews()
         bindButtons()
     }
-    
+
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+
     
     // MARK: - Setup
     
@@ -63,7 +66,7 @@ final class StatusSelectionView: UIView {
         
         container.snp.makeConstraints { make in
             make.edges.equalToSuperview()
-            make.height.equalTo(48)
+            make.height.equalTo(44)
         }
         
         buttonsStack.snp.makeConstraints { make in
@@ -78,14 +81,14 @@ final class StatusSelectionView: UIView {
             })
             .bind(to: notTakenTapped)
             .disposed(by: disposeBag)
-        
+
         takenButton.rx.tap
             .do(onNext: { [weak self] in
                 self?.selectButton(tag: 1)
             })
             .bind(to: takenTapped)
             .disposed(by: disposeBag)
-        
+
         takenDoubleButton.rx.tap
             .do(onNext: { [weak self] in
                 self?.selectButton(tag: 2)
@@ -100,12 +103,13 @@ final class StatusSelectionView: UIView {
         let button = UIButton(type: .custom)
         button.setTitle(title, for: .normal)
         button.tag = tag
-        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        button.setTitleColor(AppColor.textGray, for: .normal)
-        button.setTitleColor(.white, for: .selected)
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .regular)
+        button.setTitleColor(.black, for: .normal)
+        button.setTitleColor(.black, for: .selected)
         button.backgroundColor = .clear
         button.layer.cornerRadius = 10
         button.clipsToBounds = true
+        button.isUserInteractionEnabled = true
         return button
     }
     
@@ -148,14 +152,14 @@ final class StatusSelectionView: UIView {
                 initialSpringVelocity: 0.5
             ) {
                 button.isSelected = isSelected
-                button.backgroundColor = isSelected ? AppColor.pillGreen800 : .clear
+                button.backgroundColor = isSelected ? AppColor.pillWhite : .clear
                 button.titleLabel?.font = isSelected
-                ? .systemFont(ofSize: 14, weight: .semibold)
-                : .systemFont(ofSize: 14, weight: .medium)
+                ? .systemFont(ofSize: 16, weight: .semibold)
+                : .systemFont(ofSize: 15, weight: .regular)
                 
                 if isSelected {
                     button.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-                    button.layer.shadowColor = AppColor.pillGreen800.cgColor
+                    button.layer.shadowColor = AppColor.pillWhite.cgColor
                     button.layer.shadowOffset = CGSize(width: 0, height: 2)
                     button.layer.shadowOpacity = 0.3
                     button.layer.shadowRadius = 4

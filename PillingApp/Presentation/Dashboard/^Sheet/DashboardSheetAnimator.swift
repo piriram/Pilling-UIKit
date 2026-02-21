@@ -21,6 +21,7 @@ final class DashboardSheetAnimator {
         view.layer.cornerRadius = 24
         view.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         view.clipsToBounds = true
+        view.isUserInteractionEnabled = true
         return view
     }()
     

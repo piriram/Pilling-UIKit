@@ -35,10 +35,14 @@ final class CycleHistoryCell: UITableViewCell {
     }
     
     func configure(with cycle: Cycle) {
-        titleLabel.text = "Cycle #\(cycle.cycleNumber) · 총 \(cycle.totalDays)일"
+        titleLabel.text = AppStrings.History.cycleTitle(cycle.cycleNumber, totalDays: cycle.totalDays)
         let start = cycle.startDate.formatted(style: .yearMonthDayPoint)
         let created = cycle.createdAt.formatted(style: .yearMonthDayPoint)
-        subLabel.text = "시작: \(start) · 생성: \(created)"
-        metaLabel.text = "복용 \(cycle.activeDays)일 · 휴약 \(cycle.breakDays)일 · 예정시각 \(cycle.scheduledTime)"
+        subLabel.text = "\(AppStrings.History.startLabel) \(start) · \(AppStrings.History.createdLabel) \(created)"
+        metaLabel.text = AppStrings.History.cellMetaFormat(
+            activeDays: cycle.activeDays,
+            breakDays: cycle.breakDays,
+            time: cycle.scheduledTime
+        )
     }
 }

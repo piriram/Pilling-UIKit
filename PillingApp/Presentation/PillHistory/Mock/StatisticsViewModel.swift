@@ -21,12 +21,17 @@ final class StatisticsViewModel {
     }
 
     private let fetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol
+    private let analytics: AnalyticsServiceProtocol
     private let disposeBag = DisposeBag()
     private let currentIndexSubject = BehaviorSubject<Int>(value: 0)
     private let dataListSubject = BehaviorSubject<[PeriodRecordDTO]>(value: [])
 
-    init(fetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol) {
+    init(
+        fetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol,
+        analytics: AnalyticsServiceProtocol = DIContainer.shared.getAnalyticsService()
+    ) {
         self.fetchStatisticsDataUseCase = fetchStatisticsDataUseCase
+        self.analytics = analytics
     }
     
     func transform(input: Input) -> Output {
@@ -47,6 +52,9 @@ final class StatisticsViewModel {
         .disposed(by: disposeBag)
 
         input.leftArrowTapped
+            .do(onNext: { [weak self] _ in
+                self?.analytics.logEvent(.statisticsPeriodChanged(direction: "left"))
+            })
             .withLatestFrom(currentIndexSubject)
             .filter { $0 > 0 }
             .map { $0 - 1 }
@@ -54,6 +62,9 @@ final class StatisticsViewModel {
             .disposed(by: disposeBag)
 
         input.rightArrowTapped
+            .do(onNext: { [weak self] _ in
+                self?.analytics.logEvent(.statisticsPeriodChanged(direction: "right"))
+            })
             .withLatestFrom(Observable.combineLatest(currentIndexSubject, dataListSubject))
             .filter { index, dataList in
                 return index < dataList.count - 1
@@ -68,6 +79,8 @@ final class StatisticsViewModel {
                     return PeriodRecordDTO(
                         startDate: "",
                         endDate: "",
+                        startDateShort: "",
+                        endDateShort: "",
                         completionRate: 0,
                         medicineName: "",
                         records: [],
@@ -104,6 +117,7 @@ final class StatisticsViewModel {
     }
 
     func selectPeriod(at index: Int) {
+        analytics.logEvent(.statisticsPeriodSelected(index: index))
         currentIndexSubject.onNext(index)
     }
 
