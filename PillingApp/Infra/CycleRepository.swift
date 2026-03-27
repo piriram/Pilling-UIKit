@@ -5,6 +5,8 @@ import WidgetKit
 final class CycleRepository: CycleRepositoryProtocol {
     
     private let coreDataManager: CoreDataManager
+    private let widgetRefreshLogKey = "widget_refresh_requested_at"
+    private let widgetRefreshReasonKey = "widget_refresh_reason"
     
     init(coreDataManager: CoreDataManager) {
         self.coreDataManager = coreDataManager
@@ -22,6 +24,17 @@ final class CycleRepository: CycleRepositoryProtocol {
         ) ?? startDate
         
         return startDate <= date && date <= endDate
+    }
+
+    private func recordWidgetRefreshRequest(reason: String) {
+        guard let defaults = UserDefaults(suiteName: "group.app.Pilltastic.Pilling") else {
+            return
+        }
+
+        let now = Date()
+        defaults.set(now.timeIntervalSince1970, forKey: widgetRefreshLogKey)
+        defaults.set(reason, forKey: widgetRefreshReasonKey)
+        print("⏱️ [WidgetRefresh] requested reason=\(reason) at=\(now)")
     }
     
     
@@ -94,6 +107,7 @@ final class CycleRepository: CycleRepositoryProtocol {
                 
                 try context.save()
 
+                recordWidgetRefreshRequest(reason: "saveCycle")
                 WidgetCenter.shared.reloadAllTimelines()
 
                 observer.onNext(())
@@ -141,6 +155,7 @@ final class CycleRepository: CycleRepositoryProtocol {
                 try context.save()
 
                 // ⭐️ 위젯 업데이트
+                recordWidgetRefreshRequest(reason: "updateRecord")
                 WidgetCenter.shared.reloadAllTimelines()
 
                 observer.onNext(())
@@ -224,6 +239,7 @@ final class CycleRepository: CycleRepositoryProtocol {
 
                 try context.save()
 
+                recordWidgetRefreshRequest(reason: "updateScheduledTimes")
                 WidgetCenter.shared.reloadAllTimelines()
 
                 observer.onNext(())
@@ -241,6 +257,7 @@ final class CycleRepository: CycleRepositoryProtocol {
     func deleteAllCycles() -> Observable<Void> {
         return coreDataManager.deleteAll(entityType: PillCycleEntity.self)
             .do(onNext: {
+                self.recordWidgetRefreshRequest(reason: "deleteAllCycles")
                 WidgetCenter.shared.reloadAllTimelines()
             })
     }
@@ -283,4 +300,3 @@ final class CycleRepository: CycleRepositoryProtocol {
         }
     }
 }
-

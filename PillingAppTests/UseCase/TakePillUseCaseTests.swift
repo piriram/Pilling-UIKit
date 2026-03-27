@@ -206,6 +206,10 @@ final class MockCycleRepository: CycleRepositoryProtocol {
         return updateRecordResult
     }
 
+    func updateScheduledTimes(in cycleID: UUID, newTimeString: String) -> Observable<Void> {
+        return .just(())
+    }
+
     func deleteAllCycles() -> Observable<Void> {
         return .just(())
     }

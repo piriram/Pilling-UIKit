@@ -26,6 +26,21 @@ enum CoreDataPillStatusMapper {
         case .takenTooEarly: return 10
         case .notTaken: return 8
         case .recentlyMissed: return 3
+        default:
+            switch String(describing: status) {
+            case "todayTaken":
+                return 0
+            case "todayTakenDelayed":
+                return 1
+            case "todayTakenTooEarly":
+                return 10
+            case "todayNotTaken":
+                return 8
+            case "todayDelayed", "todayDelayedCritical":
+                return 3
+            default:
+                return 8
+            }
         }
     }
 }

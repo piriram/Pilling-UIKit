@@ -4,6 +4,10 @@ final class DIContainer {
     static let shared = DIContainer()
     
     private init() {}
+
+    private var mfdsAPIKey: String {
+        Bundle.main.object(forInfoDictionaryKey: "MFDS_API_KEY") as? String ?? ""
+    }
     
     // MARK: - DataSources
     
@@ -66,14 +70,12 @@ final class DIContainer {
     }()
 
     private lazy var medicationRepository: MedicationRepositoryProtocol = {
-        let apiKey = Bundle.main.object(forInfoDictionaryKey: "MFDS_API_KEY") as? String ?? ""
-        let apiService = MedicationAPIService(apiKey: apiKey)
+        let apiService = MedicationAPIService(apiKey: mfdsAPIKey)
         return MedicationRepository(apiService: apiService)
     }()
 
     private lazy var medicationDetailAPIService: MedicationDetailAPIServiceProtocol = {
-        let apiKey = Bundle.main.object(forInfoDictionaryKey: "MFDS_DETAIL_API_KEY") as? String ?? ""
-        return MedicationDetailAPIService(apiKey: apiKey)
+        return MedicationDetailAPIService(apiKey: mfdsAPIKey)
     }()
 
     // MARK: - UseCases

@@ -112,19 +112,19 @@ final class FetchStatisticsDataUseCase: FetchStatisticsDataUseCaseProtocol {
 
         for record in activeDayRecords {
             switch record.status {
-            case .takenTooEarly:
+            case .takenTooEarly, .todayTakenTooEarly:
                 tooEarlyCount += 1
                 totalTaken += 1
-            case .taken:
+            case .taken, .todayTaken:
                 onTimeCount += 1
                 totalTaken += 1
-            case .takenDelayed:
+            case .takenDelayed, .todayTakenDelayed:
                 delayedCount += 1
                 totalTaken += 1
             case .takenDouble:
                 doubleCount += 1
                 totalTaken += 1
-            case .missed, .recentlyMissed, .notTaken:
+            case .missed, .recentlyMissed, .notTaken, .todayDelayed, .todayDelayedCritical, .todayNotTaken:
                 missedCount += 1
             case .scheduled:
                 scheduledCount += 1

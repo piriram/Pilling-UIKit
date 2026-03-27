@@ -19,6 +19,15 @@ struct PillStatusMapper {
             return .takenDouble
         case .rest:
             return .none
+        default:
+            switch String(describing: status) {
+            case "todayNotTaken", "todayDelayed", "todayDelayedCritical":
+                return .notTaken
+            case "todayTaken", "todayTakenDelayed", "todayTakenTooEarly":
+                return .taken
+            default:
+                return .none
+            }
         }
     }
 

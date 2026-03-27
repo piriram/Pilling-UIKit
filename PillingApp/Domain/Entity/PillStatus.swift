@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - PillStatus
 
-enum PillStatus: Int, Sendable {
+enum PillStatus: Int, CaseIterable, Codable, Sendable {
     case taken = 0
     case takenDelayed = 1
     case takenDouble = 2
@@ -16,6 +16,8 @@ enum PillStatus: Int, Sendable {
     case todayTakenTooEarly = 10
     case takenTooEarly = 11
     case todayDelayedCritical = 12
+    case notTaken = 13
+    case recentlyMissed = 14
     
     var isToday: Bool {
         switch self {
@@ -37,11 +39,11 @@ enum PillStatus: Int, Sendable {
     
     var backgroundImageName: String {
         switch self {
-        case .todayTaken, .todayNotTaken, .todayTakenDelayed, .todayTakenTooEarly:
+        case .todayTaken, .todayNotTaken, .todayTakenDelayed, .todayTakenTooEarly, .notTaken:
             return "background_taken"
-        case .todayDelayed, .todayDelayedCritical, .missed:
+        case .todayDelayed, .todayDelayedCritical, .missed, .recentlyMissed:
             return "background_rest"
-        default:
+        case .taken, .takenDelayed, .takenDouble, .scheduled, .rest, .takenTooEarly:
             return "background_taken"
         }
     }
@@ -62,8 +64,12 @@ extension PillStatus {
             return .todayTakenTooEarly
         case .scheduled:
             return .todayNotTaken
+        case .notTaken:
+            return .todayNotTaken
         case .missed:
             return .todayDelayed
+        case .recentlyMissed:
+            return .todayDelayedCritical
         case .todayNotTaken, .todayTaken, .todayTakenDelayed, .todayDelayed, .takenDouble, .rest, .todayTakenTooEarly, .todayDelayedCritical:
             return self
         }
@@ -80,7 +86,7 @@ extension PillStatus {
             return .takenTooEarly
         case .todayNotTaken, .todayDelayed, .todayDelayedCritical:
             return .missed
-        case .taken, .takenDelayed, .takenDouble, .missed, .scheduled, .rest, .takenTooEarly:
+        case .taken, .takenDelayed, .takenDouble, .missed, .scheduled, .rest, .takenTooEarly, .notTaken, .recentlyMissed:
             return self
         }
     }

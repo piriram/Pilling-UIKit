@@ -208,6 +208,10 @@ final class DashboardMiddleView: UIView {
     func applyCalendarSnapshot(with items: [DayItem]) {
         calendarView.applySnapshot(with: items)
     }
+
+    func updateCalendarItem(for item: DayItem) {
+        calendarView.updateItemForDate(item.date, with: item.status)
+    }
     
     func updateCalendarWeekdayStart(from startDate: Date) {
         calendarView.updateWeekdayStart(from: startDate)
