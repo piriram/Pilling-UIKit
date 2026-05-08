@@ -14,6 +14,7 @@ final class DashboardViewModel {
     private let settingsRepository: UserDefaultsProtocol
     private let notificationManager: NotificationManagerProtocol
     private let analytics: AnalyticsServiceProtocol
+    private let recordServerPillTakenUseCase: RecordServerPillTakenUseCaseProtocol
 
     private let disposeBag = DisposeBag()
     private let calendar = Calendar.current
@@ -40,7 +41,8 @@ final class DashboardViewModel {
         userDefaultsManager: UserDefaultsManagerProtocol,
         settingsRepository: UserDefaultsProtocol,
         notificationManager: NotificationManagerProtocol,
-        analytics: AnalyticsServiceProtocol
+        analytics: AnalyticsServiceProtocol,
+        recordServerPillTakenUseCase: RecordServerPillTakenUseCaseProtocol
     ) {
         self.fetchDashboardDataUseCase = fetchDashboardDataUseCase
         self.takePillUseCase = takePillUseCase
@@ -50,6 +52,7 @@ final class DashboardViewModel {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
         self.analytics = analytics
+        self.recordServerPillTakenUseCase = recordServerPillTakenUseCase
 
 
         loadDashboardData()
@@ -359,15 +362,10 @@ final class DashboardViewModel {
                 self.updateItems()
                 self.updateDashboardMessage()
                 self.updateCanTakePill()
-
-                // 알림 업데이트 (위약 기간 반영)
                 self.updateNotificationMessage(with: updatedCycle)
-
-                // 사이클 완료 확인
                 self.checkCycleCompletion(updatedCycle)
-
-                // 복용일 마지막 날 확인
                 self.checkCompletionFloating(updatedCycle)
+                self.recordPillTakenOnServer()
             })
             .disposed(by: disposeBag)
     }
@@ -433,6 +431,13 @@ final class DashboardViewModel {
             }
         )
         .disposed(by: disposeBag)
+    }
+
+    private func recordPillTakenOnServer() {
+        guard let pillID = userDefaultsManager.loadServerPillID() else { return }
+        recordServerPillTakenUseCase.execute(pillID: pillID)
+            .subscribe()
+            .disposed(by: disposeBag)
     }
 
     // MARK: - Notification & Cycle Completion

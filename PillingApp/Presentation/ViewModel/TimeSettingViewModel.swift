@@ -25,6 +25,7 @@ final class TimeSettingViewModel {
     private let notificationManager: NotificationManagerProtocol
     private let userDefaultsManager: UserDefaultsManagerProtocol
     private let createPillCycleUseCase: CreateCycleUseCaseProtocol
+    private let registerServerPillUseCase: RegisterServerPillUseCaseProtocol
     private let disposeBag = DisposeBag()
     
     private let selectedTime = BehaviorRelay<Date>(value: Date())
@@ -36,12 +37,14 @@ final class TimeSettingViewModel {
         settingsRepository: UserDefaultsProtocol,
         notificationManager: NotificationManagerProtocol,
         userDefaultsManager: UserDefaultsManagerProtocol,
-        createPillCycleUseCase: CreateCycleUseCaseProtocol
+        createPillCycleUseCase: CreateCycleUseCaseProtocol,
+        registerServerPillUseCase: RegisterServerPillUseCaseProtocol
     ) {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
         self.userDefaultsManager = userDefaultsManager
         self.createPillCycleUseCase = createPillCycleUseCase
+        self.registerServerPillUseCase = registerServerPillUseCase
     }
     
     // MARK: - Transform
@@ -101,6 +104,7 @@ final class TimeSettingViewModel {
         )
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
+            self.syncPillToServer(name: pillInfo.name, scheduledTime: scheduledTimeString)
             return self.setupNotificationAndSaveSettings()
         }
     }
@@ -153,6 +157,15 @@ final class TimeSettingViewModel {
             }
     }
     
+    private func syncPillToServer(name: String, scheduledTime: String) {
+        guard let userID = userDefaultsManager.loadServerUserID() else { return }
+        registerServerPillUseCase.execute(userID: userID, name: name, scheduledTime: scheduledTime)
+            .subscribe(onNext: { [weak self] pillID in
+                self?.userDefaultsManager.saveServerPillID(pillID)
+            })
+            .disposed(by: disposeBag)
+    }
+
     private func handleError(_ error: Error) -> String {
         if let notificationError = error as? NotificationError {
             switch notificationError {

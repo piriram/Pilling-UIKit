@@ -1,14 +1,16 @@
 import UIKit
 import FirebaseCore
 import FirebaseCrashlytics
+import RxSwift
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
+    private let disposeBag = DisposeBag()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
+        application.registerForRemoteNotifications()
 
         #if DEBUG
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
@@ -33,10 +35,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {
-        // Called when the user discards a scene session.
-        // If any sessions were discarded while the application was not running, this will be called shortly after application:didFinishLaunchingWithOptions.
-        // Use this method to release any resources that were specific to the discarded scenes, as they will not return.
     }
 
+    // MARK: - APNs
 
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        let userID = resolveServerUserID()
+
+        let registerUseCase = DIContainer.shared.makeRegisterUserUseCase()
+        let updateTokenUseCase = DIContainer.shared.makeUpdateDeviceTokenUseCase()
+
+        registerUseCase.execute(userID: userID, deviceToken: tokenString)
+            .catch { error -> Observable<Void> in
+                guard case PillingServerError.conflict = error else { return .just(()) }
+                return updateTokenUseCase.execute(userID: userID, deviceToken: tokenString)
+                    .catch { _ in .just(()) }
+            }
+            .subscribe()
+            .disposed(by: disposeBag)
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        DIContainer.shared.getCrashlyticsService().logError(error, userInfo: ["context": "APNs registration failed"])
+    }
+
+    // MARK: - Private
+
+    private func resolveServerUserID() -> String {
+        let manager = DIContainer.shared.getUserDefaultsManager()
+        if let existing = manager.loadServerUserID() { return existing }
+        let id = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        manager.saveServerUserID(id)
+        return id
+    }
 }

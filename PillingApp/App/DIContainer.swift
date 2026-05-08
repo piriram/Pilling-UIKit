@@ -148,7 +148,8 @@ final class DIContainer {
             userDefaultsManager: userDefaultsManager,
             settingsRepository: settingsRepository,
             notificationManager: notificationManager,
-            analytics: analyticsService
+            analytics: analyticsService,
+            recordServerPillTakenUseCase: makeRecordServerPillTakenUseCase()
         )
     }
     
@@ -164,7 +165,8 @@ final class DIContainer {
             settingsRepository: settingsRepository,
             notificationManager: notificationManager,
             userDefaultsManager: userDefaultsManager,
-            createPillCycleUseCase: makeCreatePillCycleUseCase()
+            createPillCycleUseCase: makeCreatePillCycleUseCase(),
+            registerServerPillUseCase: makeRegisterServerPillUseCase()
         )
     }
     
