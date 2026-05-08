@@ -12,6 +12,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         application.registerForRemoteNotifications()
         registerUserIfNeeded()
+        updateDeviceTokenIfPlaceholder()
 
         #if DEBUG
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
@@ -63,12 +64,26 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     // MARK: - Private
 
+    private func placeholderToken() -> String {
+        UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+    }
+
     private func registerUserIfNeeded() {
         let manager = DIContainer.shared.getUserDefaultsManager()
         guard manager.loadServerUserID() == nil else { return }
         let userID = resolveServerUserID()
         DIContainer.shared.makeRegisterUserUseCase()
-            .execute(userID: userID, deviceToken: "")
+            .execute(userID: userID, deviceToken: placeholderToken())
+            .catch { _ in .just(()) }
+            .subscribe()
+            .disposed(by: disposeBag)
+    }
+
+    // 이전 실행에서 빈 문자열로 등록된 경우 placeholder로 갱신
+    private func updateDeviceTokenIfPlaceholder() {
+        guard let userID = DIContainer.shared.getUserDefaultsManager().loadServerUserID() else { return }
+        DIContainer.shared.makeUpdateDeviceTokenUseCase()
+            .execute(userID: userID, deviceToken: placeholderToken())
             .catch { _ in .just(()) }
             .subscribe()
             .disposed(by: disposeBag)
