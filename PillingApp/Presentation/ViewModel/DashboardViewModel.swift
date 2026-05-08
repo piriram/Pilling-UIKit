@@ -274,7 +274,7 @@ final class DashboardViewModel {
         let sortedRecords = cycle.records.sorted { $0.scheduledDateTime < $1.scheduledDateTime }
         let statuses = sortedRecords
             .prefix(dayLimit)
-            .map { $0.status.rawValue }
+            .map { String(describing: $0.status) }
             .joined(separator: " | ")
         print(statuses)
         print("=== End Dashboard Debug ===")

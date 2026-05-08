@@ -72,9 +72,26 @@ final class DashboardViewBindingManager {
     ) {
         // Calendar items
         viewModel.items
-            .asDriver()
-            .drive(onNext: { items in
-                infoView.applyCalendarSnapshot(with: items)
+            .asObservable()
+            .scan((previous: [DayItem](), current: [DayItem]())) { state, newItems in
+                (previous: state.current, current: newItems)
+            }
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: { [weak self] state in
+                guard let self = self else { return }
+
+                let previousItems = state.previous
+                let currentItems = state.current
+
+                if let updatedItem = self.findSingleStatusChangedItem(
+                    previous: previousItems,
+                    current: currentItems
+                ) {
+                    infoView.updateCalendarItem(for: updatedItem)
+                    return
+                }
+
+                infoView.applyCalendarSnapshot(with: currentItems)
             })
             .disposed(by: disposeBag)
         
@@ -297,5 +314,51 @@ final class DashboardViewBindingManager {
                 onCompletionFloatingView()
             })
             .disposed(by: disposeBag)
+    }
+
+    private func findSingleStatusChangedItem(
+        previous: [DayItem],
+        current: [DayItem]
+    ) -> DayItem? {
+        guard
+            !previous.isEmpty,
+            previous.count == current.count
+        else {
+            return nil
+        }
+
+        let calendar = Calendar.current
+        var changedItems: [DayItem] = []
+
+        for (oldItem, newItem) in zip(previous, current) {
+            let isSameDay = calendar.isDate(oldItem.date, inSameDayAs: newItem.date)
+            let sameStructure = isSameDay &&
+                oldItem.cycleDay == newItem.cycleDay &&
+                oldItem.scheduledDateTime == newItem.scheduledDateTime
+
+            guard sameStructure else {
+                return nil
+            }
+
+            if oldItem.status == newItem.status {
+                continue
+            }
+
+            changedItems.append(
+                DayItem(
+                    id: oldItem.id,
+                    cycleDay: newItem.cycleDay,
+                    date: newItem.date,
+                    status: newItem.status,
+                    scheduledDateTime: newItem.scheduledDateTime
+                )
+            )
+
+            if changedItems.count > 1 {
+                return nil
+            }
+        }
+
+        return changedItems.count == 1 ? changedItems[0] : nil
     }
 }

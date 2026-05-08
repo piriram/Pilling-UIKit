@@ -1,3 +1,4 @@
+import Foundation
 import WidgetKit
 
 // MARK: - PillingDailyWidgetProvider
@@ -5,6 +6,9 @@ import WidgetKit
 struct DailyWidgetProvider: TimelineProvider {
 
     private let coreDataManager = SharedCoreDataManager.shared
+    private let appGroupIdentifier = "group.app.Pilltastic.Pilling"
+    private let widgetRefreshLogKey = "widget_refresh_requested_at"
+    private let widgetRefreshReasonKey = "widget_refresh_reason"
     
     // MARK: - TimelineProvider
     
@@ -13,6 +17,8 @@ struct DailyWidgetProvider: TimelineProvider {
     }
     
     func getSnapshot(in context: Context, completion: @escaping (DailyWidgetEntry) -> Void) {
+        logRefreshLatencyIfAvailable(source: "snapshot")
+
         guard let cycle = coreDataManager.fetchCurrentCycle() else {
             completion(.empty)
             return
@@ -26,6 +32,8 @@ struct DailyWidgetProvider: TimelineProvider {
         var entries: [DailyWidgetEntry] = []
         let calendar = Calendar.current
         let now = Date()
+
+        logRefreshLatencyIfAvailable(source: "timeline")
         
         guard let cycle = coreDataManager.fetchCurrentCycle() else {
             entries.append(.empty)
@@ -87,7 +95,26 @@ struct DailyWidgetProvider: TimelineProvider {
     }
     
     // MARK: - Private Methods
-    
+
+    private func logRefreshLatencyIfAvailable(source: String) {
+        guard let defaults = UserDefaults(suiteName: appGroupIdentifier) else {
+            return
+        }
+
+        let requestedAt = defaults.double(forKey: widgetRefreshLogKey)
+        guard requestedAt > 0 else {
+            return
+        }
+
+        let requestDate = Date(timeIntervalSince1970: requestedAt)
+        let latency = Date().timeIntervalSince(requestDate)
+        let reason = defaults.string(forKey: widgetRefreshReasonKey) ?? "unknown"
+
+        print(
+            "⏱️ [WidgetRefresh] source=\(source) reason=\(reason) latency=\(String(format: "%.3f", latency))s requestAt=\(requestDate)"
+        )
+    }
+
     private func getScheduledTime(for date: Date, cycle: Cycle, calendar: Calendar) -> Date? {
         // 해당 날짜의 레코드 찾기
         guard let record = cycle.records.first(where: { record in

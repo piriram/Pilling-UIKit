@@ -117,6 +117,7 @@ final class DashboardCalendarView: UIView {
     
     /// Initial data load or complete refresh
     func applySnapshot(with items: [DayItem], animated: Bool = true) {
+        print("🗓️ [Calendar] applySnapshot itemCount=\(items.count)")
         currentItems = items
         
         var snapshot = Snapshot()
@@ -165,6 +166,7 @@ final class DashboardCalendarView: UIView {
     
     /// Update item by date - convenient for pill recording
     func updateItemForDate(_ date: Date, with newStatus: PillStatus, animated: Bool = true) {
+        print("🗓️ [Calendar] updateItemForDate itemCount=1 date=\(date)")
         guard let existingItem = currentItems.first(where: {
             Calendar.current.isDate($0.date, inSameDayAs: date)
         }) else { return }

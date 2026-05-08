@@ -141,14 +141,14 @@ final class FetchStatisticsDataUseCaseTests: XCTestCase {
         XCTAssertEqual(onTimeRecord?.days, 2)
         XCTAssertEqual(onTimeRecord?.percentage, 50)
 
-        // 조금 늦음: 1일 (25%)
-        let lateRecord = recordItems.first { $0.category == "조금 늦었어요" }
+        // 늦게 복용: 1일 (25%)
+        let lateRecord = recordItems.first { $0.category == "늦게 복용했어요" }
         XCTAssertNotNil(lateRecord)
         XCTAssertEqual(lateRecord?.days, 1)
         XCTAssertEqual(lateRecord?.percentage, 25)
 
         // 미복용: 1일 (25%)
-        let missedRecord = recordItems.first { $0.category == "미복용 및 2알 복용" }
+        let missedRecord = recordItems.first { $0.category == "미복용" }
         XCTAssertNotNil(missedRecord)
         XCTAssertEqual(missedRecord?.days, 1)
         XCTAssertEqual(missedRecord?.percentage, 25)
@@ -270,6 +270,7 @@ final class MockUserDefaultsManager: UserDefaultsManagerProtocol {
     var pillStartDate: Date?
     var currentCycleID: UUID?
     var completedOnboarding = false
+    var medicationDetails: [String: MedicationDetailStoredInfo] = [:]
 
     func savePillInfo(_ pillInfo: PillInfo) {
         self.pillInfo = pillInfo
@@ -314,5 +315,13 @@ final class MockUserDefaultsManager: UserDefaultsManagerProtocol {
 
     func loadSideEffectTags() -> [SideEffectTag] {
         return sideEffectTags
+    }
+
+    func saveMedicationDetail(_ detail: MedicationDetailStoredInfo, forItemSeq itemSeq: String) {
+        medicationDetails[itemSeq] = detail
+    }
+
+    func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo? {
+        medicationDetails[itemSeq]
     }
 }
