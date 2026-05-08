@@ -55,7 +55,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 return updateTokenUseCase.execute(userID: userID, deviceToken: tokenString)
                     .catch { _ in .just(()) }
             }
-            .do(onNext: { manager.setHasRealAPNsToken(true) })
+            .do(onNext: {
+                manager.setHasRealAPNsToken(true)
+                manager.saveDeviceToken(tokenString)
+            })
             .subscribe()
             .disposed(by: disposeBag)
     }

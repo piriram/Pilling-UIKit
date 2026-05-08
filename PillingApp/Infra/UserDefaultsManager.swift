@@ -26,6 +26,8 @@ protocol UserDefaultsManagerProtocol {
     func clearServerIDs()
     func setHasRealAPNsToken(_ value: Bool)
     func hasRealAPNsToken() -> Bool
+    func saveDeviceToken(_ token: String)
+    func loadDeviceToken() -> String?
 }
 
 
@@ -251,5 +253,13 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
 
     func hasRealAPNsToken() -> Bool {
         userDefaults.bool(forKey: UserDefaultsKey.hasRealAPNsToken.rawValue)
+    }
+
+    func saveDeviceToken(_ token: String) {
+        userDefaults.set(token, forKey: UserDefaultsKey.apnsDeviceToken.rawValue)
+    }
+
+    func loadDeviceToken() -> String? {
+        userDefaults.string(forKey: UserDefaultsKey.apnsDeviceToken.rawValue)
     }
 }

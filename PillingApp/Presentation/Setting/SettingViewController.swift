@@ -106,6 +106,34 @@ final class SettingViewController: UIViewController {
         return button
     }()
     
+    private let deviceTokenSectionLabel: UILabel = {
+        let label = UILabel()
+        label.text = "디바이스 토큰"
+        label.font = Typography.headline3(.bold)
+        label.textColor = AppColor.textBlack
+        return label
+    }()
+
+    private let deviceTokenLabel: UILabel = {
+        let label = UILabel()
+        label.text = "불러오는 중..."
+        label.font = Typography.caption(.regular)
+        label.textColor = AppColor.textGray
+        label.numberOfLines = 3
+        label.lineBreakMode = .byCharWrapping
+        return label
+    }()
+
+    private let registerTokenButton: UIButton = {
+        let button = UIButton()
+        button.backgroundColor = .systemGray6
+        button.layer.cornerRadius = 12
+        button.setTitle("서버에 등록", for: .normal)
+        button.setTitleColor(.label, for: .normal)
+        button.titleLabel?.font = Typography.body1(.bold)
+        return button
+    }()
+
     private let messageSettingButton: UIButton = {
         let button = UIButton()
         button.backgroundColor = .systemGray6
@@ -235,7 +263,8 @@ final class SettingViewController: UIViewController {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         
-        [pillSectionLabel, newPillCycleButton, alarmSectionLabel, timeSettingButton, messageSettingButton].forEach {
+        [pillSectionLabel, newPillCycleButton, alarmSectionLabel, timeSettingButton, messageSettingButton,
+         deviceTokenSectionLabel, deviceTokenLabel, registerTokenButton].forEach {
             contentView.addSubview($0)
         }
         
@@ -276,6 +305,22 @@ final class SettingViewController: UIViewController {
             $0.top.equalTo(pillSectionLabel.snp.bottom).offset(16)
             $0.leading.trailing.equalToSuperview().inset(contentInset)
             $0.height.equalTo(60)
+        }
+
+        deviceTokenSectionLabel.snp.makeConstraints {
+            $0.top.equalTo(newPillCycleButton.snp.bottom).offset(32)
+            $0.leading.trailing.equalToSuperview().inset(contentInset)
+        }
+
+        deviceTokenLabel.snp.makeConstraints {
+            $0.top.equalTo(deviceTokenSectionLabel.snp.bottom).offset(8)
+            $0.leading.trailing.equalToSuperview().inset(contentInset)
+        }
+
+        registerTokenButton.snp.makeConstraints {
+            $0.top.equalTo(deviceTokenLabel.snp.bottom).offset(12)
+            $0.leading.trailing.equalToSuperview().inset(contentInset)
+            $0.height.equalTo(52)
             $0.bottom.equalToSuperview().offset(-40)
         }
     }
@@ -291,7 +336,8 @@ final class SettingViewController: UIViewController {
             viewWillAppear: viewWillAppear,
             timeSettingTapped: timeSettingButton.rx.tap.asObservable(),
             messageSettingTapped: messageSettingButton.rx.tap.asObservable(),
-            newPillCycleTapped: newPillCycleButton.rx.tap.asObservable()
+            newPillCycleTapped: newPillCycleButton.rx.tap.asObservable(),
+            registerDeviceTokenTapped: registerTokenButton.rx.tap.asObservable()
         )
         
         let output = viewModel.transform(input: input)
@@ -353,6 +399,13 @@ final class SettingViewController: UIViewController {
             .filter { !$0.isEmpty }
             .drive(onNext: { [weak self] message in
                 self?.showToast(message: message)
+            })
+            .disposed(by: disposeBag)
+
+        // 디바이스 토큰 표시
+        output.deviceToken
+            .drive(onNext: { [weak self] token in
+                self?.deviceTokenLabel.text = token
             })
             .disposed(by: disposeBag)
     }

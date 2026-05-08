@@ -13,14 +13,16 @@ final class SettingViewModel {
         let alarmToggleChanged: Observable<Bool>?
         let healthToggleChanged: Observable<Bool>?
         let newPillCycleTapped: Observable<Void>
-        
+        let registerDeviceTokenTapped: Observable<Void>
+
         init(
             viewWillAppear: Observable<Void>,
             timeSettingTapped: Observable<Void>,
             messageSettingTapped: Observable<Void>,
             alarmToggleChanged: Observable<Bool>? = nil,
             healthToggleChanged: Observable<Bool>? = nil,
-            newPillCycleTapped: Observable<Void>
+            newPillCycleTapped: Observable<Void>,
+            registerDeviceTokenTapped: Observable<Void> = Observable.never()
         ) {
             self.viewWillAppear = viewWillAppear
             self.timeSettingTapped = timeSettingTapped
@@ -28,6 +30,7 @@ final class SettingViewModel {
             self.alarmToggleChanged = alarmToggleChanged
             self.healthToggleChanged = healthToggleChanged
             self.newPillCycleTapped = newPillCycleTapped
+            self.registerDeviceTokenTapped = registerDeviceTokenTapped
         }
     }
     
@@ -39,6 +42,7 @@ final class SettingViewModel {
         let showSuccess: Driver<String>
         let showNewPillCycleConfirmation: Driver<Void>
         let navigateToPillSetting: Driver<Void>
+        let deviceToken: Driver<String>
     }
     
     // MARK: - Properties
@@ -48,6 +52,7 @@ final class SettingViewModel {
     private let pillCycleRepository: CycleRepositoryProtocol
     private let userDefaultsManager: UserDefaultsManagerProtocol
     private let updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
+    private let updateDeviceTokenUseCase: UpdateDeviceTokenUseCaseProtocol
     private let disposeBag = DisposeBag()
 
     private let currentSettingsRelay = BehaviorRelay<UserSettings>(value: .default)
@@ -60,13 +65,15 @@ final class SettingViewModel {
         notificationManager: NotificationManagerProtocol,
         pillCycleRepository: CycleRepositoryProtocol,
         userDefaultsManager: UserDefaultsManagerProtocol,
-        updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
+        updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol,
+        updateDeviceTokenUseCase: UpdateDeviceTokenUseCaseProtocol
     ) {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
         self.pillCycleRepository = pillCycleRepository
         self.userDefaultsManager = userDefaultsManager
         self.updateScheduledTimeUseCase = updateScheduledTimeUseCase
+        self.updateDeviceTokenUseCase = updateDeviceTokenUseCase
     }
     
     // MARK: - Transform
@@ -139,10 +146,33 @@ final class SettingViewModel {
         
         let showError = errorTracker
             .asDriver(onErrorJustReturn: "알 수 없는 오류가 발생했습니다.")
-        
+
         let showSuccess = successTracker
             .asDriver(onErrorJustReturn: "")
-        
+
+        let deviceTokenValue = userDefaultsManager.loadDeviceToken() ?? "토큰 없음"
+        let deviceTokenRelay = BehaviorRelay<String>(value: deviceTokenValue)
+
+        input.registerDeviceTokenTapped
+            .flatMapLatest { [weak self] _ -> Observable<Void> in
+                guard let self = self,
+                      let token = self.userDefaultsManager.loadDeviceToken(),
+                      let userID = self.userDefaultsManager.loadServerUserID() else {
+                    errorTracker.onNext("등록할 토큰 또는 유저 ID가 없습니다.")
+                    return .empty()
+                }
+                return self.updateDeviceTokenUseCase.execute(userID: userID, deviceToken: token)
+                    .do(onNext: { successTracker.onNext("토큰을 서버에 등록했습니다.") })
+                    .catch { error in
+                        errorTracker.onNext("토큰 등록 실패: \(error.localizedDescription)")
+                        return .empty()
+                    }
+            }
+            .subscribe()
+            .disposed(by: disposeBag)
+
+        let deviceToken = deviceTokenRelay.asDriver(onErrorJustReturn: "토큰 없음")
+
         return Output(
             currentSettings: currentSettings,
             showTimePicker: showTimePicker,
@@ -150,7 +180,8 @@ final class SettingViewModel {
             showError: showError,
             showSuccess: showSuccess,
             showNewPillCycleConfirmation: showNewPillCycleConfirmation,
-            navigateToPillSetting: navigateToPillSetting
+            navigateToPillSetting: navigateToPillSetting,
+            deviceToken: deviceToken
         )
     }
     

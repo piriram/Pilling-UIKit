@@ -181,7 +181,8 @@ final class DIContainer {
             notificationManager: notificationManager,
             pillCycleRepository: cycleRepository,
             userDefaultsManager: userDefaultsManager,
-            updateScheduledTimeUseCase: makeUpdateScheduledTimeUseCase()
+            updateScheduledTimeUseCase: makeUpdateScheduledTimeUseCase(),
+            updateDeviceTokenUseCase: makeUpdateDeviceTokenUseCase()
         )
     }
 
