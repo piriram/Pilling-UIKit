@@ -24,6 +24,8 @@ protocol UserDefaultsManagerProtocol {
     func saveServerPillID(_ id: String)
     func loadServerPillID() -> String?
     func clearServerIDs()
+    func setHasRealAPNsToken(_ value: Bool)
+    func hasRealAPNsToken() -> Bool
 }
 
 
@@ -240,5 +242,14 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
     func clearServerIDs() {
         userDefaults.removeObject(forKey: UserDefaultsKey.serverUserID.rawValue)
         userDefaults.removeObject(forKey: UserDefaultsKey.serverPillID.rawValue)
+        userDefaults.removeObject(forKey: UserDefaultsKey.hasRealAPNsToken.rawValue)
+    }
+
+    func setHasRealAPNsToken(_ value: Bool) {
+        userDefaults.set(value, forKey: UserDefaultsKey.hasRealAPNsToken.rawValue)
+    }
+
+    func hasRealAPNsToken() -> Bool {
+        userDefaults.bool(forKey: UserDefaultsKey.hasRealAPNsToken.rawValue)
     }
 }

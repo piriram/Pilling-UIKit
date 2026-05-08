@@ -12,6 +12,7 @@ enum UserDefaultsKey: String {
     case medicationDetailPrefix = "medication_detail_"  // 품목기준코드별 상세 정보 저장
     case serverUserID = "server_user_id"
     case serverPillID = "server_pill_id"
+    case hasRealAPNsToken = "has_real_apns_token"
 
     // 품목기준코드로 상세 정보 키 생성
     static func medicationDetailKey(forItemSeq itemSeq: String) -> String {

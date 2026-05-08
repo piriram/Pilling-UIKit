@@ -44,6 +44,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
         let userID = resolveServerUserID()
+        let manager = DIContainer.shared.getUserDefaultsManager()
 
         let registerUseCase = DIContainer.shared.makeRegisterUserUseCase()
         let updateTokenUseCase = DIContainer.shared.makeUpdateDeviceTokenUseCase()
@@ -54,6 +55,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 return updateTokenUseCase.execute(userID: userID, deviceToken: tokenString)
                     .catch { _ in .just(()) }
             }
+            .do(onNext: { manager.setHasRealAPNsToken(true) })
             .subscribe()
             .disposed(by: disposeBag)
     }
@@ -79,9 +81,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             .disposed(by: disposeBag)
     }
 
-    // 이전 실행에서 빈 문자열로 등록된 경우 placeholder로 갱신
+    // 실 APNs 토큰 없을 때만 placeholder로 갱신 (실기기에서 APNs 콜백이 오면 덮어씀)
     private func updateDeviceTokenIfPlaceholder() {
-        guard let userID = DIContainer.shared.getUserDefaultsManager().loadServerUserID() else { return }
+        let manager = DIContainer.shared.getUserDefaultsManager()
+        guard let userID = manager.loadServerUserID(),
+              !manager.hasRealAPNsToken() else { return }
         DIContainer.shared.makeUpdateDeviceTokenUseCase()
             .execute(userID: userID, deviceToken: placeholderToken())
             .catch { _ in .just(()) }
