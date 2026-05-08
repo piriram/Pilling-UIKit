@@ -12,7 +12,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         application.registerForRemoteNotifications()
         registerUserIfNeeded()
-        updateDeviceTokenIfPlaceholder()
 
         #if DEBUG
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
@@ -75,18 +74,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         guard manager.loadServerUserID() == nil else { return }
         let userID = resolveServerUserID()
         DIContainer.shared.makeRegisterUserUseCase()
-            .execute(userID: userID, deviceToken: placeholderToken())
-            .catch { _ in .just(()) }
-            .subscribe()
-            .disposed(by: disposeBag)
-    }
-
-    // 실 APNs 토큰 없을 때만 placeholder로 갱신 (실기기에서 APNs 콜백이 오면 덮어씀)
-    private func updateDeviceTokenIfPlaceholder() {
-        let manager = DIContainer.shared.getUserDefaultsManager()
-        guard let userID = manager.loadServerUserID(),
-              !manager.hasRealAPNsToken() else { return }
-        DIContainer.shared.makeUpdateDeviceTokenUseCase()
             .execute(userID: userID, deviceToken: placeholderToken())
             .catch { _ in .just(()) }
             .subscribe()
