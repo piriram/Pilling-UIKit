@@ -42,6 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
         let tokenString = deviceToken.map { String(format: "%02.2hhx", $0) }.joined()
+        NSLog("[APNs] didRegisterForRemoteNotificationsWithDeviceToken: %@", tokenString)
         let userID = resolveServerUserID()
         let manager = DIContainer.shared.getUserDefaultsManager()
 
@@ -60,6 +61,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NSLog("[APNs] didFailToRegisterForRemoteNotificationsWithError: %@", error as NSError)
         DIContainer.shared.getCrashlyticsService().logError(error, userInfo: ["context": "APNs registration failed"])
     }
 
