@@ -8,6 +8,10 @@ final class DIContainer {
     private var mfdsAPIKey: String {
         Bundle.main.object(forInfoDictionaryKey: "MFDS_API_KEY") as? String ?? ""
     }
+
+    private var pillingAPIKey: String {
+        Bundle.main.object(forInfoDictionaryKey: "PILLING_API_KEY") as? String ?? ""
+    }
     
     // MARK: - DataSources
     
@@ -76,6 +80,14 @@ final class DIContainer {
 
     private lazy var medicationDetailAPIService: MedicationDetailAPIServiceProtocol = {
         return MedicationDetailAPIService(apiKey: mfdsAPIKey)
+    }()
+
+    private lazy var pillingServerAPIService: PillingServerAPIServiceProtocol = {
+        return PillingServerAPIService(apiKey: pillingAPIKey)
+    }()
+
+    private lazy var pillingServerRepository: PillingServerRepositoryProtocol = {
+        return PillingServerRepository(apiService: pillingServerAPIService)
     }()
 
     // MARK: - UseCases
@@ -217,6 +229,32 @@ final class DIContainer {
 
     func getMedicationDetailAPIService() -> MedicationDetailAPIServiceProtocol {
         return medicationDetailAPIService
+    }
+
+    // MARK: - Pilling Server Use Cases
+
+    func makeRegisterUserUseCase() -> RegisterUserUseCaseProtocol {
+        RegisterUserUseCase(serverRepository: pillingServerRepository)
+    }
+
+    func makeUpdateDeviceTokenUseCase() -> UpdateDeviceTokenUseCaseProtocol {
+        UpdateDeviceTokenUseCase(serverRepository: pillingServerRepository)
+    }
+
+    func makeDeleteServerUserUseCase() -> DeleteServerUserUseCaseProtocol {
+        DeleteServerUserUseCase(serverRepository: pillingServerRepository)
+    }
+
+    func makeRegisterServerPillUseCase() -> RegisterServerPillUseCaseProtocol {
+        RegisterServerPillUseCase(serverRepository: pillingServerRepository)
+    }
+
+    func makeFetchServerPillsUseCase() -> FetchServerPillsUseCaseProtocol {
+        FetchServerPillsUseCase(serverRepository: pillingServerRepository)
+    }
+
+    func makeRecordServerPillTakenUseCase() -> RecordServerPillTakenUseCaseProtocol {
+        RecordServerPillTakenUseCase(serverRepository: pillingServerRepository)
     }
 
     // MARK: - Test ViewControllers

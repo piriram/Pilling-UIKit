@@ -17,6 +17,13 @@ protocol UserDefaultsManagerProtocol {
     // 의약품 상세 정보 저장/로드
     func saveMedicationDetail(_ detail: MedicationDetailStoredInfo, forItemSeq itemSeq: String)
     func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo?
+
+    // Pilling 서버 연동
+    func saveServerUserID(_ id: String)
+    func loadServerUserID() -> String?
+    func saveServerPillID(_ id: String)
+    func loadServerPillID() -> String?
+    func clearServerIDs()
 }
 
 
@@ -210,5 +217,28 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
             return nil
         }
         return detail
+    }
+
+    // MARK: - Server IDs
+
+    func saveServerUserID(_ id: String) {
+        userDefaults.set(id, forKey: UserDefaultsKey.serverUserID.rawValue)
+    }
+
+    func loadServerUserID() -> String? {
+        userDefaults.string(forKey: UserDefaultsKey.serverUserID.rawValue)
+    }
+
+    func saveServerPillID(_ id: String) {
+        userDefaults.set(id, forKey: UserDefaultsKey.serverPillID.rawValue)
+    }
+
+    func loadServerPillID() -> String? {
+        userDefaults.string(forKey: UserDefaultsKey.serverPillID.rawValue)
+    }
+
+    func clearServerIDs() {
+        userDefaults.removeObject(forKey: UserDefaultsKey.serverUserID.rawValue)
+        userDefaults.removeObject(forKey: UserDefaultsKey.serverPillID.rawValue)
     }
 }

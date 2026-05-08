@@ -1,4 +1,5 @@
 // Configuration Template
 // Copy this file to Config.xcconfig and fill in your API key
 
-MFDS_API_KEY = YOUR_API_KEY_HERE
+MFDS_API_KEY = YOUR_MFDS_API_KEY_HERE
+PILLING_API_KEY = YOUR_PILLING_API_KEY_HERE
