@@ -11,6 +11,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
         application.registerForRemoteNotifications()
+        registerUserIfNeeded()
 
         #if DEBUG
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
@@ -61,6 +62,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     // MARK: - Private
+
+    private func registerUserIfNeeded() {
+        let manager = DIContainer.shared.getUserDefaultsManager()
+        guard manager.loadServerUserID() == nil else { return }
+        let userID = resolveServerUserID()
+        DIContainer.shared.makeRegisterUserUseCase()
+            .execute(userID: userID, deviceToken: "")
+            .catch { _ in .just(()) }
+            .subscribe()
+            .disposed(by: disposeBag)
+    }
 
     private func resolveServerUserID() -> String {
         let manager = DIContainer.shared.getUserDefaultsManager()
