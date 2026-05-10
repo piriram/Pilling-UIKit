@@ -222,14 +222,14 @@ final class SettingViewModel {
         )
         
         return settingsRepository.saveSettings(updatedSettings)
-            .flatMap { [weak self] _ -> Observable<Void> in
-                guard let self = self else { return .empty() }
-                
+            .flatMap { _ -> Observable<Void> in
+                return .just(())
+            }
             .do(onNext: { [weak self] in
                 self?.currentSettingsRelay.accept(updatedSettings)
             })
     }
-    
+
     func startNewPillCycle() -> Observable<Void> {
         // [요청 반영] 기존 약물 복용 사이클의 **기록(history)**은 삭제하지 않고,
         // 새 복용 설정을 위한 **현재 설정(setup state)**을 초기화하고 설정 화면으로 이동합니다.
