@@ -205,20 +205,6 @@ final class SettingViewModel {
                 // 현재 사이클의 미래 레코드들의 scheduledDateTime 업데이트
                 return self.updateScheduledTimeUseCase.execute(newTime: date)
             }
-            .flatMap { [weak self] _ -> Observable<Void> in
-                guard let self = self else { return .empty() }
-
-                guard currentSettings.notificationEnabled else {
-                    return .just(())
-                }
-
-                return self.notificationManager.scheduleDailyNotification(
-                    at: date,
-                    isEnabled: currentSettings.notificationEnabled,
-                    message: currentSettings.notificationMessage,
-                    cycle: nil
-                )
-            }
             .do(onNext: { [weak self] in
                 self?.currentSettingsRelay.accept(updatedSettings)
             })
@@ -239,17 +225,6 @@ final class SettingViewModel {
             .flatMap { [weak self] _ -> Observable<Void> in
                 guard let self = self else { return .empty() }
                 
-                guard currentSettings.notificationEnabled else {
-                    return .just(())
-                }
-                
-                return self.notificationManager.scheduleDailyNotification(
-                    at: currentSettings.scheduledTime,
-                    isEnabled: currentSettings.notificationEnabled,
-                    message: message,
-                    cycle: nil
-                )
-            }
             .do(onNext: { [weak self] in
                 self?.currentSettingsRelay.accept(updatedSettings)
             })
@@ -295,12 +270,7 @@ final class SettingViewModel {
                     return .error(NotificationError.permissionDenied)
                 }
 
-                return self.notificationManager.scheduleDailyNotification(
-                    at: currentSettings.scheduledTime,
-                    isEnabled: isEnabled,
-                    message: currentSettings.notificationMessage,
-                    cycle: nil
-                )
+                return .just(())
             }
             .catch { error -> Observable<Void> in
                 // 알림 권한 거부 시에도 설정은 저장 (토글은 꺼진 상태로)

@@ -443,15 +443,6 @@ final class DashboardViewModel {
     // MARK: - Notification & Cycle Completion
 
     private func updateNotificationMessage(with cycle: Cycle) {
-        let currentSettings = settings.value
-        notificationManager.scheduleDailyNotification(
-            at: currentSettings.scheduledTime,
-            isEnabled: currentSettings.notificationEnabled,
-            message: currentSettings.notificationMessage,
-            cycle: cycle
-        )
-        .subscribe()
-        .disposed(by: disposeBag)
     }
 
     private func checkCycleCompletion(_ cycle: Cycle) {
