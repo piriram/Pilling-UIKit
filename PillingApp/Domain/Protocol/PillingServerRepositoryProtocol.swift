@@ -8,4 +8,5 @@ protocol PillingServerRepositoryProtocol {
     func registerPill(userID: String, name: String, scheduledTime: String) -> Observable<String>
     func fetchPills(userID: String) -> Observable<[ServerPill]>
     func recordPillTaken(pillID: String) -> Observable<PillTakenRecord>
+    func sendHeartbeat(userID: String) -> Observable<Void>
 }

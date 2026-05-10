@@ -260,6 +260,10 @@ final class DIContainer {
         RecordServerPillTakenUseCase(serverRepository: pillingServerRepository)
     }
 
+    func makeHeartbeatUseCase() -> HeartbeatUseCaseProtocol {
+        HeartbeatUseCase(serverRepository: pillingServerRepository)
+    }
+
     // MARK: - Test ViewControllers
 
     func makeMedicationDetailTestViewController() -> MedicationDetailTestViewController {

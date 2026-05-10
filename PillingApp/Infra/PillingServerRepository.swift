@@ -47,4 +47,10 @@ final class PillingServerRepository: PillingServerRepositoryProtocol {
             .post(path: "/pills/\(pillID)/taken", body: Optional<String>.none, responseType: PillTakenResponse.self)
             .map { $0.toDomain() }
     }
+
+    func sendHeartbeat(userID: String) -> Observable<Void> {
+        apiService
+            .post(path: "/users/\(userID)/heartbeat", body: Optional<String>.none, responseType: UserResponse.self)
+            .map { _ in }
+    }
 }

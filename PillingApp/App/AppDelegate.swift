@@ -12,6 +12,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         application.registerForRemoteNotifications()
         registerUserIfNeeded()
+        sendHeartbeat()
 
         #if DEBUG
         Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
@@ -72,6 +73,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private func placeholderToken() -> String {
         UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+    }
+
+    private func sendHeartbeat() {
+        let userID = resolveServerUserID()
+        DIContainer.shared.makeHeartbeatUseCase()
+            .execute(userID: userID)
+            .catch { _ in .just(()) }
+            .subscribe()
+            .disposed(by: disposeBag)
     }
 
     private func registerUserIfNeeded() {
