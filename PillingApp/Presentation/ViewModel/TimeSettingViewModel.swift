@@ -26,6 +26,7 @@ final class TimeSettingViewModel {
     private let userDefaultsManager: UserDefaultsManagerProtocol
     private let createPillCycleUseCase: CreateCycleUseCaseProtocol
     private let registerServerPillUseCase: RegisterServerPillUseCaseProtocol
+    private let updatePillCycleUseCase: UpdatePillCycleUseCaseProtocol
     private let disposeBag = DisposeBag()
     
     private let selectedTime = BehaviorRelay<Date>(value: Date())
@@ -38,13 +39,15 @@ final class TimeSettingViewModel {
         notificationManager: NotificationManagerProtocol,
         userDefaultsManager: UserDefaultsManagerProtocol,
         createPillCycleUseCase: CreateCycleUseCaseProtocol,
-        registerServerPillUseCase: RegisterServerPillUseCaseProtocol
+        registerServerPillUseCase: RegisterServerPillUseCaseProtocol,
+        updatePillCycleUseCase: UpdatePillCycleUseCaseProtocol
     ) {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
         self.userDefaultsManager = userDefaultsManager
         self.createPillCycleUseCase = createPillCycleUseCase
         self.registerServerPillUseCase = registerServerPillUseCase
+        self.updatePillCycleUseCase = updatePillCycleUseCase
     }
     
     // MARK: - Transform
@@ -104,7 +107,13 @@ final class TimeSettingViewModel {
         )
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
-            self.syncPillToServer(name: pillInfo.name, scheduledTime: scheduledTimeString)
+            self.syncPillToServer(
+                name: pillInfo.name,
+                scheduledTime: scheduledTimeString,
+                startDate: startDate,
+                activeDays: pillInfo.takingDays,
+                breakDays: pillInfo.breakDays
+            )
             return self.setupNotificationAndSaveSettings()
         }
     }
@@ -142,12 +151,21 @@ final class TimeSettingViewModel {
             }
     }
     
-    private func syncPillToServer(name: String, scheduledTime: String) {
+    private func syncPillToServer(name: String, scheduledTime: String, startDate: Date, activeDays: Int, breakDays: Int) {
         guard let userID = userDefaultsManager.loadServerUserID() else { return }
         registerServerPillUseCase.execute(userID: userID, name: name, scheduledTime: scheduledTime)
-            .subscribe(onNext: { [weak self] pillID in
-                self?.userDefaultsManager.saveServerPillID(pillID)
-            })
+            .flatMap { [weak self] pillID -> Observable<Void> in
+                guard let self = self else { return .empty() }
+                self.userDefaultsManager.saveServerPillID(pillID)
+                return self.updatePillCycleUseCase.execute(
+                    pillID: pillID,
+                    cycleStartDate: startDate,
+                    activeDays: activeDays,
+                    breakDays: breakDays
+                )
+            }
+            .catch { _ in .just(()) }
+            .subscribe()
             .disposed(by: disposeBag)
     }
 

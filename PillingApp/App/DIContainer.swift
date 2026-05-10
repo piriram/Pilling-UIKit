@@ -166,7 +166,8 @@ final class DIContainer {
             notificationManager: notificationManager,
             userDefaultsManager: userDefaultsManager,
             createPillCycleUseCase: makeCreatePillCycleUseCase(),
-            registerServerPillUseCase: makeRegisterServerPillUseCase()
+            registerServerPillUseCase: makeRegisterServerPillUseCase(),
+            updatePillCycleUseCase: makeUpdatePillCycleUseCase()
         )
     }
     
@@ -262,6 +263,10 @@ final class DIContainer {
 
     func makeHeartbeatUseCase() -> HeartbeatUseCaseProtocol {
         HeartbeatUseCase(serverRepository: pillingServerRepository)
+    }
+
+    func makeUpdatePillCycleUseCase() -> UpdatePillCycleUseCaseProtocol {
+        UpdatePillCycleUseCase(serverRepository: pillingServerRepository)
     }
 
     // MARK: - Test ViewControllers

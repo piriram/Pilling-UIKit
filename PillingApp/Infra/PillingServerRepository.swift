@@ -53,4 +53,17 @@ final class PillingServerRepository: PillingServerRepositoryProtocol {
             .post(path: "/users/\(userID)/heartbeat", body: Optional<String>.none, responseType: UserResponse.self)
             .map { _ in }
     }
+
+    func updatePillCycle(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int) -> Observable<Void> {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let body = UpdatePillCycleRequest(
+            cycle_start_date: formatter.string(from: cycleStartDate),
+            active_days: activeDays,
+            break_days: breakDays
+        )
+        return apiService
+            .patch(path: "/pills/\(pillID)/cycle", body: body, responseType: UserResponse.self)
+            .map { _ in }
+    }
 }

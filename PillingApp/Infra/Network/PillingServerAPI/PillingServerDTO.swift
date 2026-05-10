@@ -16,6 +16,12 @@ struct RegisterPillRequest: Encodable {
     let scheduled_time: String
 }
 
+struct UpdatePillCycleRequest: Encodable {
+    let cycle_start_date: String
+    let active_days: Int
+    let break_days: Int
+}
+
 // MARK: - Response
 
 struct UserResponse: Decodable {
