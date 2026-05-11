@@ -24,4 +24,12 @@ struct DayItem: Hashable, Sendable, Identifiable {
     var isToday: Bool {
         Calendar.current.isDateInToday(date)
     }
+
+    static func == (lhs: DayItem, rhs: DayItem) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
