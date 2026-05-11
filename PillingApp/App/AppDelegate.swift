@@ -9,9 +9,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     private let disposeBag = DisposeBag()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-        }
+        FirebaseApp.configure()
         application.registerForRemoteNotifications()
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         registerUserIfNeeded()
