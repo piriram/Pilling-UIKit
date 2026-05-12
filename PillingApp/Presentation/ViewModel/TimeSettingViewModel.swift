@@ -107,14 +107,16 @@ final class TimeSettingViewModel {
         )
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
-            self.syncPillToServer(
-                name: pillInfo.name,
-                scheduledTime: scheduledTimeString,
-                startDate: startDate,
-                activeDays: pillInfo.takingDays,
-                breakDays: pillInfo.breakDays
-            )
-            return self.setupNotificationAndSaveSettings()
+            return Observable.zip(
+                self.syncPillToServer(
+                    name: pillInfo.name,
+                    scheduledTime: scheduledTimeString,
+                    startDate: startDate,
+                    activeDays: pillInfo.takingDays,
+                    breakDays: pillInfo.breakDays
+                ),
+                self.setupNotificationAndSaveSettings()
+            ).map { _ in () }
         }
     }
     
@@ -151,9 +153,9 @@ final class TimeSettingViewModel {
             }
     }
     
-    private func syncPillToServer(name: String, scheduledTime: String, startDate: Date, activeDays: Int, breakDays: Int) {
-        guard let userID = userDefaultsManager.loadServerUserID() else { return }
-        registerServerPillUseCase.execute(userID: userID, name: name, scheduledTime: scheduledTime)
+    private func syncPillToServer(name: String, scheduledTime: String, startDate: Date, activeDays: Int, breakDays: Int) -> Observable<Void> {
+        guard let userID = userDefaultsManager.loadServerUserID() else { return .just(()) }
+        return registerServerPillUseCase.execute(userID: userID, name: name, scheduledTime: scheduledTime)
             .flatMap { [weak self] pillID -> Observable<Void> in
                 guard let self = self else { return .empty() }
                 self.userDefaultsManager.saveServerPillID(pillID)
@@ -165,8 +167,6 @@ final class TimeSettingViewModel {
                 )
             }
             .catch { _ in .just(()) }
-            .subscribe()
-            .disposed(by: disposeBag)
     }
 
     private func handleError(_ error: Error) -> String {
