@@ -107,11 +107,13 @@ final class CycleRepository: CycleRepositoryProtocol {
                 
                 try context.save()
 
-                recordWidgetRefreshRequest(reason: "saveCycle")
-                WidgetCenter.shared.reloadAllTimelines()
-
                 observer.onNext(())
                 observer.onCompleted()
+
+                DispatchQueue.main.async { [weak self] in
+                    self?.recordWidgetRefreshRequest(reason: "saveCycle")
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
             } catch {
                 observer.onError(CoreDataError.saveFailed(error))
             }
@@ -154,12 +156,13 @@ final class CycleRepository: CycleRepositoryProtocol {
 
                 try context.save()
 
-                // ⭐️ 위젯 업데이트
-                recordWidgetRefreshRequest(reason: "updateRecord")
-                WidgetCenter.shared.reloadAllTimelines()
-
                 observer.onNext(())
                 observer.onCompleted()
+
+                DispatchQueue.main.async { [weak self] in
+                    self?.recordWidgetRefreshRequest(reason: "updateRecord")
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
             } catch {
                 observer.onError(CoreDataError.saveFailed(error))
             }
@@ -239,11 +242,13 @@ final class CycleRepository: CycleRepositoryProtocol {
 
                 try context.save()
 
-                recordWidgetRefreshRequest(reason: "updateScheduledTimes")
-                WidgetCenter.shared.reloadAllTimelines()
-
                 observer.onNext(())
                 observer.onCompleted()
+
+                DispatchQueue.main.async { [weak self] in
+                    self?.recordWidgetRefreshRequest(reason: "updateScheduledTimes")
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
             } catch {
                 observer.onError(CoreDataError.saveFailed(error))
             }

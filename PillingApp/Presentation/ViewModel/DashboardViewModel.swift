@@ -352,22 +352,70 @@ final class DashboardViewModel {
         guard let cycle = currentCycle.value else { return }
         let takenAt = Date()
 
-        // Analytics: 복용하기 버튼 탭
         analytics.logEvent(.pillButtonTapped)
 
+        if let optimisticCycle = buildOptimisticCycle(from: cycle, takenAt: takenAt) {
+            currentCycle.accept(optimisticCycle)
+            updateItems()
+            updateDashboardMessage()
+            updateCanTakePill()
+        }
+
         takePillUseCase.execute(cycle: cycle, settings: settings.value, takenAt: takenAt)
-            .subscribe(onNext: { [weak self] updatedCycle in
-                guard let self = self else { return }
-                self.currentCycle.accept(updatedCycle)
-                self.updateItems()
-                self.updateDashboardMessage()
-                self.updateCanTakePill()
-                self.updateNotificationMessage(with: updatedCycle)
-                self.checkCycleCompletion(updatedCycle)
-                self.checkCompletionFloating(updatedCycle)
-                self.recordPillTakenOnServer()
-            })
+            .subscribe(
+                onNext: { [weak self] updatedCycle in
+                    guard let self = self else { return }
+                    self.currentCycle.accept(updatedCycle)
+                    self.updateItems()
+                    self.updateDashboardMessage()
+                    self.updateCanTakePill()
+                    self.updateNotificationMessage(with: updatedCycle)
+                    self.checkCycleCompletion(updatedCycle)
+                    self.checkCompletionFloating(updatedCycle)
+                    self.recordPillTakenOnServer()
+                },
+                onError: { [weak self] _ in
+                    guard let self = self else { return }
+                    self.currentCycle.accept(cycle)
+                    self.updateItems()
+                    self.updateDashboardMessage()
+                    self.updateCanTakePill()
+                }
+            )
             .disposed(by: disposeBag)
+    }
+
+    private func buildOptimisticCycle(from cycle: Cycle, takenAt: Date) -> Cycle? {
+        guard let todayIndex = cycle.records.firstIndex(where: {
+            calendar.isDate($0.scheduledDateTime, inSameDayAs: takenAt)
+        }) else { return nil }
+
+        let record = cycle.records[todayIndex]
+        guard !record.status.isTaken else { return nil }
+
+        let timeDiff = takenAt.timeIntervalSince(record.scheduledDateTime)
+        let twoHours: TimeInterval = 2 * 60 * 60
+
+        let newStatus: PillStatus = {
+            if (-timeDiff) >= twoHours { return .takenTooEarly }
+            else if abs(timeDiff) <= Double(settings.value.delayThresholdMinutes * 60) { return .taken }
+            else { return .takenDelayed }
+        }()
+
+        let updatedRecord = DayRecord(
+            id: record.id,
+            cycleDay: record.cycleDay,
+            status: newStatus,
+            scheduledDateTime: record.scheduledDateTime,
+            takenAt: takenAt,
+            memo: record.memo,
+            createdAt: record.createdAt,
+            updatedAt: takenAt
+        )
+
+        var updatedCycle = cycle
+        updatedCycle.records[todayIndex] = updatedRecord
+        return updatedCycle
     }
     
     func updateState(at index: Int, to newStatus: PillStatus) {
