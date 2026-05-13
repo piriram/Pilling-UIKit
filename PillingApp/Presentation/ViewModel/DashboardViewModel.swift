@@ -30,6 +30,7 @@ final class DashboardViewModel {
     let showRetryAlert = PublishRelay<Void>()
     let showNewCycleAlert = PublishRelay<Void>()
     let showCompletionFloatingView = PublishRelay<Void>()
+    let showStatusUpdateError = PublishRelay<Void>()
     
     // MARK: - Initialization
     
@@ -78,12 +79,15 @@ final class DashboardViewModel {
                             memo: nil,
                             takenAt: nil
                         )
-                        .subscribe(onNext: { [weak self] updatedCycle in
-                            self?.currentCycle.accept(updatedCycle)
-                            self?.updateItems()
-                            self?.updateDashboardMessage()
-                            self?.updateCanTakePill()
-                        })
+                        .subscribe(
+                            onNext: { [weak self] updatedCycle in
+                                self?.currentCycle.accept(updatedCycle)
+                                self?.updateItems()
+                                self?.updateDashboardMessage()
+                                self?.updateCanTakePill()
+                            },
+                            onError: { _ in }
+                        )
                         .disposed(by: disposeBag)
                 }
             }
@@ -153,16 +157,19 @@ final class DashboardViewModel {
     
     private func reloadSettings() {
         settingsRepository.fetchSettings()
-            .subscribe(onNext: { [weak self] settings in
-                guard let self = self else { return }
-                self.settings.accept(settings)
-                
-                if var cycle = self.currentCycle.value {
-                    cycle.scheduledTime = settings.scheduledTime.formatted(style: .time24Hour)
-                    self.currentCycle.accept(cycle)
-                    self.updateItems()
-                }
-            })
+            .subscribe(
+                onNext: { [weak self] settings in
+                    guard let self = self else { return }
+                    self.settings.accept(settings)
+
+                    if var cycle = self.currentCycle.value {
+                        cycle.scheduledTime = settings.scheduledTime.formatted(style: .time24Hour)
+                        self.currentCycle.accept(cycle)
+                        self.updateItems()
+                    }
+                },
+                onError: { _ in }
+            )
             .disposed(by: disposeBag)
     }
     
@@ -438,13 +445,8 @@ final class DashboardViewModel {
     }
     
     func updateState(at index: Int, to newStatus: PillStatus, memo: String?, takenAt: Date? = nil) {
-        print("🔍 [DashboardViewModel] updateState - index: \(index), newStatus: \(newStatus), memo: \(memo ?? "nil"), takenAt: \(String(describing: takenAt))")
-        guard let cycle = currentCycle.value else {
-            print("❌ updateState: cycle이 nil입니다")
-            return
-        }
+        guard let cycle = currentCycle.value else { return }
 
-        print("🔍 [DashboardViewModel] Calling updatePillStatusUseCase")
         updatePillStatusUseCase.execute(
             cycle: cycle,
             recordIndex: index,
@@ -455,27 +457,21 @@ final class DashboardViewModel {
         .subscribe(
             onNext: { [weak self] updatedCycle in
                 guard let self = self else { return }
-                print("🔍 [DashboardViewModel] UseCase success - updatedCycle.records[\(index)].status: \(updatedCycle.records[index].status)")
-
                 self.currentCycle.accept(updatedCycle)
-
                 self.updateItems()
-
                 self.updateDashboardMessage()
-
                 self.updateCanTakePill()
-
-                // 알림 업데이트 (위약 기간 반영)
                 self.updateNotificationMessage(with: updatedCycle)
-
-                // 사이클 완료 확인
                 self.checkCycleCompletion(updatedCycle)
-
-                // 복용일 마지막 날 확인
                 self.checkCompletionFloating(updatedCycle)
             },
-            onError: { error in
-                print("❌ UseCase 에러: \(error)")
+            onError: { [weak self] _ in
+                guard let self = self else { return }
+                self.currentCycle.accept(cycle)
+                self.updateItems()
+                self.updateDashboardMessage()
+                self.updateCanTakePill()
+                self.showStatusUpdateError.accept(())
             }
         )
         .disposed(by: disposeBag)

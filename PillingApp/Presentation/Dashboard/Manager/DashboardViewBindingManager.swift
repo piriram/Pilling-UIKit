@@ -32,7 +32,8 @@ final class DashboardViewBindingManager {
         onBackgroundUpdate: @escaping () -> Void,
         onRetryAlert: @escaping (@escaping () -> Void) -> Void,
         onNewCycleAlert: @escaping () -> Void,
-        onCompletionFloatingView: @escaping () -> Void
+        onCompletionFloatingView: @escaping () -> Void,
+        onStatusUpdateError: @escaping () -> Void = {}
     ) {
         bindViewModel(
             infoView: infoView,
@@ -58,7 +59,8 @@ final class DashboardViewBindingManager {
         bindAlert(
             onRetryAlert: onRetryAlert,
             onNewCycleAlert: onNewCycleAlert,
-            onCompletionFloatingView: onCompletionFloatingView
+            onCompletionFloatingView: onCompletionFloatingView,
+            onStatusUpdateError: onStatusUpdateError
         )
     }
     
@@ -289,7 +291,8 @@ final class DashboardViewBindingManager {
     private func bindAlert(
         onRetryAlert: @escaping (@escaping () -> Void) -> Void,
         onNewCycleAlert: @escaping () -> Void,
-        onCompletionFloatingView: @escaping () -> Void
+        onCompletionFloatingView: @escaping () -> Void,
+        onStatusUpdateError: @escaping () -> Void
     ) {
         viewModel.showRetryAlert
             .observe(on: MainScheduler.instance)
@@ -312,6 +315,13 @@ final class DashboardViewBindingManager {
             .observe(on: MainScheduler.instance)
             .subscribe(onNext: {
                 onCompletionFloatingView()
+            })
+            .disposed(by: disposeBag)
+
+        viewModel.showStatusUpdateError
+            .observe(on: MainScheduler.instance)
+            .subscribe(onNext: {
+                onStatusUpdateError()
             })
             .disposed(by: disposeBag)
     }

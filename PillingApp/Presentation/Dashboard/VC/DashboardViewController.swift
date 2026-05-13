@@ -170,6 +170,9 @@ final class DashboardViewController: UIViewController {
             },
             onCompletionFloatingView: { [weak self] in
                 self?.presentCompletionFloatingView()
+            },
+            onStatusUpdateError: { [weak self] in
+                self?.presentError(message: "저장에 실패했습니다. 다시 시도해 주세요.")
             }
         )
     }

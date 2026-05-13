@@ -107,16 +107,18 @@ final class TimeSettingViewModel {
         )
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
-            return Observable.zip(
-                self.syncPillToServer(
-                    name: pillInfo.name,
-                    scheduledTime: scheduledTimeString,
-                    startDate: startDate,
-                    activeDays: pillInfo.takingDays,
-                    breakDays: pillInfo.breakDays
-                ),
-                self.setupNotificationAndSaveSettings()
-            ).map { _ in () }
+
+            self.syncPillToServer(
+                name: pillInfo.name,
+                scheduledTime: scheduledTimeString,
+                startDate: startDate,
+                activeDays: pillInfo.takingDays,
+                breakDays: pillInfo.breakDays
+            )
+            .subscribe()
+            .disposed(by: self.disposeBag)
+
+            return self.setupNotificationAndSaveSettings()
         }
     }
     

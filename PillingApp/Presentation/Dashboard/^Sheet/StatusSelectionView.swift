@@ -119,21 +119,8 @@ final class StatusSelectionView: UIView {
 
     func setInitialSelection(buttonTag: StatusButtonTag) {
         let tag = buttonTag.rawValue
-        
         guard tag >= 0 else { return }
         selectButton(tag: tag)
-        
-        // sendActions 대신 직접 relay를 트리거
-        switch buttonTag {
-        case .notTaken:
-            notTakenTapped.accept(())
-        case .taken:
-            takenTapped.accept(())
-        case .takenDouble:
-            takenDoubleTapped.accept(())
-        case .none:
-            break
-        }
     }
     
     // MARK: - Private Methods
