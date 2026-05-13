@@ -28,6 +28,11 @@ protocol UserDefaultsManagerProtocol {
     func hasRealAPNsToken() -> Bool
     func saveDeviceToken(_ token: String)
     func loadDeviceToken() -> String?
+
+    // 미전송 복약 기록 큐
+    func addPendingPillTakenDate(_ date: String)
+    func loadPendingPillTakenDates() -> [String]
+    func removePendingPillTakenDate(_ date: String)
 }
 
 
@@ -261,5 +266,24 @@ final class UserDefaultsManager: UserDefaultsManagerProtocol {
 
     func loadDeviceToken() -> String? {
         userDefaults.string(forKey: UserDefaultsKey.apnsDeviceToken.rawValue)
+    }
+
+    // MARK: - Pending Pill Taken Queue
+
+    func addPendingPillTakenDate(_ date: String) {
+        var dates = loadPendingPillTakenDates()
+        guard !dates.contains(date) else { return }
+        dates.append(date)
+        userDefaults.set(dates, forKey: UserDefaultsKey.pendingPillTakenDates.rawValue)
+    }
+
+    func loadPendingPillTakenDates() -> [String] {
+        userDefaults.stringArray(forKey: UserDefaultsKey.pendingPillTakenDates.rawValue) ?? []
+    }
+
+    func removePendingPillTakenDate(_ date: String) {
+        var dates = loadPendingPillTakenDates()
+        dates.removeAll { $0 == date }
+        userDefaults.set(dates, forKey: UserDefaultsKey.pendingPillTakenDates.rawValue)
     }
 }

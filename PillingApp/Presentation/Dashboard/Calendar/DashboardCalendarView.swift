@@ -129,38 +129,33 @@ final class DashboardCalendarView: UIView {
     /// Update single item - most efficient for pill status changes
     func updateItem(_ updatedItem: DayItem, animated: Bool = true) {
         guard let existingIndex = currentItems.firstIndex(where: { $0.id == updatedItem.id }) else { return }
-        
+
+        let oldItem = currentItems[existingIndex]
         currentItems[existingIndex] = updatedItem
-        
+
         var snapshot = dataSource.snapshot()
-        
-        // Use reconfigureItems for optimal performance
-        if snapshot.itemIdentifiers.contains(where: { $0.id == updatedItem.id }) {
-            snapshot.reconfigureItems([updatedItem])
+        if snapshot.itemIdentifiers.contains(oldItem) {
+            snapshot.insertItems([updatedItem], beforeItem: oldItem)
+            snapshot.deleteItems([oldItem])
         }
-        
+
         dataSource.apply(snapshot, animatingDifferences: animated)
     }
     
     /// Update multiple items - efficient for batch changes
     func updateItems(_ updatedItems: [DayItem], animated: Bool = true) {
         var snapshot = dataSource.snapshot()
-        var itemsToReconfigure: [DayItem] = []
-        
+
         for updatedItem in updatedItems {
-            if let existingIndex = currentItems.firstIndex(where: { $0.id == updatedItem.id }) {
-                currentItems[existingIndex] = updatedItem
-                
-                if snapshot.itemIdentifiers.contains(where: { $0.id == updatedItem.id }) {
-                    itemsToReconfigure.append(updatedItem)
-                }
+            guard let existingIndex = currentItems.firstIndex(where: { $0.id == updatedItem.id }) else { continue }
+            let oldItem = currentItems[existingIndex]
+            currentItems[existingIndex] = updatedItem
+            if snapshot.itemIdentifiers.contains(oldItem) {
+                snapshot.insertItems([updatedItem], beforeItem: oldItem)
+                snapshot.deleteItems([oldItem])
             }
         }
-        
-        if !itemsToReconfigure.isEmpty {
-            snapshot.reconfigureItems(itemsToReconfigure)
-        }
-        
+
         dataSource.apply(snapshot, animatingDifferences: animated)
     }
     

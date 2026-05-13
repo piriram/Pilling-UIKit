@@ -232,6 +232,7 @@ final class DashboardViewController: UIViewController {
             .subscribe(onNext: { [weak self] _ in
                 self?.viewModel.reloadData()
                 self?.updateBackgroundForToday()
+                self?.viewModel.flushPendingPillTakens()
             })
             .disposed(by: disposeBag)
     }

@@ -26,10 +26,11 @@ struct DayItem: Hashable, Sendable, Identifiable {
     }
 
     static func == (lhs: DayItem, rhs: DayItem) -> Bool {
-        lhs.id == rhs.id
+        lhs.id == rhs.id && lhs.status == rhs.status
     }
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
+        hasher.combine(status)
     }
 }

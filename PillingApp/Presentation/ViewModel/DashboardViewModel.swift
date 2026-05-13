@@ -483,10 +483,35 @@ final class DashboardViewModel {
 
     private func recordPillTakenOnServer() {
         guard let pillID = userDefaultsManager.loadServerPillID() else { return }
+
+        let todayString = Self.dateOnlyFormatter.string(from: Date())
+
         recordServerPillTakenUseCase.execute(pillID: pillID)
-            .subscribe()
+            .subscribe(onError: { [weak self] _ in
+                self?.userDefaultsManager.addPendingPillTakenDate(todayString)
+            })
             .disposed(by: disposeBag)
     }
+
+    func flushPendingPillTakens() {
+        guard let pillID = userDefaultsManager.loadServerPillID() else { return }
+        let pendingDates = userDefaultsManager.loadPendingPillTakenDates()
+        guard !pendingDates.isEmpty else { return }
+
+        pendingDates.forEach { date in
+            recordServerPillTakenUseCase.execute(pillID: pillID)
+                .subscribe(onNext: { [weak self] _ in
+                    self?.userDefaultsManager.removePendingPillTakenDate(date)
+                })
+                .disposed(by: disposeBag)
+        }
+    }
+
+    private static let dateOnlyFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 
     // MARK: - Notification & Cycle Completion
 
