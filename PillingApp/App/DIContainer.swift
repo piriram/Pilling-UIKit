@@ -183,14 +183,20 @@ final class DIContainer {
             pillCycleRepository: cycleRepository,
             userDefaultsManager: userDefaultsManager,
             updateScheduledTimeUseCase: makeUpdateScheduledTimeUseCase(),
-            updateDeviceTokenUseCase: makeUpdateDeviceTokenUseCase()
+            updateDeviceTokenUseCase: makeUpdateDeviceTokenUseCase(),
+            updateNotificationMessageUseCase: makeUpdateNotificationMessageUseCase()
         )
+    }
+
+    func makeUpdateNotificationMessageUseCase() -> UpdateNotificationMessageUseCaseProtocol {
+        UpdateNotificationMessageUseCase(serverRepository: pillingServerRepository)
     }
 
     func makeUpdateScheduledTimeUseCase() -> UpdateScheduledTimeUseCaseProtocol {
         return UpdateScheduledTimeUseCase(
             cycleRepository: cycleRepository,
-            userDefaultsManager: userDefaultsManager
+            userDefaultsManager: userDefaultsManager,
+            serverRepository: pillingServerRepository
         )
     }
 

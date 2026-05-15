@@ -324,4 +324,17 @@ final class MockUserDefaultsManager: UserDefaultsManagerProtocol {
     func loadMedicationDetail(forItemSeq itemSeq: String) -> MedicationDetailStoredInfo? {
         medicationDetails[itemSeq]
     }
+
+    func saveServerUserID(_ id: String) {}
+    func loadServerUserID() -> String? { nil }
+    func saveServerPillID(_ id: String) {}
+    func loadServerPillID() -> String? { nil }
+    func clearServerIDs() {}
+    func setHasRealAPNsToken(_ value: Bool) {}
+    func hasRealAPNsToken() -> Bool { false }
+    func saveDeviceToken(_ token: String) {}
+    func loadDeviceToken() -> String? { nil }
+    func addPendingPillTakenDate(_ date: String) {}
+    func loadPendingPillTakenDates() -> [String] { [] }
+    func removePendingPillTakenDate(_ date: String) {}
 }

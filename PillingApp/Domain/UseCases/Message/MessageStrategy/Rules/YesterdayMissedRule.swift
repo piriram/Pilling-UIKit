@@ -16,7 +16,7 @@ final class YesterdayMissedRule: MessageRule {
         guard let todayStatus = context.todayStatus else { return nil }
 
         if todayStatus.baseStatus == .takenDouble {
-            return .yesterdayMissedLateTiming
+            return .doubleDoseComplete
         }
 
         if todayStatus.isTaken && todayStatus.baseStatus != .takenDouble {
@@ -24,7 +24,7 @@ final class YesterdayMissedRule: MessageRule {
         }
 
         if !todayStatus.isTaken {
-            return .doubleDoseComplete
+            return .yesterdayMissedTakeTwo
         }
 
         return nil

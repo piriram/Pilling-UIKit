@@ -20,6 +20,11 @@ struct UpdatePillCycleRequest: Encodable {
     let cycle_start_date: String
     let active_days: Int
     let break_days: Int
+    let scheduled_time: String?
+}
+
+struct UpdatePillNotificationMessageRequest: Encodable {
+    let notification_message: String
 }
 
 // MARK: - Response

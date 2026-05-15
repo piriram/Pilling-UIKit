@@ -2,7 +2,7 @@ import Foundation
 import RxSwift
 
 protocol UpdatePillCycleUseCaseProtocol {
-    func execute(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int) -> Observable<Void>
+    func execute(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int, scheduledTime: String?) -> Observable<Void>
 }
 
 final class UpdatePillCycleUseCase: UpdatePillCycleUseCaseProtocol {
@@ -13,7 +13,7 @@ final class UpdatePillCycleUseCase: UpdatePillCycleUseCaseProtocol {
         self.serverRepository = serverRepository
     }
 
-    func execute(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int) -> Observable<Void> {
-        serverRepository.updatePillCycle(pillID: pillID, cycleStartDate: cycleStartDate, activeDays: activeDays, breakDays: breakDays)
+    func execute(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int, scheduledTime: String?) -> Observable<Void> {
+        serverRepository.updatePillCycle(pillID: pillID, cycleStartDate: cycleStartDate, activeDays: activeDays, breakDays: breakDays, scheduledTime: scheduledTime)
     }
 }

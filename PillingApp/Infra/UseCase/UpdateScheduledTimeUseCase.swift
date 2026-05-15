@@ -9,13 +9,16 @@ final class UpdateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol {
 
     private let cycleRepository: CycleRepositoryProtocol
     private let userDefaultsManager: UserDefaultsManagerProtocol
+    private let serverRepository: PillingServerRepositoryProtocol
 
     init(
         cycleRepository: CycleRepositoryProtocol,
-        userDefaultsManager: UserDefaultsManagerProtocol
+        userDefaultsManager: UserDefaultsManagerProtocol,
+        serverRepository: PillingServerRepositoryProtocol
     ) {
         self.cycleRepository = cycleRepository
         self.userDefaultsManager = userDefaultsManager
+        self.serverRepository = serverRepository
     }
 
     func execute(newTime: Date) -> Observable<Void> {
@@ -29,10 +32,26 @@ final class UpdateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol {
                 timeFormatter.timeZone = TimeZone.current
                 let newTimeString = timeFormatter.string(from: newTime)
 
-                return self.cycleRepository.updateScheduledTimes(
+                let localUpdate = self.cycleRepository.updateScheduledTimes(
                     in: cycle.id,
                     newTimeString: newTimeString
                 )
+
+                guard
+                    let pillID = self.userDefaultsManager.loadServerPillID()
+                else {
+                    return localUpdate
+                }
+
+                let serverUpdate = self.serverRepository.updatePillCycle(
+                    pillID: pillID,
+                    cycleStartDate: cycle.startDate,
+                    activeDays: cycle.activeDays,
+                    breakDays: cycle.breakDays,
+                    scheduledTime: newTimeString
+                ).catchAndReturn(())
+
+                return localUpdate.flatMap { serverUpdate }
             }
     }
 }

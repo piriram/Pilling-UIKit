@@ -165,7 +165,8 @@ final class TimeSettingViewModel {
                     pillID: pillID,
                     cycleStartDate: startDate,
                     activeDays: activeDays,
-                    breakDays: breakDays
+                    breakDays: breakDays,
+                    scheduledTime: scheduledTime
                 )
             }
             .catch { _ in .just(()) }

@@ -54,13 +54,21 @@ final class PillingServerRepository: PillingServerRepositoryProtocol {
             .map { _ in }
     }
 
-    func updatePillCycle(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int) -> Observable<Void> {
+    func updatePillNotificationMessage(pillID: String, message: String) -> Observable<Void> {
+        let body = UpdatePillNotificationMessageRequest(notification_message: message)
+        return apiService
+            .patch(path: "/pills/\(pillID)/message", body: body, responseType: UserResponse.self)
+            .map { _ in }
+    }
+
+    func updatePillCycle(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int, scheduledTime: String?) -> Observable<Void> {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         let body = UpdatePillCycleRequest(
             cycle_start_date: formatter.string(from: cycleStartDate),
             active_days: activeDays,
-            break_days: breakDays
+            break_days: breakDays,
+            scheduled_time: scheduledTime
         )
         return apiService
             .patch(path: "/pills/\(pillID)/cycle", body: body, responseType: UserResponse.self)

@@ -9,5 +9,6 @@ protocol PillingServerRepositoryProtocol {
     func fetchPills(userID: String) -> Observable<[ServerPill]>
     func recordPillTaken(pillID: String) -> Observable<PillTakenRecord>
     func sendHeartbeat(userID: String) -> Observable<Void>
-    func updatePillCycle(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int) -> Observable<Void>
+    func updatePillCycle(pillID: String, cycleStartDate: Date, activeDays: Int, breakDays: Int, scheduledTime: String?) -> Observable<Void>
+    func updatePillNotificationMessage(pillID: String, message: String) -> Observable<Void>
 }

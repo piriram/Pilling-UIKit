@@ -53,6 +53,7 @@ final class SettingViewModel {
     private let userDefaultsManager: UserDefaultsManagerProtocol
     private let updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol
     private let updateDeviceTokenUseCase: UpdateDeviceTokenUseCaseProtocol
+    private let updateNotificationMessageUseCase: UpdateNotificationMessageUseCaseProtocol
     private let disposeBag = DisposeBag()
 
     private let currentSettingsRelay = BehaviorRelay<UserSettings>(value: .default)
@@ -66,7 +67,8 @@ final class SettingViewModel {
         pillCycleRepository: CycleRepositoryProtocol,
         userDefaultsManager: UserDefaultsManagerProtocol,
         updateScheduledTimeUseCase: UpdateScheduledTimeUseCaseProtocol,
-        updateDeviceTokenUseCase: UpdateDeviceTokenUseCaseProtocol
+        updateDeviceTokenUseCase: UpdateDeviceTokenUseCaseProtocol,
+        updateNotificationMessageUseCase: UpdateNotificationMessageUseCaseProtocol
     ) {
         self.settingsRepository = settingsRepository
         self.notificationManager = notificationManager
@@ -74,6 +76,7 @@ final class SettingViewModel {
         self.userDefaultsManager = userDefaultsManager
         self.updateScheduledTimeUseCase = updateScheduledTimeUseCase
         self.updateDeviceTokenUseCase = updateDeviceTokenUseCase
+        self.updateNotificationMessageUseCase = updateNotificationMessageUseCase
     }
     
     // MARK: - Transform
@@ -212,22 +215,27 @@ final class SettingViewModel {
     
     func updateMessage(_ message: String) -> Observable<Void> {
         let currentSettings = currentSettingsRelay.value
-        
-        // NOTE: assuming UserSettings has a fifth field for HealthKit/other state
         let updatedSettings = UserSettings(
             scheduledTime: currentSettings.scheduledTime,
             notificationEnabled: currentSettings.notificationEnabled,
             delayThresholdMinutes: currentSettings.delayThresholdMinutes,
             notificationMessage: message
         )
-        
-        return settingsRepository.saveSettings(updatedSettings)
-            .flatMap { _ -> Observable<Void> in
-                return .just(())
-            }
+
+        let localSave = settingsRepository.saveSettings(updatedSettings)
             .do(onNext: { [weak self] in
                 self?.currentSettingsRelay.accept(updatedSettings)
             })
+
+        guard let pillID = userDefaultsManager.loadServerPillID() else {
+            return localSave
+        }
+
+        let serverSync = updateNotificationMessageUseCase
+            .execute(pillID: pillID, message: message)
+            .catchAndReturn(())
+
+        return localSave.flatMap { serverSync }
     }
 
     func startNewPillCycle() -> Observable<Void> {
