@@ -108,6 +108,8 @@ final class TimeSettingViewModel {
         .flatMap { [weak self] _ -> Observable<Void> in
             guard let self = self else { return .empty() }
 
+            // ViewModel 생명주기와 독립된 bag — stream 완료 시 자동 해제
+            let syncBag = DisposeBag()
             self.syncPillToServer(
                 name: pillInfo.name,
                 scheduledTime: scheduledTimeString,
@@ -115,8 +117,8 @@ final class TimeSettingViewModel {
                 activeDays: pillInfo.takingDays,
                 breakDays: pillInfo.breakDays
             )
-            .subscribe()
-            .disposed(by: self.disposeBag)
+            .subscribe(onDisposed: { _ = syncBag })
+            .disposed(by: syncBag)
 
             return self.setupNotificationAndSaveSettings()
         }

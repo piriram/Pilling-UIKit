@@ -376,7 +376,6 @@ final class DashboardViewModel {
                     self.updateItems()
                     self.updateDashboardMessage()
                     self.updateCanTakePill()
-                    self.updateNotificationMessage(with: updatedCycle)
                     self.checkCycleCompletion(updatedCycle)
                     self.checkCompletionFloating(updatedCycle)
                     self.recordPillTakenOnServer()
@@ -461,7 +460,6 @@ final class DashboardViewModel {
                 self.updateItems()
                 self.updateDashboardMessage()
                 self.updateCanTakePill()
-                self.updateNotificationMessage(with: updatedCycle)
                 self.checkCycleCompletion(updatedCycle)
                 self.checkCompletionFloating(updatedCycle)
             },
@@ -510,9 +508,6 @@ final class DashboardViewModel {
     }()
 
     // MARK: - Notification & Cycle Completion
-
-    private func updateNotificationMessage(with cycle: Cycle) {
-    }
 
     private func checkCycleCompletion(_ cycle: Cycle) {
         if cycle.isCycleCompleted() {
