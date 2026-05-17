@@ -36,12 +36,6 @@ final class PillingServerRepository: PillingServerRepositoryProtocol {
             .map { $0.pill_id }
     }
 
-    func fetchPills(userID: String) -> Observable<[ServerPill]> {
-        apiService
-            .get(path: "/users/\(userID)/pills", responseType: [ServerPillDTO].self)
-            .map { $0.map { $0.toDomain() } }
-    }
-
     func recordPillTaken(pillID: String) -> Observable<PillTakenRecord> {
         apiService
             .post(path: "/pills/\(pillID)/taken", body: Optional<String>.none, responseType: PillTakenResponse.self)

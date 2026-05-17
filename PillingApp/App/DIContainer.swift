@@ -259,10 +259,6 @@ final class DIContainer {
         RegisterServerPillUseCase(serverRepository: pillingServerRepository)
     }
 
-    func makeFetchServerPillsUseCase() -> FetchServerPillsUseCaseProtocol {
-        FetchServerPillsUseCase(serverRepository: pillingServerRepository)
-    }
-
     func makeRecordServerPillTakenUseCase() -> RecordServerPillTakenUseCaseProtocol {
         RecordServerPillTakenUseCase(serverRepository: pillingServerRepository)
     }

@@ -37,16 +37,6 @@ struct RegisterPillResponse: Decodable {
     let pill_id: String
 }
 
-struct ServerPillDTO: Decodable {
-    let pill_id: String
-    let name: String
-    let scheduled_time: String
-
-    func toDomain() -> ServerPill {
-        ServerPill(pillID: pill_id, name: name, scheduledTime: scheduled_time)
-    }
-}
-
 struct PillTakenResponse: Decodable {
     let record_id: String
     let taken_at: String
