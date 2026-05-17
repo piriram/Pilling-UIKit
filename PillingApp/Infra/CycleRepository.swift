@@ -261,9 +261,11 @@ final class CycleRepository: CycleRepositoryProtocol {
     
     func deleteAllCycles() -> Observable<Void> {
         return coreDataManager.deleteAll(entityType: PillCycleEntity.self)
-            .do(onNext: {
-                self.recordWidgetRefreshRequest(reason: "deleteAllCycles")
-                WidgetCenter.shared.reloadAllTimelines()
+            .do(onNext: { [weak self] in
+                DispatchQueue.main.async { [weak self] in
+                    self?.recordWidgetRefreshRequest(reason: "deleteAllCycles")
+                    WidgetCenter.shared.reloadAllTimelines()
+                }
             })
     }
     
