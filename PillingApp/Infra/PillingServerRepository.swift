@@ -44,14 +44,14 @@ final class PillingServerRepository: PillingServerRepositoryProtocol {
 
     func sendHeartbeat(userID: String) -> Observable<Void> {
         apiService
-            .post(path: "/users/\(userID)/heartbeat", body: Optional<String>.none, responseType: UserResponse.self)
+            .post(path: "/users/\(userID)/heartbeat", body: Optional<String>.none, responseType: EmptyResponse.self)
             .map { _ in }
     }
 
     func updatePillNotificationMessage(pillID: String, message: String) -> Observable<Void> {
         let body = UpdatePillNotificationMessageRequest(notification_message: message)
         return apiService
-            .patch(path: "/pills/\(pillID)/message", body: body, responseType: UserResponse.self)
+            .patch(path: "/pills/\(pillID)/message", body: body, responseType: EmptyResponse.self)
             .map { _ in }
     }
 
@@ -65,7 +65,7 @@ final class PillingServerRepository: PillingServerRepositoryProtocol {
             scheduled_time: scheduledTime
         )
         return apiService
-            .patch(path: "/pills/\(pillID)/cycle", body: body, responseType: UserResponse.self)
+            .patch(path: "/pills/\(pillID)/cycle", body: body, responseType: EmptyResponse.self)
             .map { _ in }
     }
 }

@@ -33,6 +33,8 @@ struct UserResponse: Decodable {
     let user_id: String
 }
 
+struct EmptyResponse: Decodable {}
+
 struct RegisterPillResponse: Decodable {
     let pill_id: String
 }
