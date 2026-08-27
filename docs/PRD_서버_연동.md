@@ -22,7 +22,7 @@
 ```
 iOS 앱 → (HTTPS, X-API-Key) → 서버(FastAPI) → APNs → iOS 기기
                                    │
-                              SQLite (User, Pill, PillRecord)
+                    SQLite (User, Pill, PillRecord — 당일 복용 신호만, §4.1)
 ```
 
 서버도 iOS와 동일한 클린아키텍처(`domain → usecases → infra ← presentation`) 적용.
@@ -34,6 +34,15 @@ iOS 앱 → (HTTPS, X-API-Key) → 서버(FastAPI) → APNs → iOS 기기
 | 인증 | 요청 헤더 `X-API-Key` |
 | 푸시 | APNs (JWT `.p8` 키 방식) |
 | HTTPS | Duck DNS + Let's Encrypt |
+
+### 4.1 데이터 소유권: 로컬(디바이스) vs 서버
+
+**결정: 복용 기록의 소스는 로컬(디바이스), 서버는 파생 신호만 수신.**
+
+- 전체 복용 히스토리(시각별 기록)는 디바이스에만 저장 — `DaillyWidget`이 오프라인에서도 즉시 렌더링해야 해서 어차피 로컬 데이터가 필수이고, 서버를 소스로 두면 위젯마다 네트워크 왕복이 생겨 구조가 불필요하게 복잡해짐
+- 서버가 실제로 필요한 건 알림 로직(§6)이 쓸 **"오늘 복용했는지" 같은 파생 신호 하나뿐** — 상세 이력 전체가 아님
+- 민감 건강정보(피임약 복용 기록) 전송량을 최소화하는 방향이 §3 비목표(서버 암호화 저장 낮은 우선순위)와도 맞음 — 애초에 서버에 안 올리면 그 문제 자체가 작아짐
+- 예외: MVP 이후 "복용 달성 격려 알림"(§6, 7일/21일 연속 등 streak)을 서버에서 판단하게 하려면 최소한 연속 일수 카운트는 필요 — 이건 그 기능 붙일 때 "로컬에서 계산해서 숫자만 전송" vs "서버가 직접 계산" 중 다시 결정
 
 ## 5. API 명세
 
@@ -47,7 +56,7 @@ iOS 앱 → (HTTPS, X-API-Key) → 서버(FastAPI) → APNs → iOS 기기
 | GET | `/users/{user_id}/pills` | 약 목록 조회 | |
 | PATCH | `/pills/{pill_id}/cycle` | 복약 사이클 갱신 (휴약일 알림 제어) | 응답 body 없음 |
 | PATCH | `/pills/{pill_id}/message` | 알림 문구 갱신 | 응답 body 없음 |
-| POST | `/pills/{pill_id}/taken` | 복용 기록 | 당일 발송 여부 판단 근거 |
+| POST | `/pills/{pill_id}/taken` | 복용 신호 전송 | 당일 발송 여부 판단 근거 (전체 이력 아님, §4.1 참고) |
 
 공통 에러: `401`(API Key 불일치) / `404`(리소스 없음) / `409`(중복) / `422`(입력값 오류)
 
