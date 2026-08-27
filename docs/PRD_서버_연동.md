@@ -88,8 +88,7 @@ MVP 이후: 복용 확인 재알림, 사이클 종료 임박 알림, 복용 달�
 - 서버 API 문서(`PILLING_SERVER_API_GUIDE.md`)에 heartbeat/cycle/message 엔드포인트 반영 필요 (현재 문서 누락)
 - 알림 비활성화(사용자가 앱에서 알림 끔) 상태를 서버에 어떻게 동기화할지
 - 건강 데이터 SQLite 평문 저장 여부
-- 호스팅 최종 선택 (§12 참고, 아직 미확정)
-- 장애 모니터링/알림 방식 (§13 참고, 아이디어 단계)
+- 호스팅 최종 선택 (§12 참고, GCP e2-micro 유력이나 아직 미확정)
 
 ## 11. 마일스톤 제안
 
@@ -122,24 +121,34 @@ MVP 이후: 복용 확인 재알림, 사이클 종료 임박 알림, 복용 달�
 | EC2 직접 구성 | $10~11 | ✅ | 어려움 (VPC/보안그룹 등) | 높음 | 없음 |
 | Oracle Cloud Always Free | $0 | ✅ | 어려움 (EC2급 직접 설정) | 중간 (계정 회수 사례 있음) | 없음 |
 | Raspberry Pi (자가 호스팅) | $0 (+ 초기 하드웨어) | ✅ | 보통 | 중간 (가정 네트워크 의존은 동일) | 없음 |
+| **GCP Compute Engine (e2-micro, Always Free)** | **$0** | ✅ | 어려움 (EC2급 직접 설정, us-west1/central1/east1 리전 한정) | 높음 | 없음 |
 | Google Cloud Run | 사용량 기반 | ❌ (디스크 휘발성 → Cloud SQL/Litestream 필요) | 보통 | 높음 | 있음 (DB 계층) |
 | AWS App Runner | 사용량 기반 | ❌ (동일 문제) | 보통 | 높음 | 있음 (DB 계층) |
 | Firebase Functions | 사용량 기반 | ❌ (Firestore로 전환 필요) | 어려움 (구조 재설계) | 높음 | 큼 (아키텍처 전체) |
 
 **"EC2급 직접 설정"의 의미**: 관리형 플랫폼(PaaS)이 아니라 빈 VM 하나만 주어지는 방식. SSH로 접속해 Python/의존성 설치, `systemd`로 프로세스 자동 재시작 등록, nginx 리버스 프록시 + Let's Encrypt 인증서 발급/갱신, 방화벽 포트 오픈(Oracle Cloud는 OS iptables + 콘솔 Security List 둘 다 열어야 함)까지 전부 직접 해야 함. Railway/Fly.io 같은 PaaS는 이 과정이 아예 없음.
 
-**현재 방향**: 지금 규모(개인 프로젝트, 1인 개발)엔 **Fly.io** 또는 **Lightsail $5 플랜**이 가장 현실적. 완전 무료가 최우선이면 Oracle Always Free. 최종 확정 전.
+**GCP e2-micro가 유력한 이유** (§13 참고): `piriram/DoSurf-API`가 이미 GCP 위에서 돌아가고 있고, Cloud Monitoring + `send_telegram_alert()` 텔레그램 알림 코드가 검증된 채로 존재함. Pilling 서버를 같은 GCP 프로젝트(또는 같은 계정) 안에 두면:
+- e2-micro 인스턴스 자체가 영구 무료(Always Free) — SQLite도 퍼시스턴트 디스크로 그대로 사용 가능
+- DoSurf-API의 Cloud Monitoring 웹훅 + `send_telegram_alert()` 코드를 그대로 재사용 가능 (Cloud Monitoring의 Uptime Check는 GCP 리소스가 아니어도 외부 HTTP 엔드포인트를 감시할 수 있어서, Fly.io/Lightsail로 가더라도 이 알림 코드 자체는 재사용 가능하지만, VM까지 GCP면 인프라 전체가 한 곳에 모임)
+- 다른 후보(Fly.io, Lightsail 등)는 알림 체계를 처음부터 새로 구축해야 함
 
-## 13. 운영 모니터링 (아이디어, 미검증)
+**현재 방향**: **GCP Compute Engine e2-micro**가 비용($0)과 운영 재사용성(기존 DoSurf-API 모니터링 인프라 재사용) 양쪽에서 가장 유력. 차선책은 Fly.io(더 가벼운 설정) 또는 Lightsail $5 플랜. 최종 확정 전.
 
-서버 장애 시 텔레그램으로 알림받는 방식 검토 중 — `piriram/DoSurf-API`에서 쓰는 방식을 참고하려 했으나 세션 도구 문제로 아직 확인 못함 (재확인 예정).
+## 13. 운영 모니터링 (DoSurf-API 방식 확인 완료)
 
-일반적인 구현 방향 두 가지:
+`piriram/DoSurf-API`가 이미 이 문제를 풀어놓은 상태 — 그대로 참고 가능.
 
-1. **직접 구현** — 알림 스케줄러(APScheduler 등) 옆에 헬스체크 로직을 붙이고, 실패 시 Telegram Bot API로 메시지 전송
-2. **외부 무료 서비스** — UptimeRobot, Healthchecks.io 등은 엔드포인트만 등록하면 주기적으로 핑을 보내고 실패 시 Telegram 연동 알림까지 내장. 서버 프로세스 자체가 죽는 경우 자체 헬스체크 로직도 같이 죽으므로, 외부 서비스 쪽이 더 안전함
+**구현 방식**: `app/clients/alerts.py`의 `send_telegram_alert()` 함수가 핵심.
+- `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` 환경변수 설정 시에만 동작 (미설정 시 조용히 스킵)
+- Telegram Bot API(`https://api.telegram.org/bot{token}/sendMessage`)로 직접 POST, 레벨(CRITICAL/WARNING/INFO)·source·KST 타임스탬프 자동 첨부
+- 실패 시 exponential backoff로 3회 재시도
 
-`DoSurf-API` 확인 후 방식 확정 예정.
+**호출 지점 3곳**: `/`(collect) 엔드포인트 예외 시 CRITICAL, 수집 작업 중 이상(데이터 개수 불일치, cleanup 실패 등) 시 WARNING, `/monitoring-alert` 엔드포인트가 GCP Cloud Monitoring 웹훅을 수신해 Telegram으로 포워딩(Basic Auth 보호).
+
+**아키텍처**: "직접 구현"(비즈니스 로직 예외 감지)과 "외부 서비스"(GCP Cloud Monitoring, 인프라 레벨 장애 감지)를 혼합 — 둘 다 같은 `send_telegram_alert()`로 수렴. 서버 프로세스 자체가 죽는 경우까지 커버하려면 자체 헬스체크만으론 부족하다는 게(§7 "무음 실패" 교훈과 같은 맥락) 실제로 GCP Cloud Monitoring을 같이 쓰는 이유였음.
+
+**Pilling 적용 방향**: §12에서 GCP e2-micro로 결정하면 이 코드/웹훅 패턴을 그대로 가져올 수 있음. 다른 호스팅(Fly.io 등)을 선택하면 `send_telegram_alert()` 로직은 그대로 재사용하되, GCP Cloud Monitoring 대신 UptimeRobot/Healthchecks.io 같은 외부 핑 서비스로 인프라 레벨 장애 감지를 대체해야 함.
 
 ## 부록. 이 PRD 작성 전 진행한 저장소 정리
 
