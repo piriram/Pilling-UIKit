@@ -80,17 +80,31 @@ iOS 앱 → (HTTPS, X-API-Key) → 서버(FastAPI) → APNs → iOS 기기
 
 | 메서드 | 경로 | 용도 | 비고 |
 |--------|------|------|------|
-| POST | `/users` | 사용자 등록 (user_id, device_token) | 앱 최초 실행 시. `user_id`는 로컬 생성 UUID (§4.2) |
-| PATCH | `/users/{user_id}/device-token` | APNs 토큰 갱신 | 콜백에서 즉시 호출 |
-| POST | `/users/{user_id}/heartbeat` | 생존 신호 (이탈 감지용) | 응답 body 없음 |
-| DELETE | `/users/{user_id}` | 계정 삭제 (약/기록 전체 삭제) | |
-| POST | `/users/{user_id}/pills` | 약 등록 | |
-| GET | `/users/{user_id}/pills` | 약 목록 조회 | |
-| PATCH | `/pills/{pill_id}/cycle` | 복약 사이클 갱신 (휴약일 알림 제어) | 응답 body 없음 |
-| PATCH | `/pills/{pill_id}/message` | 알림 문구 갱신 | 응답 body 없음 |
-| POST | `/pills/{pill_id}/taken` | 복용 신호 전송 | 당일 발송 여부 판단 근거 (전체 이력 아님, §4.1 참고) |
+| POST | `/users` | 사용자 등록 (user_id, device_token) | 앱 최초 실행 시. `user_id`는 로컬 생성 UUID (§4.2). 응답에 `access_token` 포함 (§5.1) |
+| PATCH | `/users/{user_id}/device-token` | APNs 토큰 갱신 | `Authorization: Bearer` 필요 (§5.1) |
+| POST | `/users/{user_id}/heartbeat` | 생존 신호 (이탈 감지용) | 응답 body 없음, 인증 필요 |
+| DELETE | `/users/{user_id}` | 계정 삭제 (약/기록 전체 삭제) | 인증 필요 |
+| POST | `/users/{user_id}/pills` | 약 등록 | 인증 필요 |
+| GET | `/users/{user_id}/pills` | 약 목록 조회 | 인증 필요 |
+| PATCH | `/pills/{pill_id}/cycle` | 복약 사이클 갱신 (휴약일 알림 제어) | 응답 body 없음, 인증 필요 |
+| PATCH | `/pills/{pill_id}/message` | 알림 문구 갱신 | 응답 body 없음, 인증 필요 |
+| POST | `/pills/{pill_id}/taken` | 복용 신호 전송 | 당일 발송 여부 판단 근거 (전체 이력 아님, §4.1 참고), 인증 필요 |
 
-공통 에러: `401`(API Key 불일치) / `404`(리소스 없음) / `409`(중복) / `422`(입력값 오류)
+공통 에러: `401`(API Key 또는 Bearer 토큰 불일치) / `404`(리소스 없음) / `409`(중복) / `422`(입력값 오류)
+
+### 5.1 인증 구조
+
+**문제**: `X-API-Key`는 앱 바이너리에 박혀있어 IPA만 뜯으면 누구나 꺼낼 수 있음. 지금 설계는 `user_id`(URL 경로)만 알면 그 값이 진짜 본인 것인지 검증 없이 조회/삭제까지 가능 — 다른 사용자의 `user_id`를 알아내면 그 사람의 약 목록 조회, 계정 삭제(`DELETE /users/{user_id}`)까지 가능한 구조였음.
+
+**결정: 등록 시 발급되는 개인 비밀 토큰(Bearer) 방식 채택.**
+
+- `POST /users`로 최초 등록할 때 서버가 `user_id`와 별개로 무작위 비밀 토큰 `access_token`을 생성해 응답에 포함
+- 클라이언트는 이 토큰을 Keychain에 저장(§4.2와 동일한 보호 수준), 이후 모든 요청에 `Authorization: Bearer <access_token>`으로 전송
+- 서버는 `user_id`가 아니라 **이 토큰이 그 `user_id`에 발급된 값과 일치하는지**로 본인 확인 — `X-API-Key`는 "이 요청이 Pilling 앱에서 왔는지"만 검증하는 용도로 남기고, 리소스별 권한은 Bearer 토큰이 담당
+- 로그인 UI 불필요 — §4.2 "로그인 강제 없음" 원칙과 충돌 없음
+- §4.2의 4단계(Sign in with Apple)가 나중에 도입되면, 그 로그인이 이 토큰 발급 주체를 "익명 등록"에서 "Apple 인증된 로그인"으로 격상시키는 구조로 자연스럽게 확장 가능
+
+**기각한 대안**: HMAC 요청 서명(이미 HTTPS로 전송 구간 보호되고 있어 추가 복잡도 대비 이득 적음), JWT(무상태 검증 이점이 지금 DB 규모에선 무의미, 토큰 회수가 더 번거로움), Apple App Attest/DeviceCheck(가장 강력하지만 구현 복잡도가 지금 위협 수준 대비 과함, iOS 전용이라 향후 Android 대응 시 또 다른 수단 필요) — 필요해지면 재검토.
 
 ## 6. 알림 타입 (MVP)
 
