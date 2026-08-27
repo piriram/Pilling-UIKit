@@ -85,6 +85,16 @@ iOS 앱 → (HTTPS, X-API-Key) → 서버(FastAPI) → APNs → iOS 기기
 - **재등록 복구 로직**: §9.1에서 이미 설계한 "서버가 사용자를 모름(404) → 자동 재등록"을 DB 완전 유실 상황에도 그대로 활용. 클라이언트가 404를 감지하면 로컬에 있는 사이클/약 정보를 다시 `POST`해서 동기화 — 서버 DB가 통째로 날아가도 사용자가 앱을 한 번 여는 것만으로 복구됨
 - **기각한 대안**: GCP Persistent Disk 스냅샷 — Always Free 번들에 포함 안 돼 별도 과금되고, 파일 하나 백업하는 데 디스크 전체 단위로 접근하는 건 이 규모엔 과함
 
+### 4.5 서버 저장소(repo) 분리
+
+**결정: 서버(Python/FastAPI) 코드는 `Pilling-UIKit`과 별도 repo로 관리 (예: `pilling-server`).**
+
+- 원래 계획이기도 함 — `archive/feat-2-server-sync`의 `PILLING_SERVER_NOTIFICATION_NOTES.md`에 "서버 코드: GitHub 별도 repo" 명시돼 있었음
+- `Pilling-UIKit`엔 서버를 호출하는 iOS 클라이언트 코드(`PillingServerAPIService`, DTO 등)만 남고, 서버 구현 자체는 포함하지 않음
+- `piriram/DoSurf-API`도 별도 repo — 서비스 단위로 repo를 나누는 기존 패턴과 일관됨
+- 툴체인이 완전히 다름(Xcode/Swift vs Python/FastAPI)이라 한 repo에 합치면 `.gitignore`/CI/Git 컨벤션이 뒤섞임 — `CLAUDE.md`의 커밋/브랜치 규칙도 지금 iOS 앱 기준이라 서버 작업까지 같은 히스토리에 넣으면 지저분해짐
+- **개발 편의성**: Claude Code 세션은 여러 repo를 동시에 붙일 수 있어(오늘 `hop_wheel-robot`, `DoSurf-API`를 `Pilling-UIKit`과 같이 연 것처럼), 서버 작업 시 `Pilling-UIKit` + `pilling-server`를 함께 열면 API 계약(클라이언트 DTO ↔ 서버 응답)을 동시에 보면서 작업 가능 — repo 분리로 인한 불편은 거의 없음
+
 ## 5. API 명세
 
 | 메서드 | 경로 | 용도 | 비고 |
