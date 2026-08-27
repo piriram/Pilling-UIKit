@@ -44,11 +44,35 @@ iOS 앱 → (HTTPS, X-API-Key) → 서버(FastAPI) → APNs → iOS 기기
 - 민감 건강정보(피임약 복용 기록) 전송량을 최소화하는 방향이 §3 비목표(서버 암호화 저장 낮은 우선순위)와도 맞음 — 애초에 서버에 안 올리면 그 문제 자체가 작아짐
 - 예외: MVP 이후 "복용 달성 격려 알림"(§6, 7일/21일 연속 등 streak)을 서버에서 판단하게 하려면 최소한 연속 일수 카운트는 필요 — 이건 그 기능 붙일 때 "로컬에서 계산해서 숫자만 전송" vs "서버가 직접 계산" 중 다시 결정
 
+### 4.2 사용자 식별자 전략
+
+**원칙: 로그인 강제 없음. 기기 변경 대응은 단계적으로, 필요할 때만 쓰는 방식으로.**
+
+1단계 — 기본 (지금 구현):
+- 앱 최초 실행 시 로컬에서 랜덤 UUID 생성 → Keychain 저장 → 그대로 서버 `user_id`로 등록
+- 로그인/회원가입 화면 없음
+
+2단계 — iOS 기기 간 자동 이어가기 (계획됨, 나중에):
+- 1단계 UUID를 iCloud Keychain으로 동기화 — 같은 Apple ID의 iOS 기기끼리는 사용자가 아무것도 안 해도 자동으로 이어짐
+- iCloud Keychain 미사용 기기나 다른 Apple ID로는 안 이어짐 (3단계로 보완)
+
+3단계 — 수동 백업/이전 (파일 export/import, 나중에):
+- 피임약 사이클이 약 30일 단위라 오래된 기록을 완벽하게 보존해야 할 이유가 크지 않음 — 계정 시스템 없이 **로컬 데이터(약/사이클/기록) + 서버 `user_id`를 파일로 export**하고, 새 기기에서 import하는 방식으로 충분
+- import 시 새 기기가 파일 속 기존 `user_id`로 `POST /users` 재호출(device_token만 갱신)하면 서버 계정도 그대로 이어짐 — 서버 스키마 변경 불필요
+- iCloud Keychain(2단계)이 안 되는 경우(꺼둠, Apple ID 다름, 향후 Android)의 수동 대체 수단 겸 백업
+- 플랫폼 종속 로그인이 아니라서 향후 Android 대응에도 그대로 재사용 가능
+
+4단계 — OAuth 로그인 (보류, 필요해지면):
+- Sign in with Apple / Google을 "설정 안쪽의 선택 기능"으로 — 정말 필요해질 때(Android 정식 출시, 계정 복구 문의 급증 등)까지 미룸
+- 넣게 되면 서버 `users` 테이블에 `apple_sub`/`google_sub`를 nullable로 추가하는 정도로 충분 (지금 스키마 변경 불필요)
+
+**기각된 방식**: `identifierForVendor`(IDFV)를 `UserDefaults`에 캐싱 — 1차 시도(§7 참고)에서 실제로 이렇게 구현했었는데, 앱 재설치만 해도 깨지고 기기 변경 시엔 100% 깨짐.
+
 ## 5. API 명세
 
 | 메서드 | 경로 | 용도 | 비고 |
 |--------|------|------|------|
-| POST | `/users` | 사용자 등록 (user_id, device_token) | 앱 최초 실행 시 |
+| POST | `/users` | 사용자 등록 (user_id, device_token) | 앱 최초 실행 시. `user_id`는 로컬 생성 UUID (§4.2) |
 | PATCH | `/users/{user_id}/device-token` | APNs 토큰 갱신 | 콜백에서 즉시 호출 |
 | POST | `/users/{user_id}/heartbeat` | 생존 신호 (이탈 감지용) | 응답 body 없음 |
 | DELETE | `/users/{user_id}` | 계정 삭제 (약/기록 전체 삭제) | |
@@ -79,6 +103,7 @@ MVP 이후: 복용 확인 재알림, 사이클 종료 임박 알림, 복용 달�
 | device_token 등록 실패/덮어쓰기 반복 (시뮬레이터 미지원, 빈 토큰, placeholder가 실토큰 덮어씀, UUID로 매번 갱신) | APNs 콜백 타이밍과 로컬 상태 관리 미흡 | 토큰 상태를 명시적으로 모델링 (`none / placeholder / real`), 실토큰 수신 전엔 서버 등록 보류 |
 | `syncPillToServer` race condition으로 PATCH 미전송 | 비동기 흐름에서 사이클 갱신과 서버 동기화 순서 보장 안 됨 | 동기화 큐 또는 명시적 순서 보장 구조 |
 | Firebase 이중 초기화 크래시 | 서버 연동과 무관, 기존 Firebase 세팅과 충돌 | 재작업 시 Firebase 의존성 최소화 유지 (이미 FirebaseAnalytics 제거로 해결됨, 재도입 주의) |
+| `resolveServerUserID()`가 `identifierForVendor`를 `UserDefaults`에 캐싱해 `user_id`로 사용 | 앱 재설치 시 `UserDefaults` 삭제 + IDFV도 리셋 가능 → 계정 연결 끊김. 기기 변경 시엔 100% 끊김 | §4.2 사용자 식별자 전략(Keychain UUID + iCloud Keychain + 파일 export/import)으로 대체 |
 
 ## 8. 로컬 알림과의 관계
 
